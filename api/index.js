@@ -1,35 +1,69 @@
 /**
  * Vercel Serverless Function Entry Point
- * This exports the Express app for Vercel's serverless platform
+ * Minimal version that serves the frontend and API
  */
 
-require('dotenv').config();
+const express = require('express');
+const path = require('path');
+const cors = require('cors');
 
-// Try to load the app and catch any errors
-let app;
+const app = express();
+
+// Enable CORS
+app.use(cors({
+  origin: [
+    'http://localhost:3001',
+    'http://localhost:8080',
+    'https://muse.shopping',
+    'https://www.muse.shopping'
+  ],
+  credentials: true,
+}));
+
+// Body parsing
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Serve static files from public directory
+app.use('/public', express.static(path.join(__dirname, '../public')));
+
+// Try to load the full API routes, but don't fail if it doesn't work
 try {
-  app = require('../src/app');
-  console.log('App loaded successfully');
+  require('dotenv').config();
+  const routes = require('../src/routes');
+  app.use('/api/v1', routes);
+  console.log('API routes loaded successfully');
 } catch (error) {
-  console.error('Error loading app:', error.message);
-  console.error('Stack:', error.stack);
-
-  // Create a minimal Express app to show the error
-  const express = require('express');
-  app = express();
-  app.get('*', (req, res) => {
-    res.status(500).send(`
-      <html>
-        <head><title>Server Error</title></head>
-        <body>
-          <h1>Server Error</h1>
-          <p>Failed to load application:</p>
-          <pre>${error.message}\n\n${error.stack}</pre>
-        </body>
-      </html>
-    `);
+  console.error('Warning: Could not load API routes:', error.message);
+  // Create a fallback health endpoint
+  app.get('/api/v1/health', (req, res) => {
+    res.json({
+      success: true,
+      data: {
+        status: 'partial',
+        message: 'Frontend only mode',
+        error: error.message
+      }
+    });
   });
 }
+
+// Serve the demo frontend at the root path
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../demo.html'));
+});
+
+// 404 handler for other routes
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    error: {
+      code: 'NOT_FOUND',
+      message: 'Endpoint not found',
+      path: req.path,
+    },
+  });
+});
 
 // Export the app for Vercel serverless functions
 module.exports = app;
