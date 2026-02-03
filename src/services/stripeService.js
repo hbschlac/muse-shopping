@@ -14,12 +14,22 @@ const Stripe = require('stripe');
 const logger = require('../utils/logger');
 const { PaymentError, ValidationError } = require('../utils/errors');
 
-// Initialize Stripe with secret key
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+// Initialize Stripe with secret key (skip if not configured to avoid boot failures)
+const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2024-12-18.acacia', // Use latest stable API version
   maxNetworkRetries: 3,
   timeout: 30000, // 30 second timeout
-});
+}) : null;
+
+if (!stripe) {
+  logger.warn('Stripe secret key not configured. Stripe operations will fail until STRIPE_SECRET_KEY is set.');
+}
+
+function ensureStripeConfigured() {
+  if (!stripe) {
+    throw new PaymentError('Stripe is not configured');
+  }
+}
 
 class StripeService {
   /**
@@ -42,6 +52,7 @@ class StripeService {
     description,
   }) {
     try {
+      ensureStripeConfigured();
       // Validate amount
       if (!amountCents || amountCents < 50) {
         throw new ValidationError('Amount must be at least $0.50 (50 cents)');
@@ -110,6 +121,7 @@ class StripeService {
    */
   static async confirmPaymentIntent(paymentIntentId, paymentMethodId) {
     try {
+      ensureStripeConfigured();
       const paymentIntent = await stripe.paymentIntents.confirm(paymentIntentId, {
         payment_method: paymentMethodId,
         return_url: `${process.env.APP_URL}/orders`, // For 3D Secure redirects
@@ -148,6 +160,7 @@ class StripeService {
    */
   static async capturePaymentIntent(paymentIntentId, amountCents = null) {
     try {
+      ensureStripeConfigured();
       const params = {};
       if (amountCents) {
         params.amount_to_capture = amountCents;
@@ -178,6 +191,7 @@ class StripeService {
    */
   static async getPaymentIntent(paymentIntentId) {
     try {
+      ensureStripeConfigured();
       const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
 
       return {

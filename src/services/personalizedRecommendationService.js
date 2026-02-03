@@ -452,10 +452,6 @@ class PersonalizedRecommendationService {
       throw error;
     }
   }
-}
-
-module.exports = PersonalizedRecommendationService;
-
 
   static applyChatReranking(items, preferences, brandAffinity = []) {
     if (!preferences) return items;
@@ -496,3 +492,6 @@ module.exports = PersonalizedRecommendationService;
       })
       .sort((a, b) => (b.relevance_score || 0) - (a.relevance_score || 0));
   }
+}
+
+module.exports = PersonalizedRecommendationService;

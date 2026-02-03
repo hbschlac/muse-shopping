@@ -6,7 +6,7 @@
 const express = require('express');
 const router = express.Router();
 const StoreConnectionController = require('../controllers/storeConnectionController');
-const { requireAuth } = require('../middleware/auth');
+const requireAuth = require('../middleware/authMiddleware');
 
 // Get all user's store connections
 router.get('/', requireAuth, StoreConnectionController.getUserConnections);

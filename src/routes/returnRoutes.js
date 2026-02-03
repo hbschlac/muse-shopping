@@ -6,7 +6,7 @@
 const express = require('express');
 const router = express.Router();
 const ReturnController = require('../controllers/returnController');
-const { requireAuth } = require('../middleware/auth');
+const requireAuth = require('../middleware/authMiddleware');
 
 // Check return eligibility for an order
 router.get('/eligibility/:orderId', requireAuth, ReturnController.checkEligibility);
