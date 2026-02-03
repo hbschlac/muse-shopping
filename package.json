@@ -1,0 +1,60 @@
+{
+  "name": "muse-shopping",
+  "version": "0.1.0",
+  "description": "Personalized fashion shopping aggregator backend",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "jest --testEnvironment=node",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:encryption": "node scripts/test-encryption.js",
+    "lint": "eslint src/**/*.js",
+    "lint:fix": "eslint src/**/*.js --fix",
+    "migrate": "node scripts/migrate.js",
+    "seed": "node scripts/seed.js",
+    "export:chat": "node src/jobs/chatExportJob.js",
+    "export:chat:flagged": "node src/jobs/chatExportJob.js --only_flagged=true"
+  },
+  "keywords": [
+    "fashion",
+    "shopping",
+    "personalization",
+    "aggregator"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.758.0",
+    "@aws-sdk/s3-request-presigner": "^3.758.0",
+    "@google-cloud/storage": "^7.16.0",
+    "axios": "^1.13.4",
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "csv-parser": "^3.2.0",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.2.1",
+    "googleapis": "^171.1.0",
+    "helmet": "^8.1.0",
+    "joi": "^18.0.2",
+    "jsonwebtoken": "^9.0.3",
+    "morgan": "^1.10.1",
+    "nanoid": "^5.1.6",
+    "pg": "^8.18.0",
+    "puppeteer": "^24.36.1",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "stripe": "^20.3.0",
+    "validator": "^13.15.26",
+    "winston": "^3.19.0"
+  },
+  "devDependencies": {
+    "eslint": "^9.39.2",
+    "jest": "^30.2.0",
+    "nodemon": "^3.1.11",
+    "prettier": "^3.8.1",
+    "supertest": "^7.2.2"
+  }
+}

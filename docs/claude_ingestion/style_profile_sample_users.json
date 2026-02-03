@@ -1,0 +1,80 @@
+[
+  {
+    "user_id": "u_001",
+    "style_layers": {
+      "minimal": 0.85,
+      "streetwear": 0.10,
+      "glam": 0.15,
+      "classic": 0.70,
+      "boho": 0.05,
+      "athleisure": 0.12,
+      "romantic": 0.08,
+      "edgy": 0.06,
+      "preppy": 0.30,
+      "avant_garde": 0.04
+    },
+    "price_layers": {"budget": 0.10, "mid": 0.45, "premium": 0.80, "luxury": 0.55},
+    "category_layers": {"bags": 0.75, "shoes": 0.40, "denim": 0.35, "workwear": 0.80, "occasion": 0.30, "accessories": 0.55, "active": 0.20, "mixed": 0.25},
+    "occasion_layers": {"work": 0.85, "event": 0.25, "casual": 0.45, "athleisure": 0.20},
+    "commerce_intent": 0.72,
+    "confidence": 0.66,
+    "ux_examples": {
+      "headline": "Your style snapshot: Clean lines and neutral basics",
+      "subhead": "Premium workwear with tailored structure",
+      "collections": ["Minimal Workwear Staples", "Polished Bags Edit"],
+      "retailer_order": ["COS", "Aritzia", "Theory", "Everlane"]
+    }
+  },
+  {
+    "user_id": "u_002",
+    "style_layers": {
+      "minimal": 0.20,
+      "streetwear": 0.82,
+      "glam": 0.18,
+      "classic": 0.25,
+      "boho": 0.10,
+      "athleisure": 0.60,
+      "romantic": 0.05,
+      "edgy": 0.70,
+      "preppy": 0.12,
+      "avant_garde": 0.15
+    },
+    "price_layers": {"budget": 0.35, "mid": 0.78, "premium": 0.40, "luxury": 0.20},
+    "category_layers": {"bags": 0.20, "shoes": 0.80, "denim": 0.50, "workwear": 0.15, "occasion": 0.10, "accessories": 0.45, "active": 0.65, "mixed": 0.30},
+    "occasion_layers": {"work": 0.20, "event": 0.15, "casual": 0.80, "athleisure": 0.70},
+    "commerce_intent": 0.55,
+    "confidence": 0.58,
+    "ux_examples": {
+      "headline": "Your style snapshot: Laid-back street style and sneakers",
+      "subhead": "Casual fits with sneaker-first energy",
+      "collections": ["Streetwear Sneaker Picks", "Everyday Athleisure"],
+      "retailer_order": ["Nike", "Adidas", "Foot Locker", "Urban Outfitters"]
+    }
+  },
+  {
+    "user_id": "u_003",
+    "style_layers": {
+      "minimal": 0.10,
+      "streetwear": 0.12,
+      "glam": 0.85,
+      "classic": 0.30,
+      "boho": 0.15,
+      "athleisure": 0.08,
+      "romantic": 0.70,
+      "edgy": 0.20,
+      "preppy": 0.10,
+      "avant_garde": 0.22
+    },
+    "price_layers": {"budget": 0.05, "mid": 0.30, "premium": 0.65, "luxury": 0.85},
+    "category_layers": {"bags": 0.65, "shoes": 0.55, "denim": 0.15, "workwear": 0.20, "occasion": 0.90, "accessories": 0.70, "active": 0.05, "mixed": 0.20},
+    "occasion_layers": {"work": 0.25, "event": 0.90, "casual": 0.30, "athleisure": 0.10},
+    "commerce_intent": 0.80,
+    "confidence": 0.74,
+    "ux_examples": {
+      "headline": "Your style snapshot: Statement looks and evening polish",
+      "subhead": "Luxury occasionwear and glam accessories",
+      "collections": ["Glam Event Looks", "Statement Accessories"],
+      "retailer_order": ["Nordstrom", "Net-a-Porter", "Revolve", "Saks"]
+    }
+  }
+]

@@ -1,0 +1,18 @@
+{
+  "package": "muse_style_profile",
+  "version": "1.0.0",
+  "generated_on": "2026-02-03",
+  "files": [
+    {"path": "style_profile_schema.json", "type": "schema", "description": "JSON schema for the Style Profile object"},
+    {"path": "style_profile_scoring_function_spec.md", "type": "spec", "description": "Scoring logic, event weights, and normalization"},
+    {"path": "style_profile_scoring_fixtures.json", "type": "test", "description": "Primary fixtures"},
+    {"path": "style_profile_scoring_fixtures_extra.json", "type": "test", "description": "Edge-case fixtures"},
+    {"path": "style_profile_scoring_test_runner.py", "type": "test-runner", "description": "Runs fixtures and asserts deltas"},
+    {"path": "style_profile_sample_users.json", "type": "example", "description": "Sample user profiles with UX outputs"},
+    {"path": "style_profile_sample_users.csv", "type": "example", "description": "Flattened sample profiles"},
+    {"path": "style_profile_copy_map.md", "type": "copy", "description": "Mapping tags to user-facing copy"},
+    {"path": "style_profile_ux_blueprint.md", "type": "ux", "description": "Product surfaces and personalization flow"},
+    {"path": "influencer_shopper_signal_map.md", "type": "mapping", "description": "Influencer to shopper signal translation"},
+    {"path": "style_profile_spec.md", "type": "spec", "description": "Narrative spec for style profile"}
+  ]
+}

@@ -1,0 +1,96 @@
+{
+  "fixtures": [
+    {
+      "id": "f_no_data",
+      "initial_profile": {
+        "user_id": "u_test_empty",
+        "style_layers": {"minimal": 0, "streetwear": 0, "glam": 0, "classic": 0, "boho": 0, "athleisure": 0, "romantic": 0, "edgy": 0, "preppy": 0, "avant_garde": 0},
+        "price_layers": {"budget": 0, "mid": 0, "premium": 0, "luxury": 0},
+        "category_layers": {"bags": 0, "shoes": 0, "denim": 0, "workwear": 0, "occasion": 0, "accessories": 0, "active": 0, "mixed": 0},
+        "occasion_layers": {"work": 0, "event": 0, "casual": 0, "athleisure": 0},
+        "commerce_intent": 0,
+        "confidence": 0
+      },
+      "event": {
+        "user_id": "u_test_empty",
+        "event_type": "click",
+        "source_type": "product",
+        "source_id": "prod_none",
+        "timestamp": "2026-02-03T12:00:00Z"
+      },
+      "product": {
+        "category": null,
+        "price_tier": null,
+        "occasion": null
+      },
+      "expected_delta": {
+        "category_layers": {},
+        "price_layers": {},
+        "occasion_layers": {},
+        "commerce_intent": 0
+      }
+    },
+    {
+      "id": "f_conflicting_signals",
+      "initial_profile": {
+        "user_id": "u_test_conflict",
+        "style_layers": {"minimal": 1.5, "streetwear": 1.2, "glam": 0.2, "classic": 0.3, "boho": 0, "athleisure": 0.8, "romantic": 0, "edgy": 0.9, "preppy": 0.1, "avant_garde": 0},
+        "price_layers": {"budget": 0.2, "mid": 0.8, "premium": 0.5, "luxury": 0.1},
+        "category_layers": {"bags": 0.2, "shoes": 0.7, "denim": 0.4, "workwear": 0.1, "occasion": 0.1, "accessories": 0.5, "active": 0.7, "mixed": 0.2},
+        "occasion_layers": {"work": 0.2, "event": 0.1, "casual": 0.9, "athleisure": 0.7},
+        "commerce_intent": 0.3,
+        "confidence": 0.6
+      },
+      "event": {
+        "user_id": "u_test_conflict",
+        "event_type": "save",
+        "source_type": "influencer",
+        "source_id": "inf_glam",
+        "timestamp": "2026-02-03T12:10:00Z"
+      },
+      "influencer": {
+        "style_archetype": "glam",
+        "price_tier": "luxury",
+        "category_focus": "occasion",
+        "commerce_readiness_score": 20
+      },
+      "expected_delta": {
+        "style_layers": {"glam": 0.9},
+        "price_layers": {"luxury": 0.9},
+        "category_layers": {"occasion": 0.9},
+        "commerce_intent": 0.1
+      }
+    },
+    {
+      "id": "f_low_confidence",
+      "initial_profile": {
+        "user_id": "u_test_low",
+        "style_layers": {"minimal": 0, "streetwear": 0, "glam": 0, "classic": 0, "boho": 0, "athleisure": 0, "romantic": 0, "edgy": 0, "preppy": 0, "avant_garde": 0},
+        "price_layers": {"budget": 0, "mid": 0, "premium": 0, "luxury": 0},
+        "category_layers": {"bags": 0, "shoes": 0, "denim": 0, "workwear": 0, "occasion": 0, "accessories": 0, "active": 0, "mixed": 0},
+        "occasion_layers": {"work": 0, "event": 0, "casual": 0, "athleisure": 0},
+        "commerce_intent": 0,
+        "confidence": 0
+      },
+      "event": {
+        "user_id": "u_test_low",
+        "event_type": "like",
+        "source_type": "influencer",
+        "source_id": "inf_minimal",
+        "timestamp": "2026-02-03T12:20:00Z"
+      },
+      "influencer": {
+        "style_archetype": "minimal",
+        "price_tier": "mid",
+        "category_focus": "denim",
+        "commerce_readiness_score": 0
+      },
+      "expected_delta": {
+        "style_layers": {"minimal": 0.6},
+        "price_layers": {"mid": 0.6},
+        "category_layers": {"denim": 0.6},
+        "commerce_intent": 0
+      }
+    }
+  ]
+}
