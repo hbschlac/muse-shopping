@@ -35,14 +35,16 @@ try {
   console.log('API routes loaded successfully');
 } catch (error) {
   console.error('Warning: Could not load API routes:', error.message);
+  console.error('Stack:', error.stack);
   // Create a fallback health endpoint
   app.get('/api/v1/health', (req, res) => {
     res.json({
       success: true,
       data: {
         status: 'partial',
-        message: 'Frontend only mode',
-        error: error.message
+        message: 'Frontend only mode - API routes failed to load',
+        error: error.message,
+        stack: error.stack
       }
     });
   });
