@@ -55,3 +55,4 @@ gmail-credentials.json
 
 # Claude Code project files
 .claude/
+.env*.local

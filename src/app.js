@@ -24,7 +24,9 @@ app.use(helmet());
 app.use(cors({
   origin: [
     process.env.CORS_ORIGIN || 'http://localhost:3001',
-    'http://localhost:8080'
+    'http://localhost:8080',
+    'https://muse.shopping',
+    'https://www.muse.shopping'
   ],
   credentials: true,
 }));
@@ -46,10 +48,19 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('combined'));
 }
 
+// Serve static files from public directory
+const path = require('path');
+app.use('/public', express.static(path.join(__dirname, '../public')));
+
 // API routes
 app.use(`/api/${API_VERSION}`, routes);
 
-// 404 handler
+// Serve the demo frontend at the root path
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../demo.html'));
+});
+
+// 404 handler for other routes
 app.use((req, res) => {
   res.status(404).json({
     success: false,

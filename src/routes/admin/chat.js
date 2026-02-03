@@ -7,9 +7,22 @@ const router = express.Router();
 const { requireAdmin } = require('../../middleware/authMiddleware');
 const ChatService = require('../../services/chatService');
 const ExportStorageService = require('../../services/exportStorageService');
+const ChatJobRunService = require('../../services/chatJobRunService');
+const ChatProfileVersionService = require('../../services/chatProfileVersionService');
+const ShopperProfileService = require('../../services/shopperProfileService');
+const PreferencesService = require('../../services/preferencesService');
+const ChatPreferenceDecayJob = require('../../jobs/chatPreferenceDecayJob');
+const ChatSessionSummaryJob = require('../../jobs/chatSessionSummaryJob');
 const pool = require('../../db/pool');
 
 router.use(requireAdmin);
+
+async function loadCurrentProfile(userId) {
+  return {
+    shopper: await ShopperProfileService.getShopperProfile(userId).catch(() => null),
+    preferences: await PreferencesService.getPreferences(userId).catch(() => null),
+  };
+}
 
 router.get('/analytics', async (req, res) => {
   try {
@@ -205,12 +218,124 @@ router.get('/flags', async (req, res) => {
   }
 });
 
+router.get('/profile-diffs', async (req, res) => {
+  try {
+    const { user_id, limit = '50' } = req.query;
+    const params = [];
+    let where = '';
+    if (user_id) {
+      params.push(parseInt(user_id));
+      where = 'WHERE user_id = $1';
+    }
+    params.push(parseInt(limit));
+    const result = await pool.query(
+      `SELECT id, user_id, before_profile, after_profile, created_at
+       FROM chat_profile_diffs ${where}
+       ORDER BY created_at DESC
+       LIMIT $${params.length}`,
+      params
+    );
+    res.json({ success: true, data: result.rows });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.get('/profile-versions', async (req, res) => {
+  try {
+    const { user_id, limit = '20' } = req.query;
+    if (!user_id) {
+      return res.status(400).json({ success: false, error: 'user_id is required' });
+    }
+    const versions = await ChatProfileVersionService.listVersions(parseInt(user_id, 10), parseInt(limit, 10));
+    res.json({ success: true, data: versions });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.get('/profile-versions/:id/preview', async (req, res) => {
+  try {
+    const versionId = parseInt(req.params.id, 10);
+    const { user_id } = req.query;
+    if (!user_id) {
+      return res.status(400).json({ success: false, error: 'user_id is required' });
+    }
+    const versions = await ChatProfileVersionService.listVersions(parseInt(user_id, 10), 1);
+    const current = await loadCurrentProfile(parseInt(user_id, 10));
+    const versionRes = await pool.query(
+      'SELECT id, snapshot, created_at FROM chat_profile_versions WHERE id = $1 AND user_id = $2',
+      [versionId, parseInt(user_id, 10)]
+    );
+    if (versionRes.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'version not found' });
+    }
+    res.json({ success: true, data: { version: versionRes.rows[0], current, latest_versions: versions } });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.post('/profile-versions/:id/restore', async (req, res) => {
+  try {
+    const versionId = parseInt(req.params.id, 10);
+    const { user_id } = req.body || {};
+    if (!user_id) {
+      return res.status(400).json({ success: false, error: 'user_id is required' });
+    }
+    const restored = await ChatProfileVersionService.restoreVersion(parseInt(user_id, 10), versionId);
+    if (!restored) {
+      return res.status(404).json({ success: false, error: 'version not found' });
+    }
+    res.json({ success: true, data: restored });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 router.get('/reviews', async (req, res) => {
   try {
     const { status = 'open' } = req.query;
     const result = await ChatService.listReviewItems(status);
     res.json({ success: true, data: result });
   } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.get('/jobs/runs', async (req, res) => {
+  try {
+    const { limit = '10' } = req.query;
+    const runs = await ChatJobRunService.getLatestRuns(parseInt(limit, 10));
+    res.json({ success: true, data: runs });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.post('/jobs/run', async (req, res) => {
+  try {
+    const { job } = req.body || {};
+    if (!job) {
+      return res.status(400).json({ success: false, error: 'job is required' });
+    }
+    const jobName = String(job);
+    if (!['preference_decay', 'session_summary'].includes(jobName)) {
+      return res.status(400).json({ success: false, error: 'unsupported job' });
+    }
+
+    let runner;
+    if (jobName === 'preference_decay') {
+      runner = new ChatPreferenceDecayJob();
+    } else {
+      runner = new ChatSessionSummaryJob();
+    }
+
+    await runner.run();
+    await ChatJobRunService.logRun(jobName, 'completed', { trigger: 'admin', user_id: req.userId || null });
+    res.json({ success: true, data: { job: jobName, status: 'completed' } });
+  } catch (error) {
+    await ChatJobRunService.logRun(req.body?.job || 'unknown', 'failed', { error: error.message, trigger: 'admin', user_id: req.userId || null });
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -317,12 +442,10 @@ router.get('/export', async (req, res) => {
         rows.push(['session', s.id, s.user_id || '', '', '', '', s.label || '', s.created_at]);
       });
       data.messages.forEach((m) => {
-        rows.push(['message', m.session_id, '', m.role, (m.content || '').replace(/
-/g, ' '), '', '', m.created_at]);
+        rows.push(['message', m.session_id, '', m.role, (m.content || '').replace(/\n/g, ' '), '', '', m.created_at]);
       });
       data.notes.forEach((n) => {
-        rows.push(['note', n.session_id, n.admin_user_id || '', '', '', (n.note || '').replace(/
-/g, ' '), '', n.created_at]);
+        rows.push(['note', n.session_id, n.admin_user_id || '', '', '', (n.note || '').replace(/\n/g, ' '), '', n.created_at]);
       });
 
       const csv = rows.map((r) => r.map((v) => {
@@ -331,11 +454,9 @@ router.get('/export', async (req, res) => {
           return '"' + s.replace(/"/g, '""') + '"';
         }
         return s;
-      }).join(',')).join('
-');
+      }).join(',')).join('\n');
 
       if (storage && storage !== 'local') {
-        const key = `chat-exports/chat-export-${Date.now()}.csv`;
         const key = `chat-exports/chat-export-${Date.now()}.csv`;
         const location = await ExportStorageService.uploadBuffer({
           provider: storage,
@@ -370,7 +491,6 @@ router.get('/export', async (req, res) => {
     }
 
     if (storage && storage !== 'local') {
-      const key = `chat-exports/chat-export-${Date.now()}.json`;
       const key = `chat-exports/chat-export-${Date.now()}.json`;
       const location = await ExportStorageService.uploadBuffer({
         provider: storage,
@@ -861,6 +981,89 @@ router.get('/ui', async (_req, res) => {
       <section class="panel">
         <div class="actions" style="justify-content: space-between; margin-bottom: 12px;">
           <div>
+            <strong>Profile Diffs</strong>
+            <div style="color: var(--muted); font-size: 12px;">Before/after snapshots from chat</div>
+          </div>
+          <div class="actions">
+            <button class="ghost" id="refreshDiffs">Refresh</button>
+          </div>
+        </div>
+        <table class="table" id="diffTable">
+          <thead>
+            <tr><th>User</th><th>Created</th><th>View</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="row" style="margin-top: 12px;">
+          <strong>Diff Snapshot</strong>
+          <pre id="diffPreview" style="margin-top: 8px;">Select a diff row to preview.</pre>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="actions" style="justify-content: space-between; margin-bottom: 12px;">
+          <div>
+            <strong>Profile Versions</strong>
+            <div style="color: var(--muted); font-size: 12px;">Preview + restore stored profile snapshots</div>
+          </div>
+          <div class="actions">
+            <button class="ghost" id="refreshVersions">Refresh</button>
+          </div>
+        </div>
+        <div class="row" style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label>User ID</label>
+            <input id="versionUserId" placeholder="Enter user id" />
+          </div>
+          <div style="display:flex; align-items:end;">
+            <button class="ghost" id="loadVersionsBtn">Load Versions</button>
+          </div>
+        </div>
+        <table class="table" id="versionsTable">
+          <thead>
+            <tr><th>ID</th><th>Created</th><th>Action</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="row" style="margin-top: 12px;">
+          <strong>Preview Diff (Current vs Selected)</strong>
+          <pre id="profilePreview" style="margin-top: 8px;">Select a version to preview changes.</pre>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="actions" style="justify-content: space-between; margin-bottom: 12px;">
+          <div>
+            <strong>Job Dashboard</strong>
+            <div style="color: var(--muted); font-size: 12px;">Run maintenance jobs and see recent runs</div>
+          </div>
+          <div class="actions">
+            <button class="ghost" id="refreshJobRuns">Refresh</button>
+          </div>
+        </div>
+        <div class="row" style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label>Job</label>
+            <select id="jobSelect">
+              <option value="preference_decay">Preference Decay</option>
+              <option value="session_summary">Session Summaries</option>
+            </select>
+          </div>
+          <div style="display:flex; align-items:end;">
+            <button class="ghost" id="runJobBtn">Run Job</button>
+          </div>
+        </div>
+        <table class="table" id="jobRunsTable">
+          <thead>
+            <tr><th>Job</th><th>Status</th><th>Run At</th><th>Meta</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </section>
+
+      <section class="panel">
+        <div class="actions" style="justify-content: space-between; margin-bottom: 12px;">
+          <div>
             <strong>Chat Sessions</strong>
             <div style="color: var(--muted); font-size: 12px;">Latest sessions with last message preview</div>
           </div>
@@ -1047,9 +1250,59 @@ router.get('/ui', async (_req, res) => {
     const exportRunsTableBody = document.querySelector('#exportRunsTable tbody');
     const refreshReviews = document.getElementById('refreshReviews');
     const reviewTableBody = document.querySelector('#reviewTable tbody');
+    const refreshDiffs = document.getElementById('refreshDiffs');
+    const diffTableBody = document.querySelector('#diffTable tbody');
+    const diffPreview = document.getElementById('diffPreview');
+    const refreshVersions = document.getElementById('refreshVersions');
+    const versionUserId = document.getElementById('versionUserId');
+    const loadVersionsBtn = document.getElementById('loadVersionsBtn');
+    const versionsTableBody = document.querySelector('#versionsTable tbody');
+    const profilePreview = document.getElementById('profilePreview');
+    const refreshJobRuns = document.getElementById('refreshJobRuns');
+    const jobSelect = document.getElementById('jobSelect');
+    const runJobBtn = document.getElementById('runJobBtn');
+    const jobRunsTableBody = document.querySelector('#jobRunsTable tbody');
 
     function safeJson(text, fallback) {
       try { return JSON.parse(text); } catch { return fallback; }
+    }
+
+    function computeDiff(before, after, path = '') {
+      const changes = [];
+      const beforeVal = before ?? null;
+      const afterVal = after ?? null;
+
+      const isObject = (val) => val && typeof val === 'object' && !Array.isArray(val);
+
+      if (isObject(beforeVal) && isObject(afterVal)) {
+        const keys = new Set([...Object.keys(beforeVal), ...Object.keys(afterVal)]);
+        keys.forEach((key) => {
+          const nextPath = path ? `${path}.${key}` : key;
+          changes.push(...computeDiff(beforeVal[key], afterVal[key], nextPath));
+        });
+        return changes;
+      }
+
+      if (Array.isArray(beforeVal) || Array.isArray(afterVal)) {
+        if (JSON.stringify(beforeVal) !== JSON.stringify(afterVal)) {
+          changes.push({ path, before: beforeVal, after: afterVal });
+        }
+        return changes;
+      }
+
+      if (beforeVal !== afterVal) {
+        changes.push({ path, before: beforeVal, after: afterVal });
+      }
+      return changes;
+    }
+
+    function renderDiff(previewEl, before, after) {
+      const changes = computeDiff(before, after);
+      if (!changes.length) {
+        previewEl.textContent = 'No changes detected.';
+        return;
+      }
+      previewEl.textContent = JSON.stringify(changes, null, 2);
     }
 
     function renderItems(items) {
@@ -1205,6 +1458,162 @@ router.get('/ui', async (_req, res) => {
         tr.innerHTML = `<td>${row.query || '-'}</td><td>${row.count}</td>`;
         queryTableBody.appendChild(tr);
       });
+    }
+
+    async function loadProfileDiffs() {
+      const token = document.getElementById('token').value.trim();
+      const res = await fetch('/api/v1/admin/chat/profile-diffs', {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+      const data = await res.json();
+      const diffs = data.data || [];
+      diffTableBody.innerHTML = '';
+      if (!diffs.length) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = '<td colspan="3">No profile diffs yet</td>';
+        diffTableBody.appendChild(tr);
+        return;
+      }
+      diffs.forEach((diff) => {
+        const tr = document.createElement('tr');
+        const button = document.createElement('button');
+        button.className = 'ghost';
+        button.textContent = 'Preview';
+        button.addEventListener('click', () => {
+          const before = typeof diff.before_profile === 'string' ? safeJson(diff.before_profile, {}) : (diff.before_profile || {});
+          const after = typeof diff.after_profile === 'string' ? safeJson(diff.after_profile, {}) : (diff.after_profile || {});
+          renderDiff(diffPreview, before, after);
+        });
+        tr.innerHTML = `<td class="mono">${diff.user_id}</td><td>${new Date(diff.created_at).toLocaleString()}</td>`;
+        const td = document.createElement('td');
+        td.appendChild(button);
+        tr.appendChild(td);
+        diffTableBody.appendChild(tr);
+      });
+    }
+
+    async function loadProfileVersions() {
+      const userId = versionUserId.value.trim();
+      if (!userId) {
+        profilePreview.textContent = 'Enter a user id to load versions.';
+        return;
+      }
+      const token = document.getElementById('token').value.trim();
+      const params = new URLSearchParams({ user_id: userId });
+      const res = await fetch(`/api/v1/admin/chat/profile-versions?${params.toString()}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+      const data = await res.json();
+      const versions = data.data || [];
+      versionsTableBody.innerHTML = '';
+      if (!versions.length) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = '<td colspan="3">No profile versions yet</td>';
+        versionsTableBody.appendChild(tr);
+        return;
+      }
+      versions.forEach((version) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td class="mono">${version.id}</td><td>${new Date(version.created_at).toLocaleString()}</td>`;
+        const td = document.createElement('td');
+        const previewBtn = document.createElement('button');
+        previewBtn.className = 'ghost';
+        previewBtn.textContent = 'Preview';
+        previewBtn.addEventListener('click', async () => {
+          await previewProfileVersion(version.id, userId);
+        });
+        const restoreBtn = document.createElement('button');
+        restoreBtn.className = 'ghost';
+        restoreBtn.style.marginLeft = '6px';
+        restoreBtn.textContent = 'Restore';
+        restoreBtn.addEventListener('click', async () => {
+          if (!confirm('Restore this profile version?')) return;
+          await restoreProfileVersion(version.id, userId);
+        });
+        td.appendChild(previewBtn);
+        td.appendChild(restoreBtn);
+        tr.appendChild(td);
+        versionsTableBody.appendChild(tr);
+      });
+    }
+
+    async function previewProfileVersion(versionId, userId) {
+      const token = document.getElementById('token').value.trim();
+      const params = new URLSearchParams({ user_id: userId });
+      const res = await fetch(`/api/v1/admin/chat/profile-versions/${versionId}/preview?${params.toString()}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+      const data = await res.json();
+      if (!data.success) {
+        profilePreview.textContent = data.error || 'Unable to preview version.';
+        return;
+      }
+      const current = data.data.current || {};
+      const version = data.data.version || {};
+      const snapshot = typeof version.snapshot === 'string' ? safeJson(version.snapshot, {}) : (version.snapshot || {});
+      renderDiff(profilePreview, current, snapshot);
+    }
+
+    async function restoreProfileVersion(versionId, userId) {
+      const token = document.getElementById('token').value.trim();
+      const res = await fetch(`/api/v1/admin/chat/profile-versions/${versionId}/restore`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({ user_id: parseInt(userId, 10) })
+      });
+      const data = await res.json();
+      if (!data.success) {
+        profilePreview.textContent = data.error || 'Unable to restore version.';
+        return;
+      }
+      profilePreview.textContent = 'Profile restored. Reload versions to preview updated changes.';
+    }
+
+    async function loadJobRuns() {
+      const token = document.getElementById('token').value.trim();
+      const res = await fetch('/api/v1/admin/chat/jobs/runs?limit=10', {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+      const data = await res.json();
+      const runs = data.data || [];
+      jobRunsTableBody.innerHTML = '';
+      if (!runs.length) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = '<td colspan="4">No job runs recorded yet</td>';
+        jobRunsTableBody.appendChild(tr);
+        return;
+      }
+      runs.forEach((run) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${run.job_name}</td>
+          <td>${run.status}</td>
+          <td>${new Date(run.run_at).toLocaleString()}</td>
+          <td class="mono">${run.metadata ? JSON.stringify(run.metadata) : '-'}</td>
+        `;
+        jobRunsTableBody.appendChild(tr);
+      });
+    }
+
+    async function runJob() {
+      const token = document.getElementById('token').value.trim();
+      const job = jobSelect.value;
+      const res = await fetch('/api/v1/admin/chat/jobs/run', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({ job })
+      });
+      const data = await res.json();
+      if (!data.success) {
+        alert(data.error || 'Job run failed');
+      }
+      await loadJobRuns();
     }
 
     function renderNotes(notes) {
@@ -1709,6 +2118,26 @@ router.get('/ui', async (_req, res) => {
       await loadReviews();
     });
 
+    refreshDiffs.addEventListener('click', async () => {
+      await loadProfileDiffs();
+    });
+
+    loadVersionsBtn.addEventListener('click', async () => {
+      await loadProfileVersions();
+    });
+
+    refreshVersions.addEventListener('click', async () => {
+      await loadProfileVersions();
+    });
+
+    refreshJobRuns.addEventListener('click', async () => {
+      await loadJobRuns();
+    });
+
+    runJobBtn.addEventListener('click', async () => {
+      await runJob();
+    });
+
     saveLabelBtn.addEventListener('click', async () => {
       const token = document.getElementById('token').value.trim();
       const sessionId = selectedSessionInput.value.trim();
@@ -1747,6 +2176,8 @@ router.get('/ui', async (_req, res) => {
       await loadExports();
       await loadExportRuns();
       await loadReviews();
+      await loadProfileDiffs();
+      await loadJobRuns();
     });
   </script>
 </body>

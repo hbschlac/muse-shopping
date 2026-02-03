@@ -5,6 +5,8 @@
 
 const pool = require('../db/pool');
 const logger = require('../utils/logger');
+const PreferencesService = require('./preferencesService');
+const BrandAffinityService = require('./brandAffinityService');
 
 class PersonalizedRecommendationService {
   /**
@@ -37,6 +39,8 @@ class PersonalizedRecommendationService {
       );
 
       const profile = profileResult.rows[0];
+      const preferences = await PreferencesService.getPreferences(userId).catch(() => null);
+      const brandAffinity = await BrandAffinityService.getBrandAffinity(userId).catch(() => []);
 
       // If no profile exists, return general recommendations
       if (!profile) {
@@ -95,7 +99,7 @@ class PersonalizedRecommendationService {
 
       const params = [
         userId,
-        this.extractCategories(profile),
+        this.extractCategories(profile, preferences),
         profile.common_sizes || [],
         profile.price_range?.min || 0,
         profile.price_range?.max || 999999
@@ -140,7 +144,7 @@ class PersonalizedRecommendationService {
       const result = await pool.query(query, params);
 
       logger.info(`Generated ${result.rows.length} personalized recommendations for user ${userId}`);
-      return result.rows;
+      return this.applyChatReranking(result.rows, preferences, brandAffinity);
     } catch (error) {
       logger.error('Failed to get personalized items:', error);
       throw error;
@@ -221,7 +225,7 @@ class PersonalizedRecommendationService {
       params.push(limit);
 
       const result = await pool.query(query, params);
-      return result.rows;
+      return this.applyChatReranking(result.rows, preferences, brandAffinity);
     } catch (error) {
       logger.error('Failed to get general recommendations:', error);
       throw error;
@@ -356,7 +360,7 @@ class PersonalizedRecommendationService {
 
         params = [
           moduleId,
-          this.extractCategories(profile),
+          this.extractCategories(profile, preferences),
           profile.common_sizes || [],
           profile.price_range?.min || 0,
           profile.price_range?.max || 999999
@@ -382,7 +386,7 @@ class PersonalizedRecommendationService {
       }
 
       const result = await pool.query(query, params);
-      return result.rows;
+      return this.applyChatReranking(result.rows, preferences, brandAffinity);
     } catch (error) {
       logger.error('Failed to get personalized module items:', error);
       throw error;
@@ -394,13 +398,15 @@ class PersonalizedRecommendationService {
    * @param {Object} profile - Shopper profile
    * @returns {Array} Categories
    */
-  static extractCategories(profile) {
-    if (!profile || !profile.favorite_categories) {
-      return [];
+  static extractCategories(profile, preferences = null) {
+    const categories = new Set();
+    if (profile && profile.favorite_categories) {
+      Object.keys(profile.favorite_categories).forEach((cat) => categories.add(cat));
     }
-
-    // favorite_categories is JSONB like {"dresses": 5, "tops": 3}
-    return Object.keys(profile.favorite_categories);
+    if (preferences && Array.isArray(preferences.preferred_categories)) {
+      preferences.preferred_categories.forEach((cat) => categories.add(cat));
+    }
+    return Array.from(categories);
   }
 
   /**
@@ -449,3 +455,44 @@ class PersonalizedRecommendationService {
 }
 
 module.exports = PersonalizedRecommendationService;
+
+
+  static applyChatReranking(items, preferences, brandAffinity = []) {
+    if (!preferences) return items;
+    const preferredColors = new Set(preferences.preferred_colors || []);
+    const preferredStyles = new Set(preferences.preferred_styles || []);
+    const preferredFits = new Set(preferences.fit_preferences || []);
+    const avoidedMaterials = new Set(preferences.avoided_materials || []);
+    const affinityMap = new Map((brandAffinity || []).map((b) => [b.brand_id, b.affinity_score]));
+
+    return items
+      .map((item) => {
+        let boost = 0;
+        if (item.colors && item.colors.some((c) => preferredColors.has(String(c).toLowerCase()))) {
+          boost += 10;
+        }
+        if (item.description) {
+          preferredStyles.forEach((style) => {
+            if (item.description.toLowerCase().includes(style.toLowerCase())) {
+              boost += 5;
+            }
+          });
+        }
+        const affinityBoost = affinityMap.has(item.brand_id) ? Math.min(20, affinityMap.get(item.brand_id)) : 0;
+        let materialPenalty = 0;
+        if (item.description) {
+          avoidedMaterials.forEach((m) => {
+            if (item.description.toLowerCase().includes(m.toLowerCase())) {
+              materialPenalty -= 5;
+            }
+          });
+          preferredFits.forEach((fit) => {
+            if (item.description.toLowerCase().includes(fit.toLowerCase())) {
+              boost += 3;
+            }
+          });
+        }
+        return { ...item, relevance_score: (item.relevance_score || 0) + boost + affinityBoost + materialPenalty };
+      })
+      .sort((a, b) => (b.relevance_score || 0) - (a.relevance_score || 0));
+  }

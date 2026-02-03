@@ -5,8 +5,13 @@ const PreferencesService = require('./preferencesService');
 const { AppError, ValidationError } = require('../utils/errors');
 const ChatPersonalizationService = require('./chatPersonalizationService');
 const ChatSafetyService = require('./chatSafetyService');
+const ChatRetrievalService = require('./chatRetrievalService');
+const PersonalizationHubService = require('./personalizationHubService');
 const ChatPreferenceIngestionService = require('./chatPreferenceIngestionService');
 const ChatFeedbackService = require('./chatFeedbackService');
+const ChatUsageService = require('./chatUsageService');
+const ChatSessionSummaryService = require('./chatSessionSummaryService');
+const ChatNotificationService = require('./chatNotificationService');
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const OPENAI_API_BASE = process.env.OPENAI_API_BASE || 'https://api.openai.com/v1';
@@ -73,11 +78,11 @@ class ChatService {
     }
 
     let normalizedHistory = this._normalizeHistory(history);
+    let activeSessionId = sessionId || null;
     const preferences = await this._getPreferencesSafe(userId);
+    const unifiedProfile = userId ? await PersonalizationHubService.getUnifiedProfile(userId, activeSessionId) : null;
     const userProfile = await ChatPersonalizationService.getUserProfile(userId);
     const sessionMemory = activeSessionId ? await ChatPersonalizationService.getSessionMemory(activeSessionId) : null;
-
-    let activeSessionId = sessionId || null;
     if (activeSessionId && normalizedHistory.length === 0) {
       normalizedHistory = await this._loadHistoryFromSession(activeSessionId, MAX_HISTORY_ITEMS);
     }
@@ -87,6 +92,7 @@ class ChatService {
       history: normalizedHistory,
       preferences,
       context,
+      sessionId: activeSessionId,
     });
     if (intent.needs_clarification) {
       const sessionTitle = this._inferTitle(trimmedMessage);
@@ -108,7 +114,9 @@ class ChatService {
       });
 
       const assistantMessage = intent.clarification_question || 'What are you shopping for? Any price range or size?';
-      const assistantMessageId = await this._appendMessage({
+      await ChatSessionSummaryService.upsertSummary(activeSessionId, null, [intent.intent]);
+
+    const assistantMessageId = await this._appendMessage({
         sessionId: activeSessionId,
         role: 'assistant',
         content: assistantMessage,
@@ -132,8 +140,21 @@ class ChatService {
     }
 
     let items = [];
+    let retrievalSources = [];
+    let retrievalContext = {};
     if (intent.intent === 'search' || intent.intent === 'mixed') {
-      items = await this._searchItems(intent, trimmedMessage);
+      const retrieval = await this._searchItems(intent, trimmedMessage, userId);
+      items = retrieval.items;
+      retrievalSources = retrieval.sources || [];
+      retrievalContext = retrieval.context || {};
+      await ChatRetrievalService.logRetrieval({
+        sessionId: activeSessionId,
+        messageId: null,
+        query: intent.query || trimmedMessage,
+        sources: retrievalSources,
+        items: items.map((i) => ({ id: i.id, name: i.canonical_name, brand: i.brand_name })),
+        context: retrievalContext,
+      });
     }
 
     const reply = await this._generateReply({
@@ -143,7 +164,27 @@ class ChatService {
       intent,
       items,
       context,
+      sessionId: activeSessionId,
     });
+
+    if (process.env.CHAT_EMBEDDINGS_ENABLED === 'true' && activeSessionId) {
+      try {
+        const ChatEmbeddingService = require('./chatEmbeddingService');
+        const embedding = await ChatEmbeddingService.generateEmbedding({
+          text: `${trimmedMessage}\\n${reply.message}`,
+          model: process.env.CHAT_EMBEDDINGS_MODEL || 'text-embedding-3-small',
+        });
+        if (embedding) {
+          await ChatPersonalizationService.upsertSessionEmbedding({
+            sessionId: activeSessionId,
+            embedding,
+            embeddingModel: process.env.CHAT_EMBEDDINGS_MODEL || 'text-embedding-3-small',
+          });
+        }
+      } catch (error) {
+        // Best-effort scaffold; ignore failures
+      }
+    }
 
     if (activeSessionId) {
       await ChatPersonalizationService.upsertSessionMemory({
@@ -190,6 +231,8 @@ class ChatService {
 
     const finalReply = safety.decision === 'allow' ? reply.message : safety.safeResponse || reply.message;
 
+    await ChatSessionSummaryService.upsertSummary(activeSessionId, null, [intent.intent]);
+
     const assistantMessageId = await this._appendMessage({
       sessionId: activeSessionId,
       role: 'assistant',
@@ -217,7 +260,7 @@ class ChatService {
     };
   }
 
-  static async _extractIntent({ message, history, preferences, context }) {
+  static async _extractIntent({ message, history, preferences, context, sessionId = null }) {
     const system = [
       'You are Muse, a fashion shopping assistant.',
       'Classify the user intent and extract explicit filters.',
@@ -242,6 +285,7 @@ class ChatService {
       response_format: { type: 'json_schema', json_schema: intentSchema },
       temperature: 0.2,
       max_tokens: 300,
+      sessionId,
     });
 
     const parsed = this._safeJsonParse(content);
@@ -258,7 +302,7 @@ class ChatService {
     return parsed;
   }
 
-  static async _generateReply({ message, history, preferences, intent, items, context }) {
+  static async _generateReply({ message, history, preferences, intent, items, context, sessionId = null }) {
     const system = [
       'You are Muse, an editorial fashion assistant and search curator.',
       'Be warm, concise, and practical. Use short paragraphs and clear guidance.',
@@ -297,6 +341,7 @@ class ChatService {
       response_format: { type: 'json_schema', json_schema: replySchema },
       temperature: 0.6,
       max_tokens: 450,
+      sessionId,
     });
 
     const parsed = this._safeJsonParse(content);
@@ -310,7 +355,7 @@ class ChatService {
     return parsed;
   }
 
-  static async _searchItems(intent, fallbackQuery) {
+  static async _searchItems(intent, fallbackQuery, userId = null) {
     const filters = intent.filters || {};
     const query = intent.query || fallbackQuery;
 
@@ -326,13 +371,18 @@ class ChatService {
     };
 
     const pagination = { limit: MAX_ITEMS, offset: 0 };
-    const result = await ItemService.searchItems(query, itemFilters, pagination);
-
-    return result.items || [];
+    const { items, sources, context } = await ChatRetrievalService.retrieve({
+      query,
+      filters,
+      limit: MAX_ITEMS,
+      userId,
+    });
+    return { items, sources, context };
   }
 
-  static async _callOpenAI({ model, messages, response_format, temperature, max_tokens }) {
+  static async _callOpenAI({ model, messages, response_format, temperature, max_tokens, sessionId = null, messageId = null }) {
     const url = `${OPENAI_API_BASE}/chat/completions`;
+    const start = Date.now();
     const res = await axios.post(
       url,
       {
@@ -347,14 +397,25 @@ class ChatService {
           Authorization: `Bearer ${OPENAI_API_KEY}`,
           'Content-Type': 'application/json',
         },
-        timeout: 20000,
+        timeout: parseInt(process.env.CHAT_MODEL_TIMEOUT_MS || '20000', 10),
       }
     );
+    const latencyMs = Date.now() - start;
 
     const choice = res.data && res.data.choices && res.data.choices[0];
     const content = choice && choice.message && choice.message.content;
     if (!content) {
       throw new AppError('OpenAI response was empty', 502, 'OPENAI_EMPTY_RESPONSE');
+    }
+
+    if (res.data && res.data.usage) {
+      await ChatUsageService.logUsage({
+        sessionId,
+        messageId,
+        model,
+        usage: res.data.usage,
+        latencyMs,
+      });
     }
 
     return content;
@@ -744,7 +805,19 @@ class ChatService {
        RETURNING *`,
       [sessionId, messageId, reason, priority, createdBy]
     );
-    return result.rows[0];
+    const review = result.rows[0];
+    if (review) {
+      try {
+        await ChatNotificationService.sendReviewAlert({
+          reviewId: review.id,
+          sessionId,
+          reason,
+        });
+      } catch (error) {
+        // Notifications should not block review creation.
+      }
+    }
+    return review;
   }
 
   static async resolveReviewItem({ reviewId, resolvedBy = null, resolutionNotes = null }) {

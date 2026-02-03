@@ -1,0 +1,12 @@
+[
+  {
+    "name": "basic_search",
+    "prompt": "Show me black blazers under $200",
+    "expected": { "intent": "search" }
+  },
+  {
+    "name": "editorial_advice",
+    "prompt": "What should I wear to a winter wedding?",
+    "expected": { "intent": "editorial" }
+  }
+]

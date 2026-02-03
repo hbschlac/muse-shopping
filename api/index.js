@@ -4,6 +4,8 @@
  */
 
 require('dotenv').config();
+
+// Load the full Express app
 const app = require('../src/app');
 
 // Export the app for Vercel serverless functions

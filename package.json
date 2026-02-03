@@ -15,7 +15,10 @@
     "migrate": "node scripts/migrate.js",
     "seed": "node scripts/seed.js",
     "export:chat": "node src/jobs/chatExportJob.js",
-    "export:chat:flagged": "node src/jobs/chatExportJob.js --only_flagged=true"
+    "export:chat:flagged": "node src/jobs/chatExportJob.js --only_flagged=true",
+    "eval:chat": "node scripts/chat-eval.js",
+    "decay:chat": "node src/jobs/chatPreferenceDecayJob.js",
+    "summarize:chat": "node src/jobs/chatSessionSummaryJob.js"
   },
   "keywords": [
     "fashion",
