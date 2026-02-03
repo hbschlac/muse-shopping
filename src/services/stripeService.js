@@ -221,6 +221,7 @@ class StripeService {
    */
   static async createRefund(paymentIntentId, amountCents = null, reason = null) {
     try {
+      ensureStripeConfigured();
       const params = {
         payment_intent: paymentIntentId,
       };
@@ -260,6 +261,7 @@ class StripeService {
    */
   static async getPaymentMethods(customerId) {
     try {
+      ensureStripeConfigured();
       const paymentMethods = await stripe.paymentMethods.list({
         customer: customerId,
         type: 'card',
@@ -291,6 +293,7 @@ class StripeService {
    */
   static async createOrGetCustomer(userId, email, name = null) {
     try {
+      ensureStripeConfigured();
       // First, try to find existing customer by metadata
       const existingCustomers = await stripe.customers.search({
         query: `metadata['userId']:'${userId}'`,
@@ -330,6 +333,7 @@ class StripeService {
    */
   static async attachPaymentMethod(paymentMethodId, customerId) {
     try {
+      ensureStripeConfigured();
       const paymentMethod = await stripe.paymentMethods.attach(paymentMethodId, {
         customer: customerId,
       });
@@ -353,6 +357,7 @@ class StripeService {
    */
   static verifyWebhookSignature(payload, signature) {
     try {
+      ensureStripeConfigured();
       const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
       if (!webhookSecret) {
@@ -403,6 +408,7 @@ class StripeService {
    */
   static async healthCheck() {
     try {
+      ensureStripeConfigured();
       await stripe.balance.retrieve();
       return true;
     } catch (error) {
