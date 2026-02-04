@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Experiment Admin</title>
+    <link rel="stylesheet" href="/admin.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="header">
+        <div>
+          <h1>Experiment Admin</h1>
+          <p>Manage recommendation experiments across placements.</p>
+        </div>
+        <div class="status" id="serverStatus">Connected</div>
+      </header>
+
+      <section class="panel">
+        <h2>Create / Edit Experiment</h2>
+        <form id="expForm">
+          <input type="hidden" id="expId" />
+
+          <div class="grid">
+            <label>
+              Name
+              <input id="name" placeholder="e.g. reco_ymal_v1" required />
+            </label>
+            <label>
+              Status
+              <select id="status">
+                <option value="DRAFT">DRAFT</option>
+                <option value="ACTIVE">ACTIVE</option>
+                <option value="PAUSED">PAUSED</option>
+              </select>
+            </label>
+          </div>
+
+          <label>
+            Hypothesis
+            <input id="hypothesis" placeholder="e.g. Cross-category will lift add-to-cart" />
+          </label>
+
+          <div class="grid">
+            <label>
+              Placements (comma-separated)
+              <input id="placements" placeholder="pdp_ymal, newsfeed" />
+            </label>
+            <label>
+              Primary Metric
+              <input id="primaryMetric" value="add_to_cart" />
+            </label>
+          </div>
+
+          <div class="grid">
+            <label>
+              Assignment Strategy
+              <input id="assignment" value="user_id_then_session_id" />
+            </label>
+            <label>
+              Eligibility (optional JSON)
+              <input id="eligibility" placeholder='{"locale":"en-US"}' />
+            </label>
+          </div>
+
+          <div class="variants">
+            <div class="variants-header">
+              <h3>Variants</h3>
+              <button type="button" id="addVariant">Add Variant</button>
+            </div>
+            <div id="variantsList"></div>
+          </div>
+
+          <div class="actions">
+            <button type="submit" id="saveBtn">Save Experiment</button>
+            <button type="button" id="resetBtn" class="secondary">Reset</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel">
+        <h2>Experiments</h2>
+        <div id="experimentsList" class="list"></div>
+      </section>
+    </div>
+
+    <script src="/admin.js"></script>
+  </body>
+</html>

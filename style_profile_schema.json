@@ -1,0 +1,62 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "StyleProfile",
+  "type": "object",
+  "required": ["user_id", "style_layers", "price_layers", "category_layers", "occasion_layers", "commerce_intent", "confidence"],
+  "properties": {
+    "user_id": {"type": "string"},
+    "style_layers": {
+      "type": "object",
+      "properties": {
+        "minimal": {"type": "number"},
+        "streetwear": {"type": "number"},
+        "glam": {"type": "number"},
+        "classic": {"type": "number"},
+        "boho": {"type": "number"},
+        "athleisure": {"type": "number"},
+        "romantic": {"type": "number"},
+        "edgy": {"type": "number"},
+        "preppy": {"type": "number"},
+        "avant_garde": {"type": "number"}
+      },
+      "additionalProperties": false
+    },
+    "price_layers": {
+      "type": "object",
+      "properties": {
+        "budget": {"type": "number"},
+        "mid": {"type": "number"},
+        "premium": {"type": "number"},
+        "luxury": {"type": "number"}
+      },
+      "additionalProperties": false
+    },
+    "category_layers": {
+      "type": "object",
+      "properties": {
+        "bags": {"type": "number"},
+        "shoes": {"type": "number"},
+        "denim": {"type": "number"},
+        "workwear": {"type": "number"},
+        "occasion": {"type": "number"},
+        "accessories": {"type": "number"},
+        "active": {"type": "number"},
+        "mixed": {"type": "number"}
+      },
+      "additionalProperties": false
+    },
+    "occasion_layers": {
+      "type": "object",
+      "properties": {
+        "work": {"type": "number"},
+        "event": {"type": "number"},
+        "casual": {"type": "number"},
+        "athleisure": {"type": "number"}
+      },
+      "additionalProperties": false
+    },
+    "commerce_intent": {"type": "number"},
+    "confidence": {"type": "number"}
+  },
+  "additionalProperties": false
+}

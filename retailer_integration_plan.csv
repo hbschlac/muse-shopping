@@ -1,0 +1,20 @@
+retailer,region,catalog_scale,access_method,access_notes,priority
+Amazon,US/CA,Very high,Affiliate/Partner API (PA-API / Creators) + data partnership,Affiliate access required; product data may be limited by category policies.,P0
+Walmart,US/CA,Very high,Marketplace API,"Official marketplace API for catalog, price, inventory.",P0
+Target,US/CA,High,No public catalog API; use affiliate/partner feeds or monitored extraction,Partner feed preferred; scraping only where permitted.,P0
+Macy's,US/CA,High,Partner API (private) / affiliate feed,Developer access is private; typically via partner or affiliate feed.,P0
+Nordstrom,US/CA,High,Partner feed / affiliate; monitor site with permission,No public catalog API.,P0
+Bloomingdale's,US/CA,Medium,Partner feed / affiliate,No public catalog API.,P1
+DSW,US/CA,High (shoes),Partner feed / affiliate,No public catalog API.,P1
+Zappos,US/CA,High (shoes),Partner feed / affiliate,No public catalog API.,P1
+Aritzia,US/CA,Medium,Partner feed / site monitoring,No public catalog API.,P1
+The RealReal,US/CA,Medium (resale),Partner feed / site monitoring,No public catalog API.,P1
+Mytheresa,Global,Medium (luxury),Partner feed / affiliate,No public catalog API.,P1
+Net-a-Porter / The Outnet,Global,Medium (luxury),Partner feed / affiliate,No public catalog API.,P1
+Rakuten Ichiba,Japan,Very high,Rakuten Web Service API,Public API for item search and pricing.,P0
+Coupang,Korea,Very high,Coupang Open API (seller/partner),Open API access for partner/seller catalog.,P0
+Lazada,SEA,Very high,Lazada Open Platform API,Open platform for catalog and order data.,P0
+Shopee,SEA,Very high,Shopee Open Platform / 3rd-party partner API,Partner portal access; third-party aggregators may be needed.,P0
+The Iconic,AU,High,Partner feed / affiliate,No public catalog API.,P1
+David Jones,AU,Medium,Partner feed / affiliate,No public catalog API.,P2
+Myer,AU,Medium,Partner feed / affiliate,No public catalog API.,P2

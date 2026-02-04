@@ -4,6 +4,7 @@ package-lock.json
 
 # Environment variables
 .env
+.env.*
 .env.local
 .env.test
 .env.production

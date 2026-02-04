@@ -1,0 +1,65 @@
+{
+  "fixtures": [
+    {
+      "id": "f_simple_influencer_follow",
+      "initial_profile": {
+        "user_id": "u_test_1",
+        "style_layers": {"minimal": 0, "streetwear": 0, "glam": 0, "classic": 0, "boho": 0, "athleisure": 0, "romantic": 0, "edgy": 0, "preppy": 0, "avant_garde": 0},
+        "price_layers": {"budget": 0, "mid": 0, "premium": 0, "luxury": 0},
+        "category_layers": {"bags": 0, "shoes": 0, "denim": 0, "workwear": 0, "occasion": 0, "accessories": 0, "active": 0, "mixed": 0},
+        "occasion_layers": {"work": 0, "event": 0, "casual": 0, "athleisure": 0},
+        "commerce_intent": 0,
+        "confidence": 0
+      },
+      "event": {
+        "user_id": "u_test_1",
+        "event_type": "follow",
+        "source_type": "influencer",
+        "source_id": "inf_001",
+        "timestamp": "2026-02-03T12:00:00Z"
+      },
+      "influencer": {
+        "style_archetype": "minimal",
+        "price_tier": "premium",
+        "category_focus": "workwear",
+        "commerce_readiness_score": 20
+      },
+      "expected_delta": {
+        "style_layers": {"minimal": 1.0},
+        "price_layers": {"premium": 1.0},
+        "category_layers": {"workwear": 1.0},
+        "commerce_intent": 0.1
+      }
+    },
+    {
+      "id": "f_purchase_product",
+      "initial_profile": {
+        "user_id": "u_test_2",
+        "style_layers": {"minimal": 0.2, "streetwear": 0.1, "glam": 0.1, "classic": 0.3, "boho": 0, "athleisure": 0.1, "romantic": 0, "edgy": 0, "preppy": 0, "avant_garde": 0},
+        "price_layers": {"budget": 0.1, "mid": 0.3, "premium": 0.4, "luxury": 0.2},
+        "category_layers": {"bags": 0.1, "shoes": 0.2, "denim": 0.1, "workwear": 0.4, "occasion": 0.1, "accessories": 0.1, "active": 0.1, "mixed": 0},
+        "occasion_layers": {"work": 0.4, "event": 0.1, "casual": 0.2, "athleisure": 0.1},
+        "commerce_intent": 0.4,
+        "confidence": 0.5
+      },
+      "event": {
+        "user_id": "u_test_2",
+        "event_type": "purchase",
+        "source_type": "product",
+        "source_id": "prod_007",
+        "timestamp": "2026-02-03T13:00:00Z"
+      },
+      "product": {
+        "category": "bags",
+        "price_tier": "premium",
+        "occasion": "event"
+      },
+      "expected_delta": {
+        "category_layers": {"bags": 1.5},
+        "price_layers": {"premium": 1.5},
+        "occasion_layers": {"event": 1.5},
+        "commerce_intent": 0.2
+      }
+    }
+  ]
+}
