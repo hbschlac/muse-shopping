@@ -246,6 +246,8 @@ class StyleProfileService {
    */
   static async applyLayerUpdates(userId, updates, weight, sourceMetadata) {
     try {
+      // Calculate new confidence based on total_events
+      // Formula: confidence = min(1, log10(total_events + 1) / 2)
       const result = await pool.query(
         `UPDATE style_profiles
          SET
@@ -255,6 +257,7 @@ class StyleProfileService {
            occasion_layers = $4::jsonb,
            commerce_intent = commerce_intent + $5,
            total_events = total_events + 1,
+           confidence = LEAST(1.0, LOG(10, total_events + 2) / 2.0),
            last_event_at = CURRENT_TIMESTAMP
          WHERE user_id = $6
          RETURNING *`,

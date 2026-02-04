@@ -7,6 +7,7 @@ const pool = require('../db/pool');
 const logger = require('../utils/logger');
 const PreferencesService = require('./preferencesService');
 const BrandAffinityService = require('./brandAffinityService');
+const StyleProfileService = require('./styleProfileService');
 
 class PersonalizedRecommendationService {
   /**
@@ -144,7 +145,11 @@ class PersonalizedRecommendationService {
       const result = await pool.query(query, params);
 
       logger.info(`Generated ${result.rows.length} personalized recommendations for user ${userId}`);
-      return this.applyChatReranking(result.rows, preferences, brandAffinity);
+
+      // Apply style profile boosting
+      const boostedItems = await StyleProfileService.boostItemsForUser(userId, result.rows);
+
+      return this.applyChatReranking(boostedItems, preferences, brandAffinity);
     } catch (error) {
       logger.error('Failed to get personalized items:', error);
       throw error;

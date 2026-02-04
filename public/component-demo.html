@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Muse Design System - Component Demo</title>
+
+  <!-- Design System Stylesheets -->
+  <link rel="stylesheet" href="/css/design-tokens.css">
+  <link rel="stylesheet" href="/css/components.css">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      padding-bottom: 80px; /* Space for bottom nav */
+    }
+
+    .demo-section {
+      padding: var(--space-8) var(--page-margin);
+      border-bottom: 1px solid var(--color-divider);
+    }
+
+    .demo-section h2 {
+      font-size: var(--text-2xl);
+      font-weight: var(--weight-semibold);
+      margin-bottom: var(--space-4);
+      color: var(--color-charcoal);
+    }
+
+    .demo-section h3 {
+      font-size: var(--text-lg);
+      font-weight: var(--weight-semibold);
+      margin: var(--space-6) 0 var(--space-3);
+      color: var(--color-text-secondary);
+    }
+
+    .button-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-3);
+      margin-bottom: var(--space-6);
+    }
+
+    .color-swatch {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      margin-bottom: var(--space-3);
+    }
+
+    .color-box {
+      width: 64px;
+      height: 64px;
+      border-radius: var(--radius-card-small);
+      box-shadow: var(--shadow-base);
+    }
+
+    .color-info {
+      flex: 1;
+    }
+
+    .color-name {
+      font-weight: var(--weight-semibold);
+      margin-bottom: var(--space-1);
+    }
+
+    .color-hex {
+      font-size: var(--text-sm);
+      color: var(--color-text-secondary);
+      font-family: 'Courier New', monospace;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Page Header -->
+  <header class="demo-section" style="background: var(--color-white);">
+    <div style="text-align: center;">
+      <h1 style="font-size: 48px; font-family: cursive; margin-bottom: var(--space-2);">Muse</h1>
+      <p style="color: var(--color-text-secondary);">Design System Component Demo</p>
+    </div>
+  </header>
+
+  <!-- Colors -->
+  <section class="demo-section">
+    <h2>Colors</h2>
+
+    <h3>Core Neutrals</h3>
+    <div class="color-swatch">
+      <div class="color-box" style="background: #F6F3EE;"></div>
+      <div class="color-info">
+        <div class="color-name">Ecru</div>
+        <div class="color-hex">#F6F3EE</div>
+      </div>
+    </div>
+
+    <div class="color-swatch">
+      <div class="color-box" style="background: #FFFFFF; border: 1px solid var(--color-divider);"></div>
+      <div class="color-info">
+        <div class="color-name">White</div>
+        <div class="color-hex">#FFFFFF</div>
+      </div>
+    </div>
+
+    <div class="color-swatch">
+      <div class="color-box" style="background: #1F1F1F;"></div>
+      <div class="color-info">
+        <div class="color-name">Charcoal</div>
+        <div class="color-hex">#1F1F1F</div>
+      </div>
+    </div>
+
+    <h3>Accent Colors</h3>
+    <div class="color-swatch">
+      <div class="color-box" style="background: #F4A785;"></div>
+      <div class="color-info">
+        <div class="color-name">Peach</div>
+        <div class="color-hex">#F4A785</div>
+      </div>
+    </div>
+
+    <div class="color-swatch">
+      <div class="color-box" style="background: #F1785A;"></div>
+      <div class="color-info">
+        <div class="color-name">Coral</div>
+        <div class="color-hex">#F1785A</div>
+      </div>
+    </div>
+
+    <div class="color-swatch">
+      <div class="color-box gradient-primary"></div>
+      <div class="color-info">
+        <div class="color-name">Primary Gradient</div>
+        <div class="color-hex">Peach → Coral</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Buttons -->
+  <section class="demo-section">
+    <h2>Buttons</h2>
+
+    <h3>Button Variants</h3>
+    <div class="button-group">
+      <button class="btn btn-primary">Primary Button</button>
+      <button class="btn btn-secondary">Secondary Button</button>
+      <button class="btn btn-ghost">Ghost Button</button>
+    </div>
+
+    <h3>Button Sizes</h3>
+    <div class="button-group">
+      <button class="btn btn-primary btn-sm">Small</button>
+      <button class="btn btn-primary">Default</button>
+      <button class="btn btn-primary btn-lg">Large</button>
+    </div>
+
+    <h3>Full Width</h3>
+    <button class="btn btn-primary btn-block">Full Width Button</button>
+  </section>
+
+  <!-- Search Bar -->
+  <section class="demo-section">
+    <h2>Search Bar</h2>
+    <div class="search-container">
+      <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+      </svg>
+      <input type="text" class="search-input" placeholder="Search for brands, items, or styles...">
+    </div>
+  </section>
+
+  <!-- Tags -->
+  <section class="demo-section">
+    <h2>Tags / Pills</h2>
+    <div style="display: flex; flex-wrap: wrap; gap: var(--space-2);">
+      <span class="tag">Casual</span>
+      <span class="tag">Summer</span>
+      <span class="tag">Dresses</span>
+      <span class="tag tag-gradient">Featured</span>
+      <span class="tag">New Arrival</span>
+    </div>
+  </section>
+
+  <!-- Story Rings -->
+  <section class="demo-section">
+    <h2>Story Rings</h2>
+    <div class="story-container">
+      <div class="story-item">
+        <div class="story-ring">
+          <img src="https://via.placeholder.com/72" alt="Story" class="story-avatar">
+        </div>
+        <span class="story-label">Summer</span>
+      </div>
+      <div class="story-item">
+        <div class="story-ring">
+          <img src="https://via.placeholder.com/72" alt="Story" class="story-avatar">
+        </div>
+        <span class="story-label">Trending</span>
+      </div>
+      <div class="story-item">
+        <div class="story-ring">
+          <img src="https://via.placeholder.com/72" alt="Story" class="story-avatar">
+        </div>
+        <span class="story-label">New In</span>
+      </div>
+      <div class="story-item">
+        <div class="story-ring">
+          <img src="https://via.placeholder.com/72" alt="Story" class="story-avatar">
+        </div>
+        <span class="story-label">Favorites</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Product Cards -->
+  <section class="demo-section">
+    <h2>Product Cards</h2>
+    <div class="product-grid">
+      <!-- Product Card 1 -->
+      <div class="product-card">
+        <img src="https://via.placeholder.com/300x400" alt="Product" class="product-image">
+        <button class="save-btn" aria-label="Save product">
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+          </svg>
+        </button>
+        <div class="product-info">
+          <div class="product-brand">Everlane</div>
+          <div class="product-name">The Modern Loafer</div>
+          <div class="product-price">$98</div>
+        </div>
+      </div>
+
+      <!-- Product Card 2 (Saved) -->
+      <div class="product-card">
+        <img src="https://via.placeholder.com/300x400" alt="Product" class="product-image">
+        <button class="save-btn is-saved" aria-label="Unsave product">
+          <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+          </svg>
+        </button>
+        <div class="product-info">
+          <div class="product-brand">Reformation</div>
+          <div class="product-name">Linen Midi Dress</div>
+          <div class="product-price">$248</div>
+        </div>
+      </div>
+
+      <!-- Product Card 3 -->
+      <div class="product-card">
+        <img src="https://via.placeholder.com/300x400" alt="Product" class="product-image">
+        <button class="save-btn" aria-label="Save product">
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+          </svg>
+        </button>
+        <div class="product-info">
+          <div class="product-brand">& Other Stories</div>
+          <div class="product-name">Silk Blouse</div>
+          <div class="product-price">$129</div>
+        </div>
+      </div>
+
+      <!-- Product Card 4 -->
+      <div class="product-card">
+        <img src="https://via.placeholder.com/300x400" alt="Product" class="product-image">
+        <button class="save-btn" aria-label="Save product">
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+          </svg>
+        </button>
+        <div class="product-info">
+          <div class="product-brand">Madewell</div>
+          <div class="product-name">The Perfect Tee</div>
+          <div class="product-price">$35</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Loading States -->
+  <section class="demo-section">
+    <h2>Loading States</h2>
+
+    <h3>Skeleton Loaders</h3>
+    <div class="product-grid">
+      <div>
+        <div class="skeleton skeleton-card"></div>
+        <div style="margin-top: var(--space-3);">
+          <div class="skeleton skeleton-text"></div>
+          <div class="skeleton skeleton-text-sm"></div>
+        </div>
+      </div>
+      <div>
+        <div class="skeleton skeleton-card"></div>
+        <div style="margin-top: var(--space-3);">
+          <div class="skeleton skeleton-text"></div>
+          <div class="skeleton skeleton-text-sm"></div>
+        </div>
+      </div>
+    </div>
+
+    <h3>Spinner</h3>
+    <div style="display: flex; justify-content: center; padding: var(--space-6);">
+      <div class="spinner"></div>
+    </div>
+  </section>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <button class="nav-item is-active">
+      <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+      </svg>
+      <span class="nav-label">Home</span>
+    </button>
+
+    <button class="nav-item">
+      <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+      </svg>
+      <span class="nav-label">Search</span>
+    </button>
+
+    <button class="nav-item">
+      <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+      </svg>
+      <span class="nav-label">Muse</span>
+    </button>
+
+    <button class="nav-item">
+      <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+      </svg>
+      <span class="nav-label">Saves</span>
+    </button>
+
+    <button class="nav-item">
+      <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+      </svg>
+      <span class="nav-label">Profile</span>
+    </button>
+  </nav>
+
+  <script>
+    // Add interactivity to save buttons
+    document.querySelectorAll('.save-btn').forEach(button => {
+      button.addEventListener('click', function(e) {
+        e.stopPropagation();
+        this.classList.toggle('is-saved');
+      });
+    });
+
+    // Add interactivity to nav items
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', function() {
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('is-active'));
+        this.classList.add('is-active');
+      });
+    });
+  </script>
+</body>
+</html>

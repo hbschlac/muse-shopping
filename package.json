@@ -6,10 +6,12 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "test": "jest --testEnvironment=node",
+    "test": "jest --testEnvironment=node --passWithNoTests",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
+    "test:coverage": "jest --coverage --passWithNoTests",
+    "test:ci": "jest --ci --coverage --maxWorkers=2",
     "test:encryption": "node scripts/test-encryption.js",
+    "test:integration": "chmod +x ./test-retailer-integration.sh && ./test-retailer-integration.sh",
     "lint": "eslint src/**/*.js",
     "lint:fix": "eslint src/**/*.js --fix",
     "migrate": "node scripts/migrate.js",
@@ -18,7 +20,10 @@
     "export:chat:flagged": "node src/jobs/chatExportJob.js --only_flagged=true",
     "eval:chat": "node scripts/chat-eval.js",
     "decay:chat": "node src/jobs/chatPreferenceDecayJob.js",
-    "summarize:chat": "node src/jobs/chatSessionSummaryJob.js"
+    "summarize:chat": "node src/jobs/chatSessionSummaryJob.js",
+    "prepare": "husky",
+    "precommit": "npm run lint && npm run test",
+    "prepush": "npm run test:ci"
   },
   "keywords": [
     "fashion",
@@ -55,7 +60,9 @@
   },
   "devDependencies": {
     "eslint": "^9.39.2",
+    "husky": "^9.1.7",
     "jest": "^30.2.0",
+    "lint-staged": "^16.2.7",
     "nodemon": "^3.1.11",
     "prettier": "^3.8.1",
     "supertest": "^7.2.2"

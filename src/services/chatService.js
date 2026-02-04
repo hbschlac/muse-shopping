@@ -12,6 +12,7 @@ const ChatFeedbackService = require('./chatFeedbackService');
 const ChatUsageService = require('./chatUsageService');
 const ChatSessionSummaryService = require('./chatSessionSummaryService');
 const ChatNotificationService = require('./chatNotificationService');
+const StyleProfileService = require('./styleProfileService');
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const OPENAI_API_BASE = process.env.OPENAI_API_BASE || 'https://api.openai.com/v1';
@@ -68,13 +69,18 @@ const replySchema = {
 
 class ChatService {
   static async getChatResponse({ message, history = [], context = {}, userId = null, sessionId = null }) {
-    if (!OPENAI_API_KEY) {
+    const demoMode = process.env.CHAT_DEMO_MODE === 'true';
+    if (!OPENAI_API_KEY && !demoMode) {
       throw new AppError('OpenAI API key not configured', 500, 'OPENAI_CONFIG_ERROR');
     }
 
     const trimmedMessage = String(message || '').trim().slice(0, MAX_MESSAGE_CHARS);
     if (!trimmedMessage) {
       throw new ValidationError('message cannot be empty');
+    }
+
+    if (demoMode) {
+      return this._buildDemoResponse(trimmedMessage);
     }
 
     let normalizedHistory = this._normalizeHistory(history);
@@ -155,6 +161,11 @@ class ChatService {
         items: items.map((i) => ({ id: i.id, name: i.canonical_name, brand: i.brand_name })),
         context: retrievalContext,
       });
+
+      // NEW: Track product recommendations in style profile
+      if (userId && items.length > 0) {
+        await this._trackRecommendationsInStyleProfile(userId, items);
+      }
     }
 
     const reply = await this._generateReply({
@@ -201,6 +212,7 @@ class ChatService {
         sessionId: activeSessionId,
         messageId: null,
         intent,
+        originalMessage: trimmedMessage,
       });
     }
 
@@ -909,6 +921,45 @@ static async getSessionMessages(sessionId) {
     await ChatFeedbackService.recordFeedback({ messageId, rating });
     return result.rows[0];
   }
+
+  static _buildDemoResponse(message) {
+    const reply = [
+      "Totally — here’s a minimalist 5-piece capsule that’s neutral, arm-friendly, and long-lasting:",
+      "1. Long-sleeve rib knit tee (oatmeal or taupe)",
+      "2. Structured overshirt or light jacket (olive or stone)",
+      "3. Straight-leg trouser (charcoal or espresso)",
+      "4. Midi skirt or wide-leg pant (sand or camel)",
+      "5. Longline cardigan or knit blazer (mocha or warm gray)",
+      "",
+      "If you share your sizes and whether you prefer pants over skirts, I can curate exact pieces.",
+    ].join("\n");
+
+    return {
+      intent: "mixed",
+      query: message,
+      filters: {
+        min_price: null,
+        max_price: null,
+        categories: ["tops", "outerwear", "bottoms", "knitwear"],
+        subcategories: null,
+        attributes: ["minimalist", "neutral", "earth-tones", "long-sleeve"],
+        on_sale: null,
+        in_stock: null,
+        sort_by: null,
+      },
+      needs_clarification: true,
+      message: reply,
+      followups: [
+        "What sizes do you typically wear for tops and bottoms?",
+        "Do you prefer pants only, or are skirts okay?",
+        "Any specific budget range per item?",
+      ],
+      items: [],
+      session_id: `demo-${Date.now()}`,
+      message_id: null,
+      assistant_message_id: null,
+    };
+  }
   static _inferTitle(message) {
     if (!message) return null;
     const words = message.split(/\s+/).slice(0, 6).join(' ');
@@ -922,6 +973,60 @@ static async getSessionMessages(sessionId) {
     } catch (error) {
       return null;
     }
+  }
+
+  /**
+   * Track product recommendations in style profile
+   * Log 'click' events for each recommended item with its style metadata
+   */
+  static async _trackRecommendationsInStyleProfile(userId, items) {
+    if (!userId || !items || items.length === 0) return;
+
+    try {
+      // Track up to first 3 items to avoid overwhelming the style profile
+      const topItems = items.slice(0, 3);
+
+      for (const item of topItems) {
+        // Extract style metadata from item
+        const styleArchetype = item.style_tags && item.style_tags.length > 0
+          ? item.style_tags[0]
+          : null;
+
+        await StyleProfileService.updateProfile(
+          userId,
+          'click', // Chat recommendation view = click event (weight 0.5)
+          'product',
+          item.id,
+          {
+            style_archetype: styleArchetype,
+            price_tier: item.price_tier || null,
+            category_focus: this._mapCategoryToFocus(item.category),
+            occasion_tag: item.occasion_tag || null
+          }
+        );
+      }
+    } catch (error) {
+      // Don't fail the chat response if style tracking fails
+      console.warn('Failed to track chat recommendations in style profile:', error.message);
+    }
+  }
+
+  /**
+   * Map product category to category_focus
+   */
+  static _mapCategoryToFocus(category) {
+    const categoryMap = {
+      'Handbags & Wallets': 'bags',
+      'Shoes': 'shoes',
+      'Denim': 'denim',
+      'Workwear': 'workwear',
+      'Dresses': 'occasion',
+      'Accessories': 'accessories',
+      'Activewear': 'active',
+      'Athletic & Sneakers': 'active'
+    };
+
+    return categoryMap[category] || 'mixed';
   }
 }
 

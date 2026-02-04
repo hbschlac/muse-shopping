@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In - Muse</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Dancing+Script:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #F6F3EE;
+            color: #1F1F1F;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .auth-container {
+            background: white;
+            border-radius: 24px;
+            padding: 60px 50px;
+            max-width: 480px;
+            width: 100%;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+        }
+
+        .logo {
+            font-family: 'Dancing Script', cursive;
+            font-size: 56px;
+            font-weight: 600;
+            color: #F1785A;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .tagline {
+            text-align: center;
+            color: #6F6F6F;
+            font-size: 16px;
+            margin-bottom: 48px;
+            font-weight: 400;
+        }
+
+        .welcome-text {
+            font-size: 24px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 32px;
+            color: #1F1F1F;
+        }
+
+        .social-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .social-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 16px;
+            background: white;
+            border: 2px solid #E5E5E5;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #1F1F1F;
+        }
+
+        .social-btn:hover {
+            border-color: #F1785A;
+            background: #FFF9F7;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 32px 0;
+        }
+
+        .divider-line {
+            flex: 1;
+            height: 1px;
+            background: #E5E5E5;
+        }
+
+        .divider-text {
+            font-size: 14px;
+            color: #6F6F6F;
+        }
+
+        .email-btn {
+            background: transparent;
+            color: #1F1F1F;
+            border: 2px solid #1F1F1F;
+            padding: 16px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+        }
+
+        .email-btn:hover {
+            background: #1F1F1F;
+            color: white;
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: 24px;
+        }
+
+        .back-link a {
+            color: #6F6F6F;
+            text-decoration: none;
+            font-size: 15px;
+        }
+
+        .back-link a:hover {
+            color: #F1785A;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .auth-container {
+                padding: 40px 30px;
+            }
+
+            .logo {
+                font-size: 48px;
+            }
+
+            .welcome-text {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="logo">Muse</div>
+        <p class="tagline">All your favorite stores. One place. Personalized. Fast.</p>
+
+        <h2 class="welcome-text">Welcome</h2>
+
+        <div class="social-buttons">
+            <button class="social-btn" onclick="handleGoogleAuth()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                </svg>
+                Continue with Google
+            </button>
+
+            <button class="social-btn" onclick="handleInstagramAuth()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <radialGradient id="ig-gradient" cx="50%" cy="100%" r="100%">
+                            <stop offset="0%" style="stop-color:#FD5;stop-opacity:1" />
+                            <stop offset="50%" style="stop-color:#FF543E;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#C837AB;stop-opacity:1" />
+                        </radialGradient>
+                    </defs>
+                    <rect x="2" y="2" width="20" height="20" rx="5" fill="url(#ig-gradient)"/>
+                    <circle cx="12" cy="12" r="4.5" fill="none" stroke="white" stroke-width="2"/>
+                    <circle cx="17.5" cy="6.5" r="1.5" fill="white"/>
+                </svg>
+                Continue with Instagram
+            </button>
+        </div>
+
+        <div class="divider">
+            <div class="divider-line"></div>
+            <span class="divider-text">or</span>
+            <div class="divider-line"></div>
+        </div>
+
+        <button class="email-btn" onclick="handleEmailAuth()">Continue with Email</button>
+
+        <div class="back-link">
+            <a href="landing.html">← Back to home</a>
+        </div>
+    </div>
+
+    <script>
+        function handleGoogleAuth() {
+            // TODO: Implement Google OAuth
+            alert('Google authentication coming soon!');
+            // For demo purposes, redirect to newsfeed
+            setTimeout(() => {
+                window.location.href = 'newsfeed.html';
+            }, 500);
+        }
+
+        function handleInstagramAuth() {
+            // TODO: Implement Instagram/Meta OAuth
+            alert('Instagram authentication coming soon!');
+            // For demo purposes, redirect to newsfeed
+            setTimeout(() => {
+                window.location.href = 'newsfeed.html';
+            }, 500);
+        }
+
+        function handleEmailAuth() {
+            // TODO: Show email/password form
+            alert('Email authentication coming soon!');
+            // For demo purposes, redirect to newsfeed
+            setTimeout(() => {
+                window.location.href = 'newsfeed.html';
+            }, 500);
+        }
+    </script>
+</body>
+</html>

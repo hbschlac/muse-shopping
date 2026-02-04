@@ -1,0 +1,16 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Run tests before commit
+echo "Running pre-commit tests..."
+
+# Backend tests
+echo "Testing backend..."
+npm run test || exit 1
+
+# Frontend tests  
+echo "Testing frontend..."
+cd frontend && npm run test || exit 1
+cd ..
+
+echo "✅ All tests passed!"

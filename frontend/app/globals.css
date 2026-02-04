@@ -1,0 +1,216 @@
+@import "tailwindcss";
+
+:root {
+  /* Brand Colors */
+  --color-ecru: #FAFAF8;
+  --color-white: #FFFFFF;
+  --color-charcoal: #1F1F1F;
+  --color-divider: #E9E5DF;
+
+  /* Accent Colors (5% usage - buttons only) */
+  --color-peach: #F4A785;
+  --color-coral: #F1785A;
+  --color-blue: #8EC5FF;
+
+  /* Neutral Palette (85% usage) */
+  --color-gray-50: #FAFAFA;
+  --color-gray-100: #F5F5F5;
+  --color-gray-200: #E5E5E5;
+  --color-gray-300: #D4D4D4;
+  --color-gray-400: #A3A3A3;
+  --color-gray-500: #737373;
+  --color-gray-600: #525252;
+  --color-gray-700: #404040;
+  --color-gray-800: #262626;
+  --color-gray-900: #171717;
+
+  /* Gradients (only on primary CTA buttons) */
+  --gradient-primary: linear-gradient(135deg, #F4A785 0%, #8EC5FF 100%);
+
+  /* Muse fabric background color palette */
+  --muse-0: #EBE0D5;
+  --muse-1: #D6C8BA;
+  --muse-2: #CBB6A8;
+  --muse-3: #B4A597;
+  --muse-4: #6A5950;
+
+  /* Typography */
+  --font-primary: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+
+  /* Body text always 16px */
+  --text-body: 16px;
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Border Radius (12px everywhere - hard rule) */
+  --radius-base: 12px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-subtle: 0 2px 8px rgba(0, 0, 0, 0.05);
+  --shadow-base: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lifted: 0 8px 24px rgba(0, 0, 0, 0.12);
+
+  /* Animation (calm > playful) */
+  --duration-base: 150ms;
+  --duration-slow: 200ms;
+  --ease-out: ease-out;
+}
+
+@theme inline {
+  --color-background: var(--color-ecru);
+  --color-foreground: var(--color-charcoal);
+  --font-sans: var(--font-primary);
+}
+
+body {
+  background: var(--color-ecru);
+  color: var(--color-charcoal);
+  font-family: var(--font-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Utility Classes */
+.gradient-primary {
+  background: var(--gradient-primary);
+}
+
+.gradient-sky {
+  background: var(--gradient-sky);
+}
+
+.gradient-mint {
+  background: var(--gradient-mint);
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Hide scrollbar but keep functionality */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Welcome cream gradient background */
+.welcome-cream-gradient {
+  min-height: 100vh;
+  position: relative;
+  background:
+    radial-gradient(120% 80% at 15% 10%, rgba(255,255,255,0.92), transparent 60%),
+    radial-gradient(140% 100% at 85% 20%, rgba(252,246,240,0.80), transparent 65%),
+    radial-gradient(160% 120% at 50% 85%, rgba(215,205,195,0.18), transparent 70%),
+    linear-gradient(160deg, #FBF6F1 0%, #F5EEE6 55%, #EFE5D9 100%);
+  background-repeat: no-repeat;
+}
+
+/* Subtle contrast overlay to make waves visible */
+.welcome-background::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 90% at 15% 10%, rgba(255,255,255,0.45), transparent 60%),
+    radial-gradient(160% 120% at 50% 85%, rgba(90,72,62,0.12), transparent 70%);
+  mix-blend-mode: multiply;
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.welcome-background > * {
+  position: relative;
+  z-index: 1;
+}
+
+
+/* Muse Fabric Background Hero */
+.app-hero {
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate; /* ensure overlays blend correctly */
+  background:
+    linear-gradient(160deg, #efe3d7 0%, #e7d7c7 55%, #dccab9 100%);
+  display: grid;
+  place-items: center;
+}
+
+/* Stronger highlight + paper glow */
+.app-hero::before {
+  content: "";
+  position: absolute;
+  inset: -25%;
+  z-index: 0;
+  background:
+    radial-gradient(85% 60% at 15% 10%, rgba(255,255,255,0.85), transparent 60%),
+    radial-gradient(70% 50% at 75% 20%, rgba(255,255,255,0.40), transparent 62%),
+    radial-gradient(90% 65% at 30% 70%, rgba(230,208,190,0.55), transparent 65%);
+  filter: blur(10px);
+  opacity: 1;
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+/* Darker shadow bands (waves) */
+.app-hero::after {
+  content: "";
+  position: absolute;
+  inset: -30%;
+  z-index: 0;
+  background:
+    radial-gradient(140% 70% at 10% 25%, rgba(88,70,60,0.20), transparent 55%),
+    radial-gradient(140% 70% at 90% 35%, rgba(88,70,60,0.18), transparent 60%),
+    radial-gradient(140% 70% at 20% 82%, rgba(88,70,60,0.14), transparent 62%),
+    radial-gradient(120% 60% at 60% 55%, rgba(88,70,60,0.10), transparent 60%);
+  filter: blur(18px);
+  opacity: 0.9;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+
+/* Optional soft grain */
+.app-hero__grain {
+  position: absolute;
+  inset: 0;
+  background-image: repeating-radial-gradient(
+    circle at 0 0,
+    rgba(255,255,255,0.02) 0,
+    rgba(255,255,255,0.02) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  mix-blend-mode: overlay;
+  opacity: 0.25;
+  pointer-events: none;
+}
+
+.app-hero__content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 24px;
+  width: 100%;
+}

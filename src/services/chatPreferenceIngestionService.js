@@ -4,12 +4,14 @@ const PreferencesService = require('./preferencesService');
 const ChatNormalizationService = require('./chatNormalizationService');
 const ChatProfileDiffService = require('./chatProfileDiffService');
 const ChatProfileVersionService = require('./chatProfileVersionService');
+const StyleProfileService = require('./styleProfileService');
+const StyleNormalizer = require('../utils/styleNormalizer');
 
 class ChatPreferenceIngestionService {
   static _decayWeight() {
     return 1.0; // scaffold for time-decay logic
   }
-  static async ingestFromIntent({ userId, sessionId, messageId, intent }) {
+  static async ingestFromIntent({ userId, sessionId, messageId, intent, originalMessage = '' }) {
     if (!userId || !intent || !intent.filters) return null;
 
     const filters = intent.filters || {};
@@ -65,11 +67,12 @@ class ChatPreferenceIngestionService {
     await ChatProfileVersionService.snapshot(userId);
     await ChatProfileDiffService.captureBeforeAfter(userId, async () => {
       await this._applyToShopperProfile(userId, { categories, priceMin, priceMax });
-      // diff capture handles both updates
-    // await this._applyToFashionPreferences(userId, { categories, attributes, colors, sizes, occasions, materials, fits });
+      await this._applyToFashionPreferences(userId, { categories, attributes, colors, sizes, occasions, materials, fits });
+
+      // NEW: Update style profile from chat intent
+      await this._applyToStyleProfile(userId, { categories, priceMin, priceMax, originalMessage });
     });
-    // diff capture handles both updates
-    // await this._applyToFashionPreferences(userId, { categories, attributes, colors, sizes, occasions, materials, fits });
+
     logger.info(`Chat preference event stored for user ${userId}`);
 
     return eventResult.rows[0];
@@ -132,6 +135,72 @@ class ChatPreferenceIngestionService {
       });
     } catch (error) {
       logger.warn('Failed to update fashion preferences from chat', error.message);
+    }
+  }
+
+  /**
+   * Update style profile from chat intent
+   * Normalizes chat message to style archetypes and updates profile
+   */
+  static async _applyToStyleProfile(userId, { categories = [], priceMin = null, priceMax = null, originalMessage = '' }) {
+    if (!userId || !originalMessage) return;
+
+    try {
+      // Extract style signals from the original message
+      const styleSignals = StyleNormalizer.extractStyleSignals({}, originalMessage);
+
+      // Map price range to price tier
+      let priceTier = null;
+      if (priceMin !== null || priceMax !== null) {
+        const avgPrice = ((priceMin || 0) + (priceMax || 999999)) / 2;
+        if (avgPrice < 5000) priceTier = 'budget'; // < $50
+        else if (avgPrice < 15000) priceTier = 'mid'; // $50-$150
+        else if (avgPrice < 50000) priceTier = 'premium'; // $150-$500
+        else priceTier = 'luxury'; // $500+
+      }
+
+      // Map categories to category_focus (pick first matched category)
+      const categoryFocus = styleSignals.categories[0] || categories[0] || null;
+
+      // Update style profile for each detected style archetype
+      for (const styleArchetype of styleSignals.styles) {
+        await StyleProfileService.updateProfile(
+          userId,
+          'click', // Chat interaction = click event (weight 0.5)
+          'product', // Source type
+          null, // No specific product ID yet
+          {
+            style_archetype: styleArchetype,
+            price_tier: priceTier,
+            category_focus: categoryFocus,
+            occasion_tag: styleSignals.occasions[0] || null
+          }
+        );
+      }
+
+      // If no specific styles detected but we have category/price info, still update
+      if (styleSignals.styles.length === 0 && (priceTier || categoryFocus)) {
+        await StyleProfileService.updateProfile(
+          userId,
+          'click',
+          'product',
+          null,
+          {
+            style_archetype: null,
+            price_tier: priceTier,
+            category_focus: categoryFocus,
+            occasion_tag: styleSignals.occasions[0] || null
+          }
+        );
+      }
+
+      logger.info(`Updated style profile from chat for user ${userId}:`, {
+        styles: styleSignals.styles,
+        categories: styleSignals.categories,
+        priceTier
+      });
+    } catch (error) {
+      logger.warn('Failed to update style profile from chat', error.message);
     }
   }
 }

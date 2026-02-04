@@ -1,0 +1,240 @@
+/**
+ * Muse Shopping - Design Tokens
+ * CSS Custom Properties for consistent theming
+ *
+ * Usage: Import this file first in your main stylesheet
+ */
+
+:root {
+  /* ========================================
+     COLORS
+     ======================================== */
+
+  /* Core Neutrals */
+  --color-ecru: #F6F3EE;
+  --color-white: #FFFFFF;
+  --color-charcoal: #1F1F1F;
+  --color-text-secondary: #6F6F6F;
+  --color-divider: #E9E5DF;
+
+  /* Accent Colors (use sparingly) */
+  --color-peach: #F4A785;
+  --color-coral: #F1785A;
+  --color-blush: #F6C6C1;
+  --color-sky: #8EC5FF;
+  --color-lilac: #C8B6FF;
+
+  /* Semantic Colors */
+  --color-background: var(--color-ecru);
+  --color-surface: var(--color-white);
+  --color-text-primary: var(--color-charcoal);
+  --color-text-muted: var(--color-text-secondary);
+  --color-border: var(--color-divider);
+
+  /* ========================================
+     GRADIENTS
+     ======================================== */
+
+  /* Primary CTA Gradient (Peach → Coral) */
+  --gradient-primary: linear-gradient(135deg, #F4A785 0%, #F1785A 100%);
+
+  /* Playful Gradient (Stories, special moments) */
+  --gradient-playful: linear-gradient(135deg, #F4A785 0%, #C8B6FF 50%, #8EC5FF 100%);
+
+  /* ========================================
+     TYPOGRAPHY
+     ======================================== */
+
+  /* Font Families */
+  --font-primary: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-brand: 'YourScriptFont', cursive; /* Replace with actual font name */
+
+  /* Font Weights */
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+
+  /* Font Sizes */
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-base: 16px;
+  --text-lg: 18px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+  --text-3xl: 32px;
+
+  /* Line Heights */
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.75;
+
+  /* ========================================
+     SPACING
+     ======================================== */
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+
+  /* Layout Spacing */
+  --page-margin: 16px;
+  --grid-gap: 12px;
+  --section-spacing: 20px;
+
+  /* ========================================
+     BORDER RADIUS
+     ======================================== */
+
+  --radius-search: 26px;
+  --radius-button: 24px;
+  --radius-card: 20px;
+  --radius-card-small: 16px;
+  --radius-pill: 999px;
+  --radius-circle: 50%;
+
+  /* ========================================
+     SHADOWS
+     ======================================== */
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-base: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
+
+  /* Elevation for cards on hover/press */
+  --shadow-lifted: 0 4px 16px rgba(0, 0, 0, 0.08);
+
+  /* ========================================
+     TRANSITIONS
+     ======================================== */
+
+  --duration-fast: 150ms;
+  --duration-base: 250ms;
+  --duration-slow: 400ms;
+
+  --ease-smooth: cubic-bezier(0.4, 0.0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-in: cubic-bezier(0.4, 0.0, 1, 1);
+  --ease-out: cubic-bezier(0.0, 0.0, 0.2, 1);
+
+  /* ========================================
+     Z-INDEX SCALE
+     ======================================== */
+
+  --z-base: 0;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-modal-backdrop: 900;
+  --z-modal: 1000;
+  --z-toast: 1100;
+
+  /* ========================================
+     BREAKPOINTS (for reference)
+     ======================================== */
+
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+}
+
+/* ========================================
+   DARK MODE PREPARATION (Optional)
+   ======================================== */
+
+/* @media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: #1F1F1F;
+    --color-surface: #2A2A2A;
+    --color-text-primary: #F6F3EE;
+    --color-text-secondary: #9F9F9F;
+    --color-border: #3F3F3F;
+  }
+} */
+
+/* ========================================
+   UTILITY CLASSES
+   ======================================== */
+
+/* Gradients */
+.gradient-primary {
+  background: var(--gradient-primary);
+}
+
+.gradient-playful {
+  background: var(--gradient-playful);
+}
+
+/* Text Colors */
+.text-primary {
+  color: var(--color-text-primary);
+}
+
+.text-secondary {
+  color: var(--color-text-secondary);
+}
+
+/* Backgrounds */
+.bg-ecru {
+  background-color: var(--color-ecru);
+}
+
+.bg-white {
+  background-color: var(--color-white);
+}
+
+/* ========================================
+   RESET & BASE STYLES
+   ======================================== */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-primary);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  color: var(--color-text-primary);
+  background-color: var(--color-background);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ensure images are responsive */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Button reset */
+button {
+  font-family: inherit;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+/* Link reset */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Focus styles for accessibility */
+*:focus-visible {
+  outline: 2px solid var(--color-coral);
+  outline-offset: 2px;
+}

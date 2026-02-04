@@ -14,6 +14,7 @@ const PreferencesService = require('../../services/preferencesService');
 const ChatPreferenceDecayJob = require('../../jobs/chatPreferenceDecayJob');
 const ChatSessionSummaryJob = require('../../jobs/chatSessionSummaryJob');
 const pool = require('../../db/pool');
+const path = require('path');
 
 router.use(requireAdmin);
 
@@ -657,6 +658,8 @@ router.get('/sessions/:id', async (req, res) => {
 });
 
 router.get('/ui', async (_req, res) => {
+  res.sendFile(path.join(__dirname, 'chat-admin.html'));
+  /*
   res.type('html').send(`<!doctype html>
 <html lang="en">
 <head>
@@ -2182,6 +2185,7 @@ router.get('/ui', async (_req, res) => {
   </script>
 </body>
 </html>`);
-});});
+*/
+});
 
 module.exports = router;

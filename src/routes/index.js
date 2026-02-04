@@ -18,6 +18,7 @@ const webhookRoutes = require('./webhookRoutes');
 const socialConnectionRoutes = require('./socialConnectionRoutes');
 const experimentRoutes = require('./experimentRoutes');
 const chatRoutes = require('./chatRoutes');
+const influencerRoutes = require('./influencers');
 // Use secured analytics routes with rate limiting, validation, and audit logging
 const analyticsRoutes = require('./analyticsRoutes.secured');
 const dataDeletionRoutes = require('./dataDeletionRoutes');
@@ -31,6 +32,7 @@ const adminManualOrderRoutes = require('./admin/manualOrders');
 
 const router = express.Router();
 const path = require('path');
+const pool = require('../db/pool');
 
 // Health check endpoint
 router.get('/health', (req, res) => {
@@ -40,6 +42,30 @@ router.get('/health', (req, res) => {
       status: 'healthy',
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
+    },
+  });
+});
+
+// Readiness check endpoint
+router.get('/health/ready', async (req, res) => {
+  const checks = {
+    db: false,
+    openai: Boolean(process.env.OPENAI_API_KEY),
+  };
+  try {
+    await pool.query('SELECT 1');
+    checks.db = true;
+  } catch (error) {
+    checks.db = false;
+  }
+
+  const ready = checks.db && checks.openai;
+  res.status(ready ? 200 : 503).json({
+    success: ready,
+    data: {
+      status: ready ? 'ready' : 'not_ready',
+      checks,
+      timestamp: new Date().toISOString(),
     },
   });
 });
@@ -75,6 +101,7 @@ router.use('/experiments', experimentRoutes);
 router.use('/chat', chatRoutes);
 router.use('/analytics', analyticsRoutes);
 router.use('/sponsored', sponsoredContentRoutes);
+router.use('/influencers', influencerRoutes);
 
 // Data deletion callback (Meta/Facebook compliance)
 router.use('/', dataDeletionRoutes);

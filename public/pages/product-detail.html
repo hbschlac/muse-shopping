@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Modern Loafer - Everlane | Muse</title>
+
+  <!-- Design System -->
+  <link rel="stylesheet" href="/css/design-tokens.css">
+  <link rel="stylesheet" href="/css/components.css">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      padding-bottom: 80px;
+    }
+
+    /* Header */
+    .pdp-header {
+      position: sticky;
+      top: 0;
+      background: var(--color-ecru);
+      padding: var(--space-4) var(--page-margin);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: var(--z-sticky);
+      border-bottom: 1px solid var(--color-divider);
+    }
+
+    .back-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background var(--duration-fast) var(--ease-smooth);
+    }
+
+    .back-btn:hover {
+      background: rgba(31, 31, 31, 0.04);
+    }
+
+    .pdp-actions {
+      display: flex;
+      gap: var(--space-2);
+    }
+
+    .icon-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background var(--duration-fast) var(--ease-smooth);
+    }
+
+    .icon-btn:hover {
+      background: rgba(31, 31, 31, 0.04);
+    }
+
+    .icon-btn.is-saved {
+      background: var(--gradient-primary);
+      color: var(--color-white);
+    }
+
+    /* Image gallery */
+    .image-gallery {
+      width: 100%;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      display: flex;
+    }
+
+    .image-gallery::-webkit-scrollbar {
+      display: none;
+    }
+
+    .gallery-image {
+      width: 100%;
+      flex-shrink: 0;
+      scroll-snap-align: start;
+      aspect-ratio: 3 / 4;
+      object-fit: cover;
+    }
+
+    .gallery-indicators {
+      display: flex;
+      justify-content: center;
+      gap: var(--space-2);
+      padding: var(--space-4);
+    }
+
+    .gallery-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--color-divider);
+      transition: background var(--duration-fast) var(--ease-smooth);
+    }
+
+    .gallery-dot.is-active {
+      background: var(--color-coral);
+      width: 20px;
+      border-radius: 999px;
+    }
+
+    /* Product info */
+    .pdp-content {
+      padding: 0 var(--page-margin) var(--space-8);
+    }
+
+    .pdp-brand {
+      font-size: var(--text-lg);
+      font-weight: var(--weight-semibold);
+      color: var(--color-charcoal);
+      margin-bottom: var(--space-1);
+    }
+
+    .pdp-name {
+      font-size: var(--text-2xl);
+      font-weight: var(--weight-semibold);
+      color: var(--color-charcoal);
+      margin-bottom: var(--space-3);
+      line-height: var(--leading-tight);
+    }
+
+    .pdp-price {
+      font-size: var(--text-xl);
+      font-weight: var(--weight-semibold);
+      color: var(--color-charcoal);
+      margin-bottom: var(--space-6);
+    }
+
+    /* Color selector */
+    .color-selector {
+      margin-bottom: var(--space-6);
+    }
+
+    .selector-label {
+      font-size: var(--text-sm);
+      font-weight: var(--weight-medium);
+      color: var(--color-text-secondary);
+      margin-bottom: var(--space-3);
+    }
+
+    .color-options {
+      display: flex;
+      gap: var(--space-3);
+    }
+
+    .color-option {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-card-small);
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: border-color var(--duration-fast) var(--ease-smooth);
+      position: relative;
+    }
+
+    .color-option.is-selected {
+      border-color: var(--color-coral);
+    }
+
+    .color-option.is-selected::after {
+      content: '✓';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: var(--color-white);
+      font-weight: var(--weight-semibold);
+      font-size: var(--text-sm);
+    }
+
+    /* Size selector */
+    .size-selector {
+      margin-bottom: var(--space-6);
+    }
+
+    .size-options {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--space-2);
+    }
+
+    .size-option {
+      padding: var(--space-3);
+      text-align: center;
+      font-size: var(--text-sm);
+      font-weight: var(--weight-medium);
+      border: 1px solid var(--color-divider);
+      border-radius: var(--radius-card-small);
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-smooth);
+    }
+
+    .size-option:hover {
+      border-color: var(--color-charcoal);
+    }
+
+    .size-option.is-selected {
+      background: var(--gradient-primary);
+      color: var(--color-white);
+      border-color: transparent;
+    }
+
+    .size-option.is-disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+      position: relative;
+    }
+
+    .size-option.is-disabled::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: currentColor;
+    }
+
+    /* CTA section */
+    .pdp-cta {
+      display: flex;
+      gap: var(--space-3);
+      margin-bottom: var(--space-6);
+    }
+
+    /* Details section */
+    .pdp-details {
+      border-top: 1px solid var(--color-divider);
+      padding-top: var(--space-6);
+    }
+
+    .detail-accordion {
+      border-bottom: 1px solid var(--color-divider);
+    }
+
+    .detail-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-4) 0;
+      cursor: pointer;
+    }
+
+    .detail-title {
+      font-size: var(--text-base);
+      font-weight: var(--weight-semibold);
+      color: var(--color-charcoal);
+    }
+
+    .detail-icon {
+      width: 20px;
+      height: 20px;
+      transition: transform var(--duration-base) var(--ease-smooth);
+    }
+
+    .detail-accordion.is-open .detail-icon {
+      transform: rotate(180deg);
+    }
+
+    .detail-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height var(--duration-base) var(--ease-smooth);
+    }
+
+    .detail-accordion.is-open .detail-content {
+      max-height: 500px;
+    }
+
+    .detail-text {
+      font-size: var(--text-sm);
+      line-height: var(--leading-relaxed);
+      color: var(--color-text-secondary);
+      padding-bottom: var(--space-4);
+    }
+
+    .detail-text ul {
+      list-style: none;
+      padding: 0;
+      margin: var(--space-3) 0;
+    }
+
+    .detail-text li {
+      padding-left: var(--space-5);
+      position: relative;
+      margin-bottom: var(--space-2);
+    }
+
+    .detail-text li::before {
+      content: '•';
+      position: absolute;
+      left: var(--space-3);
+      color: var(--color-coral);
+    }
+
+    /* You might also like */
+    .recommendations {
+      margin-top: var(--space-8);
+      padding-top: var(--space-6);
+      border-top: 1px solid var(--color-divider);
+    }
+
+    .recommendations-title {
+      font-size: var(--text-lg);
+      font-weight: var(--weight-semibold);
+      margin-bottom: var(--space-4);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="pdp-header">
+    <button class="back-btn" aria-label="Go back">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+      </svg>
+    </button>
+
+    <div class="pdp-actions">
+      <button class="icon-btn" aria-label="Share">
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
+        </svg>
+      </button>
+
+      <button class="icon-btn" id="save-btn" aria-label="Save product">
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Image Gallery -->
+  <div class="image-gallery" id="gallery">
+    <img src="https://via.placeholder.com/600x800/F4A785/FFFFFF?text=Image+1" alt="Product image 1" class="gallery-image">
+    <img src="https://via.placeholder.com/600x800/F1785A/FFFFFF?text=Image+2" alt="Product image 2" class="gallery-image">
+    <img src="https://via.placeholder.com/600x800/C8B6FF/FFFFFF?text=Image+3" alt="Product image 3" class="gallery-image">
+    <img src="https://via.placeholder.com/600x800/8EC5FF/FFFFFF?text=Image+4" alt="Product image 4" class="gallery-image">
+  </div>
+
+  <div class="gallery-indicators">
+    <div class="gallery-dot is-active"></div>
+    <div class="gallery-dot"></div>
+    <div class="gallery-dot"></div>
+    <div class="gallery-dot"></div>
+  </div>
+
+  <!-- Product Info -->
+  <div class="pdp-content">
+    <div class="pdp-brand">Everlane</div>
+    <h1 class="pdp-name">The Modern Loafer</h1>
+    <div class="pdp-price">$98</div>
+
+    <!-- Color Selector -->
+    <div class="color-selector">
+      <div class="selector-label">Color: Black</div>
+      <div class="color-options">
+        <button class="color-option is-selected" style="background: #1F1F1F;" aria-label="Black"></button>
+        <button class="color-option" style="background: #8B4513;" aria-label="Tan"></button>
+        <button class="color-option" style="background: #FFFFFF; border: 1px solid #E9E5DF;" aria-label="White"></button>
+      </div>
+    </div>
+
+    <!-- Size Selector -->
+    <div class="size-selector">
+      <div class="selector-label">Size: Select your size</div>
+      <div class="size-options">
+        <button class="size-option">5</button>
+        <button class="size-option">5.5</button>
+        <button class="size-option">6</button>
+        <button class="size-option">6.5</button>
+        <button class="size-option is-selected">7</button>
+        <button class="size-option">7.5</button>
+        <button class="size-option">8</button>
+        <button class="size-option is-disabled">8.5</button>
+        <button class="size-option">9</button>
+        <button class="size-option">9.5</button>
+        <button class="size-option">10</button>
+        <button class="size-option">10.5</button>
+      </div>
+    </div>
+
+    <!-- CTA Buttons -->
+    <div class="pdp-cta">
+      <button class="btn btn-primary btn-block">Add to Cart</button>
+    </div>
+
+    <!-- Details Accordion -->
+    <div class="pdp-details">
+      <div class="detail-accordion is-open">
+        <button class="detail-header">
+          <span class="detail-title">Description</span>
+          <svg class="detail-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </button>
+        <div class="detail-content">
+          <div class="detail-text">
+            <p>A modern take on a classic silhouette. The Modern Loafer features premium Italian leather, a cushioned insole, and a refined almond toe. Perfect for both work and weekend wear.</p>
+            <ul>
+              <li>Italian leather upper</li>
+              <li>Cushioned leather insole</li>
+              <li>Leather sole with rubber heel</li>
+              <li>Almond toe shape</li>
+              <li>1" heel height</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-accordion">
+        <button class="detail-header">
+          <span class="detail-title">Fit & Care</span>
+          <svg class="detail-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </button>
+        <div class="detail-content">
+          <div class="detail-text">
+            <p><strong>Fit:</strong> True to size. If between sizes, we recommend sizing up.</p>
+            <p><strong>Care:</strong> Wipe clean with a soft, dry cloth. Store in dust bag when not in use. Avoid prolonged exposure to water.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-accordion">
+        <button class="detail-header">
+          <span class="detail-title">Shipping & Returns</span>
+          <svg class="detail-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </button>
+        <div class="detail-content">
+          <div class="detail-text">
+            <p><strong>Shipping:</strong> Free standard shipping on orders over $100. Arrives in 5-7 business days.</p>
+            <p><strong>Returns:</strong> Free returns within 30 days of purchase. Items must be unworn and in original condition.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-accordion">
+        <button class="detail-header">
+          <span class="detail-title">Sustainability</span>
+          <svg class="detail-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </button>
+        <div class="detail-content">
+          <div class="detail-text">
+            <p>Made in a factory that meets our high standards for environmental practices and fair labor.</p>
+            <ul>
+              <li>Chrome-free tanned leather</li>
+              <li>Water-based adhesives</li>
+              <li>Fair Trade Certified™ factory</li>
+              <li>Carbon-neutral shipping</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recommendations -->
+    <section class="recommendations">
+      <h2 class="recommendations-title">You Might Also Like</h2>
+      <div class="product-grid">
+        <div class="product-card">
+          <img src="https://via.placeholder.com/300x400" alt="Product" class="product-image">
+          <button class="save-btn" aria-label="Save product">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+            </svg>
+          </button>
+          <div class="product-info">
+            <div class="product-brand">Everlane</div>
+            <div class="product-name">The Day Heel</div>
+            <div class="product-price">$145</div>
+          </div>
+        </div>
+
+        <div class="product-card">
+          <img src="https://via.placeholder.com/300x400" alt="Product" class="product-image">
+          <button class="save-btn" aria-label="Save product">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+            </svg>
+          </button>
+          <div class="product-info">
+            <div class="product-brand">Everlane</div>
+            <div class="product-name">The Italian Leather Tote</div>
+            <div class="product-price">$268</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <button class="nav-item">
+      <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+      </svg>
+      <span class="nav-label">Home</span>
+    </button>
+
+    <button class="nav-item">
+      <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+      </svg>
+      <span class="nav-label">Search</span>
+    </button>
+
+    <button class="nav-item">
+      <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+      </svg>
+      <span class="nav-label">Muse</span>
+    </button>
+
+    <button class="nav-item">
+      <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+      </svg>
+      <span class="nav-label">Saves</span>
+    </button>
+
+    <button class="nav-item">
+      <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+      </svg>
+      <span class="nav-label">Profile</span>
+    </button>
+  </nav>
+
+  <script>
+    // Gallery scroll indicators
+    const gallery = document.getElementById('gallery');
+    const dots = document.querySelectorAll('.gallery-dot');
+
+    gallery.addEventListener('scroll', () => {
+      const scrollLeft = gallery.scrollLeft;
+      const width = gallery.offsetWidth;
+      const index = Math.round(scrollLeft / width);
+
+      dots.forEach((dot, i) => {
+        dot.classList.toggle('is-active', i === index);
+      });
+    });
+
+    // Color selector
+    document.querySelectorAll('.color-option').forEach(option => {
+      option.addEventListener('click', function() {
+        document.querySelectorAll('.color-option').forEach(o => o.classList.remove('is-selected'));
+        this.classList.add('is-selected');
+      });
+    });
+
+    // Size selector
+    document.querySelectorAll('.size-option:not(.is-disabled)').forEach(option => {
+      option.addEventListener('click', function() {
+        document.querySelectorAll('.size-option').forEach(o => o.classList.remove('is-selected'));
+        this.classList.add('is-selected');
+      });
+    });
+
+    // Save button
+    const saveBtn = document.getElementById('save-btn');
+    saveBtn.addEventListener('click', function() {
+      this.classList.toggle('is-saved');
+      const icon = this.querySelector('svg');
+
+      if (this.classList.contains('is-saved')) {
+        icon.setAttribute('fill', 'currentColor');
+        this.style.transform = 'scale(1.2)';
+        setTimeout(() => {
+          this.style.transform = '';
+        }, 200);
+      } else {
+        icon.setAttribute('fill', 'none');
+      }
+    });
+
+    // Accordion
+    document.querySelectorAll('.detail-header').forEach(header => {
+      header.addEventListener('click', function() {
+        const accordion = this.parentElement;
+        const isOpen = accordion.classList.contains('is-open');
+
+        // Close all accordions
+        document.querySelectorAll('.detail-accordion').forEach(a => a.classList.remove('is-open'));
+
+        // Toggle current
+        if (!isOpen) {
+          accordion.classList.add('is-open');
+        }
+      });
+    });
+
+    // Recommendation save buttons
+    document.querySelectorAll('.save-btn').forEach(button => {
+      button.addEventListener('click', function(e) {
+        e.stopPropagation();
+        this.classList.toggle('is-saved');
+      });
+    });
+
+    // Nav interactions
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', function() {
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('is-active'));
+        this.classList.add('is-active');
+      });
+    });
+  </script>
+</body>
+</html>

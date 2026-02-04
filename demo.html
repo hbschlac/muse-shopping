@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Muse Shopping - Live Demo</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Dancing+Script:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <style>
         * {
             margin: 0;
@@ -12,9 +18,9 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: #fafafa;
-            color: #262626;
+            font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #F6F3EE;
+            color: #1F1F1F;
         }
 
         .container {
@@ -32,13 +38,21 @@
         }
 
         .header h1 {
-            font-size: 32px;
-            font-weight: 300;
-            letter-spacing: -0.5px;
+            font-family: 'Dancing Script', cursive;
+            font-size: 48px;
+            font-weight: 600;
+            letter-spacing: 0;
+            color: #F1785A;
+        }
+
+        .header p {
+            font-size: 16px;
+            font-weight: 500;
+            color: #6F6F6F;
         }
 
         .auth-section {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #F4A785 0%, #F1785A 100%);
             border: none;
             padding: 60px 40px;
             margin-bottom: 30px;
@@ -284,15 +298,16 @@
 
         button {
             background: white;
-            color: #667eea;
+            color: #1F1F1F;
             border: none;
-            padding: 16px 48px;
+            padding: 18px 48px;
             border-radius: 50px;
-            font-size: 16px;
+            font-size: 17px;
             font-weight: 700;
             cursor: pointer;
             transition: all 0.3s ease;
             box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+            font-family: 'Be Vietnam Pro', sans-serif;
         }
 
         button:hover {
@@ -1256,8 +1271,8 @@
 </head>
 <body>
     <div class="header">
-        <h1>✨ Muse Shopping</h1>
-        <p style="color: #8e8e8e; margin-top: 8px;">Personalized Fashion Discovery</p>
+        <h1>Muse</h1>
+        <p style="margin-top: 8px;">All your favorite stores. One place. Personalized. Fast.</p>
     </div>
 
     <div class="container">
@@ -1268,8 +1283,47 @@
 
             <!-- Login Form -->
             <div id="loginForm" style="display: block; position: relative; z-index: 1;">
-                <div class="step-title">Welcome Back!</div>
-                <div class="step-description">Sign in to continue your shopping journey</div>
+                <div class="step-title">Welcome to Muse</div>
+                <div class="step-description">Your personal shopping companion</div>
+
+                <!-- Social Login Buttons -->
+                <div class="button-group" style="flex-direction: column;">
+                    <button onclick="connectWithGmail()" style="background: white; color: #1F1F1F; display: flex; align-items: center; justify-content: center; gap: 12px; cursor: pointer;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                        </svg>
+                        Continue with Google
+                    </button>
+
+                    <button onclick="connectWithInstagram()" style="background: white; color: #1F1F1F; display: flex; align-items: center; justify-content: center; gap: 12px; cursor: pointer;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <radialGradient id="ig-gradient" cx="50%" cy="100%" r="100%">
+                                <stop offset="0%" style="stop-color:#FD5;stop-opacity:1" />
+                                <stop offset="50%" style="stop-color:#FF543E;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#C837AB;stop-opacity:1" />
+                            </radialGradient>
+                            <rect x="2" y="2" width="20" height="20" rx="5" fill="url(#ig-gradient)"/>
+                            <circle cx="12" cy="12" r="4.5" fill="none" stroke="white" stroke-width="2"/>
+                            <circle cx="17.5" cy="6.5" r="1.5" fill="white"/>
+                        </svg>
+                        Continue with Instagram
+                    </button>
+
+                    <button class="skip-btn" onclick="showEmailLogin()" style="cursor: pointer;">Sign in with email instead</button>
+                </div>
+
+                <div class="toggle-auth" style="color: rgba(255,255,255,0.8);">
+                    New to Muse? <a href="#" onclick="showRegistration(event)" style="color: white;">Get started</a>
+                </div>
+            </div>
+
+            <!-- Email Login Form (hidden by default) -->
+            <div id="emailLoginForm" style="display: none; position: relative; z-index: 1;">
+                <div class="step-title">Sign in with email</div>
+                <div class="step-description">Enter your credentials</div>
 
                 <div class="form-group">
                     <input type="email" id="loginEmail" placeholder="your@email.com">
@@ -1283,20 +1337,48 @@
 
                 <div class="button-group">
                     <button onclick="login()">Sign In</button>
-                </div>
-
-                <div class="toggle-auth" style="color: rgba(255,255,255,0.8);">
-                    Don't have an account? <a href="#" onclick="showRegistration(event)" style="color: white;">Sign up</a>
+                    <button class="skip-btn" onclick="backToMainLogin()">Back</button>
                 </div>
             </div>
 
             <!-- Registration Form -->
             <div id="registrationForm" style="display: none;">
                 <!-- Question Counter -->
-                <div class="question-counter" id="questionCounter">Question 1 of 6</div>
+                <div class="question-counter" id="questionCounter">Question 1 of 7</div>
+
+                <!-- Step 0: Connect with Gmail (New First Step) -->
+                <div class="step-container active" id="step0">
+                    <div class="step-title">Let's get started</div>
+                    <div class="step-description">Connect your Gmail for a personalized experience</div>
+
+                    <div class="email-connection-container">
+                        <div class="email-connection-icon">📧</div>
+
+                        <div class="email-connection-benefits">
+                            <ul>
+                                <li>Automatically discover brands you already shop with</li>
+                                <li>Get personalized recommendations</li>
+                                <li>Never miss a sale from your favorite stores</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="button-group" style="flex-direction: column;">
+                        <button onclick="connectWithGmail()" style="background: white; color: #667eea; display: flex; align-items: center; justify-content: center; gap: 12px;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                            </svg>
+                            Connect with Gmail
+                        </button>
+                        <button class="skip-btn" onclick="nextStep(0)">Continue with email instead</button>
+                    </div>
+                </div>
 
                 <!-- Step 1: Name -->
-                <div class="step-container active" id="step1">
+                <div class="step-container" id="step1">
                     <div class="step-title">What's your name?</div>
                     <div class="step-description">Let's start with something simple</div>
 
@@ -1543,8 +1625,9 @@
         function showRegistration(event) {
             if (event) event.preventDefault();
             document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('emailLoginForm').style.display = 'none';
             document.getElementById('registrationForm').style.display = 'block';
-            currentStep = 1;
+            currentStep = 0;
             updateProgress();
             updateAuthBackground(currentStep);
         }
@@ -1552,23 +1635,34 @@
         function showLogin(event) {
             if (event) event.preventDefault();
             document.getElementById('registrationForm').style.display = 'none';
+            document.getElementById('emailLoginForm').style.display = 'none';
             document.getElementById('loginForm').style.display = 'block';
             clearErrors();
         }
 
+        function showEmailLogin() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('emailLoginForm').style.display = 'block';
+        }
+
+        function backToMainLogin() {
+            document.getElementById('emailLoginForm').style.display = 'none';
+            document.getElementById('loginForm').style.display = 'block';
+        }
+
         function updateProgress() {
-            const totalSteps = 6;
+            const totalSteps = 7;
 
             // Update question counter
             const counter = document.getElementById('questionCounter');
             if (counter) {
-                counter.textContent = `Question ${currentStep} of ${totalSteps}`;
+                counter.textContent = `Question ${currentStep + 1} of ${totalSteps}`;
             }
 
             // Show/hide steps
             document.querySelectorAll('.step-container').forEach((container, index) => {
                 container.classList.remove('active');
-                if (index + 1 === currentStep) {
+                if (index === currentStep) {
                     container.classList.add('active');
                     // Auto-focus first input in new step
                     setTimeout(() => {
@@ -1582,14 +1676,15 @@
         function updateAuthBackground(step) {
             const authSection = document.querySelector('.auth-section');
             const gradients = [
-                'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-                'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-                'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-                'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-                'linear-gradient(135deg, #30cfd0 0%, #330867 100%)'
+                'linear-gradient(135deg, #F4A785 0%, #F1785A 100%)',                    // Peach to Coral
+                'linear-gradient(135deg, #F4A785 20%, #C8B6FF 80%)',                    // Peach to Lilac
+                'linear-gradient(135deg, #F1785A 0%, #F6C6C1 100%)',                    // Coral to Blush
+                'linear-gradient(135deg, #8EC5FF 0%, #C8B6FF 100%)',                    // Sky to Lilac
+                'linear-gradient(135deg, #F4A785 0%, #8EC5FF 50%, #C8B6FF 100%)',       // Playful gradient
+                'linear-gradient(135deg, #F6C6C1 0%, #F1785A 50%, #F4A785 100%)',       // Warm blend
+                'linear-gradient(135deg, #C8B6FF 0%, #8EC5FF 50%, #F4A785 100%)'        // Cool to warm
             ];
-            authSection.style.background = gradients[(step - 1) % gradients.length];
+            authSection.style.background = gradients[(step) % gradients.length];
         }
 
         function clearErrors() {
@@ -1685,7 +1780,12 @@
         }
 
         async function nextStep(step) {
-            if (step === 1) {
+            if (step === 0) {
+                // Skip Gmail connection, continue with email registration
+                currentStep = 1;
+                updateProgress();
+                updateAuthBackground(currentStep);
+            } else if (step === 1) {
                 if (!validateStep1()) return;
                 registrationData.full_name = document.getElementById('fullName').value.trim();
                 currentStep = 2;
@@ -1719,10 +1819,90 @@
             }
         }
 
+        async function connectWithGmail() {
+            try {
+                showStatus('Connecting to Gmail...', 'info');
+
+                // If user is already logged in, initiate connection
+                if (accessToken) {
+                    const response = await fetch(`${API_BASE}/email/connect`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`
+                        }
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success && data.data.authUrl) {
+                        // Redirect to Google OAuth
+                        window.location.href = data.data.authUrl;
+                        return;
+                    }
+                }
+
+                // If not logged in yet, show message and continue to registration
+                showStatus('Please complete registration first, then connect Gmail.', 'info');
+                setTimeout(() => {
+                    currentStep = 1;
+                    updateProgress();
+                    updateAuthBackground(currentStep);
+                }, 1500);
+
+            } catch (error) {
+                console.error('Error connecting Gmail:', error);
+                showStatus('Unable to connect Gmail at this time. Continuing with registration.', 'info');
+                setTimeout(() => {
+                    currentStep = 1;
+                    updateProgress();
+                    updateAuthBackground(currentStep);
+                }, 1500);
+            }
+        }
+
+        async function connectWithInstagram() {
+            try {
+                showStatus('Instagram login coming soon!', 'info');
+                // TODO: Implement Instagram/Meta OAuth flow
+                // For now, redirect to email registration
+                setTimeout(() => {
+                    showEmailLogin();
+                }, 1500);
+            } catch (error) {
+                console.error('Error connecting Instagram:', error);
+                showStatus('Unable to connect Instagram at this time.', 'info');
+            }
+        }
+
         async function connectEmail() {
-            showStatus('Email connection feature coming soon!', 'info');
-            // For now, proceed to register
-            await registerUser();
+            try {
+                showStatus('Connecting your email...', 'info');
+
+                // Get OAuth URL
+                const response = await fetch(`${API_BASE}/email/connect`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.data.authUrl) {
+                    // Store that user wants to scan email after callback
+                    localStorage.setItem('pendingEmailScan', 'true');
+                    // Redirect to Google OAuth
+                    window.location.href = data.data.authUrl;
+                } else {
+                    showStatus('Unable to connect email. Continuing...', 'info');
+                    await registerUser();
+                }
+
+            } catch (error) {
+                console.error('Error connecting email:', error);
+                showStatus('Email connection not available. Continuing...', 'info');
+                await registerUser();
+            }
         }
 
         async function skipEmailConnection() {
@@ -1980,43 +2160,12 @@
             try {
                 const isFollowing = button.classList.contains('following');
 
-                // Demo mode: just update UI without API call
-                if (demoMode) {
-                    if (isFollowing) {
-                        button.classList.remove('following');
-                        button.textContent = 'Follow';
-                        followingCount--;
-                    } else {
-                        button.classList.add('following');
-                        button.textContent = 'Following';
-                        followingCount++;
-                    }
-
-                    // Update brand in allBrands array
-                    const brand = allBrands.find(b => b.id === brandId);
-                    if (brand) brand.isFollowing = !isFollowing;
-
-                    updateFollowingCount();
-                    return;
-                }
-
+                // Optimistically update UI immediately for better UX
                 if (isFollowing) {
-                    await fetch(`${API_BASE}/brands/follow/${brandId}`, {
-                        method: 'DELETE',
-                        headers: { 'Authorization': `Bearer ${accessToken}` }
-                    });
                     button.classList.remove('following');
                     button.textContent = 'Follow';
                     followingCount--;
                 } else {
-                    await fetch(`${API_BASE}/brands/follow`, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${accessToken}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ brand_id: brandId, notification_enabled: true })
-                    });
                     button.classList.add('following');
                     button.textContent = 'Following';
                     followingCount++;
@@ -2028,8 +2177,55 @@
 
                 updateFollowingCount();
 
+                // Demo mode: skip API call
+                if (demoMode) {
+                    return;
+                }
+
+                // Make API call in background
+                if (!isFollowing) {
+                    const response = await fetch(`${API_BASE}/brands/follow`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ brand_id: brandId, notification_enabled: true })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to follow brand');
+                    }
+                } else {
+                    const response = await fetch(`${API_BASE}/brands/follow/${brandId}`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${accessToken}` }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to unfollow brand');
+                    }
+                }
+
             } catch (error) {
                 console.error('Error toggling follow:', error);
+                // Revert UI on error
+                const isNowFollowing = button.classList.contains('following');
+                if (isNowFollowing) {
+                    button.classList.remove('following');
+                    button.textContent = 'Follow';
+                    followingCount--;
+                } else {
+                    button.classList.add('following');
+                    button.textContent = 'Following';
+                    followingCount++;
+                }
+
+                const brand = allBrands.find(b => b.id === brandId);
+                if (brand) brand.isFollowing = !isNowFollowing;
+
+                updateFollowingCount();
+                showToast('Failed to update brand follow status', 'error');
             }
         }
 

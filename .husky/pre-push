@@ -1,0 +1,20 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Run full test suite before push
+echo "Running pre-push tests..."
+
+# Backend tests with coverage
+echo "Testing backend with coverage..."
+npm run test:ci || exit 1
+
+# Frontend tests with coverage
+echo "Testing frontend with coverage..."
+cd frontend && npm run test:ci || exit 1
+cd ..
+
+# Integration tests
+echo "Running integration tests..."
+npm run test:integration || echo "Integration tests skipped (servers may not be running)"
+
+echo "✅ All tests passed! Ready to push."

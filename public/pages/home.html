@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Muse - Your Personal Shopping Muse</title>
+
+  <!-- Design System -->
+  <link rel="stylesheet" href="/css/design-tokens.css">
+  <link rel="stylesheet" href="/css/components.css">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* Page-specific styles */
+    .page-header {
+      position: sticky;
+      top: 0;
+      background: var(--color-ecru);
+      padding: var(--space-4) var(--page-margin);
+      z-index: var(--z-sticky);
+      border-bottom: 1px solid var(--color-divider);
+    }
+
+    .brand-logo {
+      font-size: 28px;
+      font-family: cursive; /* Replace with actual brand font */
+      text-align: center;
+      color: var(--color-charcoal);
+      margin-bottom: var(--space-3);
+    }
+
+    .stories-section {
+      background: var(--color-white);
+      padding: var(--space-4) var(--page-margin);
+      border-bottom: 1px solid var(--color-divider);
+    }
+
+    .feed-section {
+      padding: var(--page-margin);
+      padding-bottom: 100px; /* Space for bottom nav */
+    }
+
+    .section-title {
+      font-size: var(--text-lg);
+      font-weight: var(--weight-semibold);
+      margin-bottom: var(--space-4);
+      color: var(--color-charcoal);
+    }
+
+    .feed-card {
+      background: var(--color-white);
+      border-radius: var(--radius-card);
+      overflow: hidden;
+      margin-bottom: var(--space-5);
+      box-shadow: var(--shadow-base);
+    }
+
+    .feed-image {
+      width: 100%;
+      aspect-ratio: 4 / 5;
+      object-fit: cover;
+    }
+
+    .feed-content {
+      padding: var(--space-4);
+    }
+
+    .feed-caption {
+      font-size: var(--text-base);
+      line-height: var(--leading-relaxed);
+      color: var(--color-text-primary);
+      margin-bottom: var(--space-3);
+    }
+
+    .feed-meta {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      margin-bottom: var(--space-4);
+    }
+
+    .feed-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-circle);
+      object-fit: cover;
+    }
+
+    .feed-author {
+      flex: 1;
+    }
+
+    .feed-author-name {
+      font-size: var(--text-sm);
+      font-weight: var(--weight-semibold);
+      color: var(--color-charcoal);
+    }
+
+    .feed-author-handle {
+      font-size: var(--text-xs);
+      color: var(--color-text-secondary);
+    }
+
+    .feed-products {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-3);
+    }
+
+    .feed-product-tile {
+      background: var(--color-ecru);
+      border-radius: var(--radius-card-small);
+      padding: var(--space-2);
+      transition: transform var(--duration-fast) var(--ease-smooth);
+    }
+
+    .feed-product-tile:active {
+      transform: scale(0.98);
+    }
+
+    .feed-product-image {
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: cover;
+      border-radius: var(--radius-card-small);
+      margin-bottom: var(--space-2);
+    }
+
+    .feed-product-name {
+      font-size: var(--text-xs);
+      font-weight: var(--weight-medium);
+      color: var(--color-charcoal);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .feed-product-price {
+      font-size: var(--text-xs);
+      color: var(--color-text-secondary);
+    }
+
+    .module-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--space-4);
+    }
+
+    .see-all-link {
+      font-size: var(--text-sm);
+      font-weight: var(--weight-medium);
+      color: var(--color-coral);
+      cursor: pointer;
+    }
+
+    /* Trending items horizontal scroll */
+    .trending-items {
+      display: flex;
+      gap: var(--space-3);
+      overflow-x: auto;
+      padding-bottom: var(--space-2);
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+
+    .trending-items::-webkit-scrollbar {
+      display: none;
+    }
+
+    .trending-item {
+      flex-shrink: 0;
+      width: 140px;
+    }
+
+    .trending-image {
+      width: 100%;
+      aspect-ratio: 3 / 4;
+      object-fit: cover;
+      border-radius: var(--radius-card);
+      margin-bottom: var(--space-2);
+    }
+
+    .trending-brand {
+      font-size: var(--text-xs);
+      font-weight: var(--weight-medium);
+      color: var(--color-charcoal);
+      margin-bottom: var(--space-1);
+    }
+
+    .trending-price {
+      font-size: var(--text-sm);
+      font-weight: var(--weight-semibold);
+      color: var(--color-charcoal);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Page Header -->
+  <header class="page-header">
+    <div class="brand-logo">Muse</div>
+    <div class="search-container">
+      <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+      </svg>
+      <input type="text" class="search-input" placeholder="What's on your mind today?">
+    </div>
+  </header>
+
+  <!-- Stories Section -->
+  <section class="stories-section">
+    <div class="story-container">
+      <div class="story-item">
+        <div class="story-ring">
+          <img src="https://via.placeholder.com/72/F4A785/FFFFFF?text=☀️" alt="Summer" class="story-avatar">
+        </div>
+        <span class="story-label">Summer</span>
+      </div>
+
+      <div class="story-item">
+        <div class="story-ring">
+          <img src="https://via.placeholder.com/72/F1785A/FFFFFF?text=🔥" alt="Trending" class="story-avatar">
+        </div>
+        <span class="story-label">Trending</span>
+      </div>
+
+      <div class="story-item">
+        <div class="story-ring">
+          <img src="https://via.placeholder.com/72/C8B6FF/FFFFFF?text=✨" alt="New" class="story-avatar">
+        </div>
+        <span class="story-label">New In</span>
+      </div>
+
+      <div class="story-item">
+        <div class="story-ring">
+          <img src="https://via.placeholder.com/72/8EC5FF/FFFFFF?text=💙" alt="For You" class="story-avatar">
+        </div>
+        <span class="story-label">For You</span>
+      </div>
+
+      <div class="story-item">
+        <div class="story-ring">
+          <img src="https://via.placeholder.com/72/F6C6C1/FFFFFF?text=👗" alt="Dresses" class="story-avatar">
+        </div>
+        <span class="story-label">Dresses</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Feed -->
+  <main class="feed-section">
+
+    <!-- Trending This Week -->
+    <section style="margin-bottom: var(--space-8);">
+      <div class="module-header">
+        <h2 class="section-title">Trending This Week</h2>
+        <a class="see-all-link">See All</a>
+      </div>
+
+      <div class="trending-items">
+        <div class="trending-item">
+          <img src="https://via.placeholder.com/140x187/F4A785/FFFFFF?text=Item+1" alt="Trending item" class="trending-image">
+          <div class="trending-brand">Everlane</div>
+          <div class="trending-price">$98</div>
+        </div>
+
+        <div class="trending-item">
+          <img src="https://via.placeholder.com/140x187/F1785A/FFFFFF?text=Item+2" alt="Trending item" class="trending-image">
+          <div class="trending-brand">Reformation</div>
+          <div class="trending-price">$248</div>
+        </div>
+
+        <div class="trending-item">
+          <img src="https://via.placeholder.com/140x187/C8B6FF/FFFFFF?text=Item+3" alt="Trending item" class="trending-image">
+          <div class="trending-brand">& Other Stories</div>
+          <div class="trending-price">$129</div>
+        </div>
+
+        <div class="trending-item">
+          <img src="https://via.placeholder.com/140x187/8EC5FF/FFFFFF?text=Item+4" alt="Trending item" class="trending-image">
+          <div class="trending-brand">Madewell</div>
+          <div class="trending-price">$78</div>
+        </div>
+
+        <div class="trending-item">
+          <img src="https://via.placeholder.com/140x187/F6C6C1/FFFFFF?text=Item+5" alt="Trending item" class="trending-image">
+          <div class="trending-brand">Aritzia</div>
+          <div class="trending-price">$158</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Editorial Feed Card 1 -->
+    <article class="feed-card">
+      <img src="https://via.placeholder.com/600x750/F4A785/FFFFFF?text=Outfit+Inspiration" alt="Feed post" class="feed-image">
+
+      <div class="feed-content">
+        <div class="feed-meta">
+          <img src="https://via.placeholder.com/32" alt="User avatar" class="feed-avatar">
+          <div class="feed-author">
+            <div class="feed-author-name">Style Curator</div>
+            <div class="feed-author-handle">@muse_editorial</div>
+          </div>
+        </div>
+
+        <p class="feed-caption">
+          Effortless summer looks that transition from day to night. These pieces are perfect for your next getaway ☀️
+        </p>
+
+        <div class="feed-products">
+          <div class="feed-product-tile">
+            <img src="https://via.placeholder.com/150" alt="Product" class="feed-product-image">
+            <div class="feed-product-name">Linen Dress</div>
+            <div class="feed-product-price">$128</div>
+          </div>
+
+          <div class="feed-product-tile">
+            <img src="https://via.placeholder.com/150" alt="Product" class="feed-product-image">
+            <div class="feed-product-name">Woven Sandals</div>
+            <div class="feed-product-price">$89</div>
+          </div>
+
+          <div class="feed-product-tile">
+            <img src="https://via.placeholder.com/150" alt="Product" class="feed-product-image">
+            <div class="feed-product-name">Straw Bag</div>
+            <div class="feed-product-price">$68</div>
+          </div>
+
+          <div class="feed-product-tile">
+            <img src="https://via.placeholder.com/150" alt="Product" class="feed-product-image">
+            <div class="feed-product-name">Gold Hoops</div>
+            <div class="feed-product-price">$45</div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- Just For You Section -->
+    <section style="margin-bottom: var(--space-8);">
+      <div class="module-header">
+        <h2 class="section-title">Just For You</h2>
+        <a class="see-all-link">See All</a>
+      </div>
+
+      <div class="product-grid">
+        <div class="product-card">
+          <img src="https://via.placeholder.com/300x400/F1785A/FFFFFF?text=For+You+1" alt="Product" class="product-image">
+          <button class="save-btn" aria-label="Save product">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+            </svg>
+          </button>
+          <div class="product-info">
+            <div class="product-brand">COS</div>
+            <div class="product-name">Organic Cotton T-Shirt</div>
+            <div class="product-price">$55</div>
+          </div>
+        </div>
+
+        <div class="product-card">
+          <img src="https://via.placeholder.com/300x400/C8B6FF/FFFFFF?text=For+You+2" alt="Product" class="product-image">
+          <button class="save-btn is-saved" aria-label="Unsave product">
+            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+            </svg>
+          </button>
+          <div class="product-info">
+            <div class="product-brand">Aritzia</div>
+            <div class="product-name">Effortless Pant</div>
+            <div class="product-price">$128</div>
+          </div>
+        </div>
+
+        <div class="product-card">
+          <img src="https://via.placeholder.com/300x400/8EC5FF/FFFFFF?text=For+You+3" alt="Product" class="product-image">
+          <button class="save-btn" aria-label="Save product">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+            </svg>
+          </button>
+          <div class="product-info">
+            <div class="product-brand">Everlane</div>
+            <div class="product-name">The Day Heel</div>
+            <div class="product-price">$165</div>
+          </div>
+        </div>
+
+        <div class="product-card">
+          <img src="https://via.placeholder.com/300x400/F6C6C1/FFFFFF?text=For+You+4" alt="Product" class="product-image">
+          <button class="save-btn" aria-label="Save product">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+            </svg>
+          </button>
+          <div class="product-info">
+            <div class="product-brand">Ganni</div>
+            <div class="product-name">Printed Midi Dress</div>
+            <div class="product-price">$295</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Editorial Feed Card 2 -->
+    <article class="feed-card">
+      <img src="https://via.placeholder.com/600x750/C8B6FF/FFFFFF?text=Style+Tips" alt="Feed post" class="feed-image">
+
+      <div class="feed-content">
+        <div class="feed-meta">
+          <img src="https://via.placeholder.com/32" alt="User avatar" class="feed-avatar">
+          <div class="feed-author">
+            <div class="feed-author-name">Muse Style Guide</div>
+            <div class="feed-author-handle">@muse_tips</div>
+          </div>
+        </div>
+
+        <p class="feed-caption">
+          5 wardrobe essentials for the modern minimalist. Invest in quality pieces that work hard for you 🤍
+        </p>
+
+        <div class="feed-products">
+          <div class="feed-product-tile">
+            <img src="https://via.placeholder.com/150" alt="Product" class="feed-product-image">
+            <div class="feed-product-name">White Tee</div>
+            <div class="feed-product-price">$48</div>
+          </div>
+
+          <div class="feed-product-tile">
+            <img src="https://via.placeholder.com/150" alt="Product" class="feed-product-image">
+            <div class="feed-product-name">Black Jeans</div>
+            <div class="feed-product-price">$168</div>
+          </div>
+
+          <div class="feed-product-tile">
+            <img src="https://via.placeholder.com/150" alt="Product" class="feed-product-image">
+            <div class="feed-product-name">Trench Coat</div>
+            <div class="feed-product-price">$398</div>
+          </div>
+
+          <div class="feed-product-tile">
+            <img src="https://via.placeholder.com/150" alt="Product" class="feed-product-image">
+            <div class="feed-product-name">Leather Bag</div>
+            <div class="feed-product-price">$248</div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+  </main>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <button class="nav-item is-active">
+      <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+      </svg>
+      <span class="nav-label">Home</span>
+    </button>
+
+    <button class="nav-item">
+      <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+      </svg>
+      <span class="nav-label">Search</span>
+    </button>
+
+    <button class="nav-item">
+      <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+      </svg>
+      <span class="nav-label">Muse</span>
+    </button>
+
+    <button class="nav-item">
+      <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+      </svg>
+      <span class="nav-label">Saves</span>
+    </button>
+
+    <button class="nav-item">
+      <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+      </svg>
+      <span class="nav-label">Profile</span>
+    </button>
+  </nav>
+
+  <script>
+    // Save button interactions
+    document.querySelectorAll('.save-btn').forEach(button => {
+      button.addEventListener('click', function(e) {
+        e.stopPropagation();
+        this.classList.toggle('is-saved');
+
+        // Animate the heart
+        if (this.classList.contains('is-saved')) {
+          this.style.transform = 'scale(1.2)';
+          setTimeout(() => {
+            this.style.transform = '';
+          }, 200);
+        }
+      });
+    });
+
+    // Nav item interactions
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', function() {
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('is-active'));
+        this.classList.add('is-active');
+      });
+    });
+
+    // Product card tap effects
+    document.querySelectorAll('.product-card, .feed-product-tile').forEach(card => {
+      card.addEventListener('click', function() {
+        console.log('Product clicked');
+        // Would navigate to PDP here
+      });
+    });
+  </script>
+</body>
+</html>
