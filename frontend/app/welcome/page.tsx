@@ -8,7 +8,7 @@ export default function WelcomePage() {
         {/* Logo */}
         <div className="text-center mb-6">
         <div className="flex justify-center mb-6">
-          <img src="/muse-wordmark.svg" alt="Muse" className="h-96" />
+          <img src="/muse-wordmark-gradient.svg" alt="Muse" className="h-96" />
         </div>
         <p className="text-lg text-gray-600 font-light">
           Shop all your favorites in one place
