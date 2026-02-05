@@ -122,7 +122,7 @@ export default function Newsfeed() {
       subtitle: "Discover the season's must-haves",
       cta_text: 'Shop Now',
       cta_url: '/search?q=winter',
-      gradient: 'from-[#F4A785]/20 to-[#8EC5FF]/20',
+      gradient: 'from-[#F4C4B0]/20 to-[#8EC5FF]/20',
       is_active: true,
       priority: 1,
     },
@@ -132,7 +132,7 @@ export default function Newsfeed() {
       subtitle: 'Fresh styles for the new season',
       cta_text: 'Explore',
       cta_url: '/search?q=spring',
-      gradient: 'from-[#8EC5FF]/20 to-[#F4A785]/20',
+      gradient: 'from-[#8EC5FF]/20 to-[#F4C4B0]/20',
       is_active: true,
       priority: 2,
     },
@@ -142,7 +142,7 @@ export default function Newsfeed() {
       subtitle: 'Shop eco-friendly fashion',
       cta_text: 'Shop Sustainable',
       cta_url: '/search?q=sustainable',
-      gradient: 'from-[#F1785A]/20 to-[#F4A785]/20',
+      gradient: 'from-[#F1785A]/20 to-[#F4C4B0]/20',
       is_active: true,
       priority: 3,
     },
@@ -397,7 +397,7 @@ export default function Newsfeed() {
                 onClick={() => handleStoryClick(story.id)}
                 className="flex flex-col items-center gap-2 flex-shrink-0"
               >
-                <div className="w-[68px] h-[68px] rounded-full p-[3px] bg-gradient-to-br from-[#F4A785] to-[#F1785A]">
+                <div className="w-[68px] h-[68px] rounded-full p-[3px] bg-gradient-to-br from-[#F4C4B0] to-[#F1785A]">
                   {story.thumbnail_url ? (
                     <div className="w-full h-full rounded-full bg-white flex items-center justify-center p-2">
                       <img
@@ -427,7 +427,7 @@ export default function Newsfeed() {
               href={`/campaign/${heroCampaigns[currentHero].id}`}
               className={`block relative aspect-[16/9] md:aspect-[21/9] bg-gradient-to-br ${
                 heroCampaigns[currentHero].gradient ||
-                'from-[#F4A785]/20 to-[#8EC5FF]/20'
+                'from-[#F4C4B0]/20 to-[#8EC5FF]/20'
               } rounded-[12px] overflow-hidden transition-all duration-700`}
             >
               <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
@@ -479,7 +479,7 @@ export default function Newsfeed() {
           </div>
 
           {/* Enhanced Search Box */}
-          <div className="relative h-auto min-h-[64px] max-h-[150px] bg-white rounded-[16px] shadow-[0_4px_20px_rgba(0,0,0,0.12)] border-2 border-transparent hover:border-[#F4A785] focus-within:border-[#F1785A] transition-all duration-200 flex items-center px-5 py-4">
+          <div className="relative h-auto min-h-[64px] max-h-[150px] bg-white rounded-[16px] shadow-[0_4px_20px_rgba(0,0,0,0.12)] border-2 border-transparent hover:border-[#F4C4B0] focus-within:border-[#F1785A] transition-all duration-200 flex items-center px-5 py-4">
             <svg
               className="w-6 h-6 text-[#F1785A] mr-3 flex-shrink-0"
               fill="none"
@@ -505,7 +505,7 @@ export default function Newsfeed() {
               }}
             />
             <button
-              className="ml-3 px-6 py-3 bg-gradient-to-r from-[#F4A785] to-[#F1785A] text-white text-[14px] font-semibold rounded-full hover:shadow-lg hover:scale-105 transition-all duration-200 flex-shrink-0"
+              className="ml-3 px-6 py-3 bg-gradient-to-r from-[#F4C4B0] to-[#F1785A] text-white text-[14px] font-semibold rounded-full hover:shadow-lg hover:scale-105 transition-all duration-200 flex-shrink-0"
               onClick={() => {
                 // Handle chat submission
                 console.log('Chat submitted');
