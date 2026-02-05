@@ -66,6 +66,215 @@ class ItemService {
   }
 
   /**
+   * Get reviews summary + recent reviews (mock server-side for now)
+   */
+  static async getItemReviews(itemId, limit = 3, offset = 0, sortBy = 'newest') {
+    const summaryQuery = `
+      SELECT
+        COUNT(*)::int as total_reviews,
+        COALESCE(AVG(rating), 0) as rating,
+        COUNT(*) FILTER (WHERE rating = 5)::int as count_5,
+        COUNT(*) FILTER (WHERE rating = 4)::int as count_4,
+        COUNT(*) FILTER (WHERE rating = 3)::int as count_3,
+        COUNT(*) FILTER (WHERE rating = 2)::int as count_2,
+        COUNT(*) FILTER (WHERE rating = 1)::int as count_1
+      FROM item_reviews
+      WHERE item_id = $1 AND status = 'published'
+    `;
+
+    let orderClause = `ORDER BY COALESCE(r.source_created_at, r.created_at) DESC`;
+    if (sortBy === 'helpful') {
+      orderClause = `ORDER BY r.helpful_count DESC, COALESCE(r.source_created_at, r.created_at) DESC`;
+    }
+
+    const reviewsQuery = `
+      SELECT
+        r.id,
+        r.rating,
+        r.title,
+        r.body,
+        r.helpful_count,
+        COALESCE(r.source_created_at, r.created_at) as created_at,
+        r.source_retailer,
+        r.source_url,
+        COALESCE(u.full_name, r.reviewer_name, 'Muse Shopper') as reviewer_name
+      FROM item_reviews r
+      LEFT JOIN users u ON r.user_id = u.id
+      WHERE r.item_id = $1 AND r.status = 'published'
+      ${orderClause}
+      LIMIT $2 OFFSET $3
+    `;
+
+    const sourcesQuery = `
+      SELECT DISTINCT source_retailer
+      FROM item_reviews
+      WHERE item_id = $1 AND status = 'published' AND source_retailer IS NOT NULL
+      ORDER BY source_retailer
+    `;
+
+    const [summaryResult, itemsResult, sourcesResult] = await Promise.all([
+      pool.query(summaryQuery, [itemId]),
+      pool.query(reviewsQuery, [itemId, Math.max(1, limit), Math.max(0, offset)]),
+      pool.query(sourcesQuery, [itemId])
+    ]);
+
+    const summaryRow = summaryResult.rows[0];
+    const total = summaryRow.total_reviews || 0;
+
+    const breakdown = {
+      5: total ? summaryRow.count_5 / total : 0,
+      4: total ? summaryRow.count_4 / total : 0,
+      3: total ? summaryRow.count_3 / total : 0,
+      2: total ? summaryRow.count_2 / total : 0,
+      1: total ? summaryRow.count_1 / total : 0
+    };
+
+    return {
+      summary: {
+        rating: parseFloat(summaryRow.rating) || 0,
+        total_reviews: total,
+        breakdown,
+        sources: sourcesResult.rows.map(row => row.source_retailer).filter(Boolean)
+      },
+      pagination: {
+        limit: Math.max(1, limit),
+        offset: Math.max(0, offset),
+        total,
+        has_more: Math.max(0, offset) + itemsResult.rows.length < total
+      },
+      items: itemsResult.rows
+    };
+  }
+
+  /**
+   * Create a new review for an item
+   */
+  static async createItemReview(itemId, { userId = null, rating, title, body, reviewerName = null }) {
+    const query = `
+      INSERT INTO item_reviews (item_id, user_id, reviewer_name, rating, title, body, source_retailer)
+      VALUES ($1, $2, $3, $4, $5, $6, 'muse')
+      RETURNING *
+    `;
+
+    const result = await pool.query(query, [
+      itemId,
+      userId,
+      reviewerName,
+      rating,
+      title || null,
+      body
+    ]);
+
+    return result.rows[0];
+  }
+
+  /**
+   * Increment helpful count for a review
+   */
+  static async incrementReviewHelpful(itemId, reviewId, { userId = null, ipAddress = null } = {}) {
+    const ipHash = ipAddress ? this._hashIp(ipAddress) : null;
+
+    if (!userId && !ipHash) {
+      return null;
+    }
+
+    const insertEvent = `
+      INSERT INTO review_helpful_events (review_id, user_id, ip_hash)
+      VALUES ($1, $2, $3)
+      ON CONFLICT DO NOTHING
+      RETURNING id
+    `;
+
+    const eventResult = await pool.query(insertEvent, [reviewId, userId, ipHash]);
+    if (eventResult.rows.length === 0) {
+      return { already_marked: true };
+    }
+
+    const query = `
+      UPDATE item_reviews
+      SET helpful_count = helpful_count + 1, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1 AND item_id = $2 AND status = 'published'
+      RETURNING id, helpful_count
+    `;
+
+    const result = await pool.query(query, [reviewId, itemId]);
+    return result.rows[0] || null;
+  }
+
+  static _hashIp(ipAddress) {
+    const crypto = require('crypto');
+    return crypto.createHash('sha256').update(ipAddress).digest('hex');
+  }
+
+  /**
+   * Report a review
+   */
+  static async reportReview(itemId, reviewId, { userId = null, ipAddress = null, reason = 'inappropriate' } = {}) {
+    const ipHash = ipAddress ? this._hashIp(ipAddress) : null;
+
+    const existsQuery = `
+      SELECT id FROM item_reviews
+      WHERE id = $1 AND item_id = $2 AND status = 'published'
+    `;
+    const exists = await pool.query(existsQuery, [reviewId, itemId]);
+    if (exists.rows.length === 0) {
+      return null;
+    }
+
+    const query = `
+      INSERT INTO review_reports (review_id, user_id, ip_hash, reason)
+      VALUES ($1, $2, $3, $4)
+      RETURNING *
+    `;
+
+    const result = await pool.query(query, [reviewId, userId, ipHash, reason]);
+    const report = result.rows[0];
+
+    const threshold = parseInt(process.env.REVIEW_REPORT_HIDE_THRESHOLD || '3', 10);
+    const countResult = await pool.query(
+      'SELECT COUNT(*)::int as total FROM review_reports WHERE review_id = $1',
+      [reviewId]
+    );
+    const total = countResult.rows[0].total || 0;
+
+    if (total >= threshold) {
+      await pool.query(
+        `UPDATE item_reviews
+         SET status = 'hidden', updated_at = CURRENT_TIMESTAMP
+         WHERE id = $1`,
+        [reviewId]
+      );
+    }
+
+    return { ...report, report_count: total };
+  }
+
+  /**
+   * Get PDP bundle (item details + similar items + favorites)
+   */
+  static async getPdpBundle(itemId, userId = null, options = {}) {
+    const { similarLimit = 8 } = options;
+
+    const item = await this.getItemDetails(itemId);
+    if (!item) {
+      return null;
+    }
+
+    const [similarItems, isFavorited] = await Promise.all([
+      this.getSimilarItems(itemId, similarLimit),
+      userId ? this.isFavorited(userId, itemId) : Promise.resolve(false)
+    ]);
+
+    return {
+      item: {
+        ...item,
+        is_favorited: isFavorited
+      },
+      similar_items: similarItems
+    };
+  }
+
+  /**
    * Search items by keyword
    */
   static async searchItems(query, filters = {}, pagination = {}) {
@@ -296,6 +505,7 @@ class ItemService {
 
     return grouped;
   }
+
 }
 
 module.exports = ItemService;

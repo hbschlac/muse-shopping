@@ -29,6 +29,7 @@ const adminInstagramRoutes = require('./admin/instagram');
 const adminChatRoutes = require('./admin/chat');
 const adminExperimentRoutes = require('./admin/experiments');
 const adminManualOrderRoutes = require('./admin/manualOrders');
+const adminReviewRoutes = require('./admin/reviews');
 
 const router = express.Router();
 const path = require('path');
@@ -79,6 +80,11 @@ router.get('/terms', (req, res) => {
   res.sendFile(path.join(__dirname, '../../public/terms-of-service.html'));
 });
 
+// PDP page (static HTML)
+router.get('/pdp', (req, res) => {
+  res.sendFile(path.join(__dirname, '../../public/pdp.html'));
+});
+
 // API routes
 router.use('/auth', authRoutes);
 router.use('/auth', googleAuthRoutes); // Google OAuth routes
@@ -113,5 +119,6 @@ router.use('/admin/instagram', adminInstagramRoutes);
 router.use('/admin/experiments', adminExperimentRoutes);
 router.use('/admin/chat', adminChatRoutes);
 router.use('/admin/manual-orders', adminManualOrderRoutes);
+router.use('/admin/reviews', adminReviewRoutes);
 
 module.exports = router;

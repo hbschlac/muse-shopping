@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Muse - Product Detail</title>
+    <link rel="stylesheet" href="/pdp.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header class="topbar">
+        <button class="icon-btn" type="button" aria-label="Back">
+          <span class="icon">←</span>
+        </button>
+        <div class="wordmark">
+          <img src="/muse-logo.png" alt="Muse" />
+        </div>
+        <div class="icon-row">
+          <button class="icon-btn" type="button" aria-label="Save">
+            <span class="icon">♡</span>
+          </button>
+          <a class="icon-btn" href="/chat.html" aria-label="Chat">
+            <span class="icon">💬</span>
+          </a>
+          <button class="icon-btn" type="button" aria-label="Bag">
+            <span class="icon">👜</span>
+          </button>
+        </div>
+      </header>
+
+      <section class="media-shell">
+        <div class="media">
+          <img id="heroImage" src="/muse-icon.png" alt="Item image" />
+        </div>
+        <div class="thumbs" id="thumbs"></div>
+        <div class="dots" aria-hidden="true">
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+      </section>
+
+      <section class="details">
+        <h1 class="title" id="itemTitle">Item Name</h1>
+        <div class="rating-row">
+          <div class="stars">★★★★★</div>
+          <div class="rating-text"><span id="ratingValue">4.8</span> (<span id="ratingCount">328</span> Reviews)</div>
+        </div>
+
+        <div class="price-row">
+          <span class="price" id="price">$0</span>
+          <span class="dot">•</span>
+          <span class="in-stock" id="stockStatus">In Stock</span>
+          <span class="size-guide">Size Guide →</span>
+        </div>
+
+        <div class="option-row" id="colorOptions">
+          <button class="pill active" type="button">Camel</button>
+          <button class="pill" type="button">Dark Gray</button>
+          <button class="pill" type="button">Black</button>
+        </div>
+
+        <div class="option-row" id="sizeOptions">
+          <button class="pill" type="button">XS</button>
+          <button class="pill" type="button">S</button>
+          <button class="pill" type="button">M</button>
+          <button class="pill" type="button">L</button>
+        </div>
+
+        <div class="info-card">
+          <span class="truck">🚚</span>
+          <span>Free shipping on all orders</span>
+        </div>
+
+        <p class="description" id="itemDesc">
+          A timeless camel wool coat with a classic, tailored fit.
+        </p>
+      </section>
+
+      <section class="cta-shell">
+        <button class="cta" type="button">Add to Bag</button>
+        <button class="cta-secondary" type="button">Buy Now</button>
+      </section>
+
+      <section class="reviews">
+        <div class="section-header">
+          <h2>Ratings & Reviews</h2>
+          <div class="source-badges" id="reviewSources"></div>
+          <button class="ghost-btn" type="button" id="openReviewModal">Write a Review</button>
+        </div>
+
+        <div class="review-summary">
+          <div class="summary-score">
+            <div class="score" id="summaryRating">4.8</div>
+            <div class="stars">★★★★★</div>
+            <div class="summary-count" id="summaryCount">866</div>
+          </div>
+          <div class="summary-bars">
+            <div class="bar-row">
+              <span>5</span>
+              <div class="bar"><span id="bar5" style="width: 72%;"></span></div>
+            </div>
+            <div class="bar-row">
+              <span>4</span>
+              <div class="bar"><span id="bar4" style="width: 18%;"></span></div>
+            </div>
+            <div class="bar-row">
+              <span>3</span>
+              <div class="bar"><span id="bar3" style="width: 6%;"></span></div>
+            </div>
+            <div class="bar-row">
+              <span>2</span>
+              <div class="bar"><span id="bar2" style="width: 3%;"></span></div>
+            </div>
+            <div class="bar-row">
+              <span>1</span>
+              <div class="bar"><span id="bar1" style="width: 1%;"></span></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="reviewList"></div>
+      </section>
+
+      <section class="product-info">
+        <h2>Product Information</h2>
+        <div class="info-grid" id="productInfoGrid"></div>
+      </section>
+
+      <section class="card">
+        <h2 class="section-title">Where to buy</h2>
+        <div id="listings"></div>
+      </section>
+
+      <section class="card">
+        <h2 class="section-title">You Might Also Like</h2>
+        <div class="similar-list" id="similarItems"></div>
+      </section>
+
+      <div class="status" id="status">Waiting for item…</div>
+    </div>
+
+    <div class="modal-backdrop" id="reviewModal" aria-hidden="true">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>Write a Review</h3>
+          <button class="icon-btn" type="button" id="closeReviewModal">×</button>
+        </div>
+        <form id="reviewForm">
+          <label>
+            Rating
+            <select name="rating" required>
+              <option value="5">5</option>
+              <option value="4">4</option>
+              <option value="3">3</option>
+              <option value="2">2</option>
+              <option value="1">1</option>
+            </select>
+          </label>
+          <label>
+            Title
+            <input name="title" placeholder="Short summary" />
+          </label>
+          <label>
+            Review
+            <textarea name="body" rows="4" placeholder="Share your thoughts" required></textarea>
+          </label>
+          <label>
+            Name (optional)
+            <input name="reviewer_name" placeholder="Your name" />
+          </label>
+          <button class="cta" type="submit">Submit Review</button>
+        </form>
+      </div>
+    </div>
+
+    <nav class="bottom-nav" aria-label="Primary">
+      <a class="nav-item active" href="/muse-ui.html">
+        <span class="nav-icon">⌂</span>
+        <span>Feed</span>
+      </a>
+      <a class="nav-item" href="/chat.html">
+        <span class="nav-icon">▦</span>
+        <span>Chat</span>
+      </a>
+      <button class="nav-item" type="button">
+        <span class="nav-icon">♡</span>
+        <span>Saved</span>
+      </button>
+      <button class="nav-item" type="button">
+        <span class="nav-icon">👜</span>
+        <span>Cart</span>
+      </button>
+    </nav>
+
+    <script src="/pdp.js"></script>
+  </body>
+</html>

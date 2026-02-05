@@ -9,6 +9,11 @@ router.get('/filters', ItemController.getFilterOptions);
 router.get('/search', ItemController.searchItems);
 
 // Optional auth endpoints (work with or without auth)
+router.get('/:itemId/pdp', optionalAuthMiddleware, ItemController.getPdpBundle);
+router.get('/:itemId/reviews', ItemController.getItemReviews);
+router.post('/:itemId/reviews', optionalAuthMiddleware, ItemController.createItemReview);
+router.post('/:itemId/reviews/:reviewId/helpful', optionalAuthMiddleware, ItemController.markReviewHelpful);
+router.post('/:itemId/reviews/:reviewId/report', optionalAuthMiddleware, ItemController.reportReview);
 router.get('/:itemId', optionalAuthMiddleware, ItemController.getItemDetails);
 router.get('/:itemId/similar', ItemController.getSimilarItems);
 

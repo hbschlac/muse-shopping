@@ -1,20 +1,29 @@
+@import url("https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap");
+
 :root {
-  --bg: #f6f1e8;
+  color-scheme: light;
+  --slate-900: #1f2428;
+  --slate-700: #343c42;
+  --slate-100: #f4f5f6;
+  --blue-cool: #4d7cfe;
+  --peach: #f7b38a;
+  --coral: #ff6f6b;
   --panel: #ffffff;
-  --text: #1f1d1a;
-  --muted: #6c635a;
-  --accent: #2d6a4f;
-  --accent-2: #e1b12c;
-  --border: #e5ddd0;
+  --border: #e2dcd4;
+  --text: var(--slate-900);
+  --muted: #6f655b;
+  --btn-grad-primary: linear-gradient(135deg, #4d7cfe 0%, #ff6f6b 100%);
+  --btn-grad-secondary: linear-gradient(135deg, #f7b38a 0%, #ff6f6b 100%);
+  --shadow: 0 14px 32px rgba(31, 36, 40, 0.12);
 }
 
 * { box-sizing: border-box; }
 
 body {
   margin: 0;
-  font-family: "Merriweather", "Georgia", serif;
+  font-family: "Be Vietnam Pro", system-ui, sans-serif;
   color: var(--text);
-  background: linear-gradient(120deg, #f6f1e8, #f0e7d8);
+  background: radial-gradient(circle at 15% 10%, #2b3238 0%, #1f2428 40%, #15191c 100%);
 }
 
 .app {
@@ -34,11 +43,12 @@ body {
 .header h1 {
   margin: 0 0 6px 0;
   font-size: 32px;
+  color: #f8f7f4;
 }
 
 .header p {
   margin: 0;
-  color: var(--muted);
+  color: #c6c0b7;
 }
 
 .status {
@@ -47,6 +57,7 @@ body {
   padding: 10px 14px;
   border-radius: 999px;
   font-size: 14px;
+  color: var(--slate-700);
 }
 
 .panel {
@@ -55,7 +66,7 @@ body {
   border-radius: 12px;
   padding: 20px;
   margin-bottom: 20px;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+  box-shadow: var(--shadow);
 }
 
 .panel h2 {
@@ -82,6 +93,7 @@ input, select {
   border-radius: 8px;
   border: 1px solid var(--border);
   font-size: 14px;
+  background: #fff;
 }
 
 .variants {
@@ -131,16 +143,17 @@ button {
   padding: 10px 14px;
   border-radius: 8px;
   border: none;
-  background: var(--accent);
+  background: var(--btn-grad-primary);
   color: #fff;
   cursor: pointer;
   font-size: 14px;
+  box-shadow: 0 8px 18px rgba(77, 124, 254, 0.25);
 }
 
 button.secondary {
-  background: #efe7dc;
-  color: var(--text);
-  border: 1px solid var(--border);
+  background: var(--btn-grad-secondary);
+  color: #1f2428;
+  border: none;
 }
 
 .list {
@@ -170,9 +183,9 @@ button.secondary {
 
 .tag {
   font-size: 12px;
-  background: #f1f7f3;
-  color: #2d6a4f;
-  border: 1px solid #cfe6d8;
+  background: rgba(77, 124, 254, 0.12);
+  color: var(--blue-cool);
+  border: 1px solid rgba(77, 124, 254, 0.2);
   padding: 4px 8px;
   border-radius: 999px;
 }

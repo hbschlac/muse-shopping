@@ -7,6 +7,7 @@ const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
 const morgan = require('morgan');
+const path = require('path');
 require('dotenv').config();
 
 const routes = require('./routes');
@@ -40,6 +41,9 @@ app.use(express.urlencoded({ extended: true }));
 
 // Input sanitization (protect against XSS)
 app.use(sanitizeInput);
+
+// Serve static assets (public)
+app.use(express.static(path.join(__dirname, '../public')));
 
 // HTTP request logging
 if (process.env.NODE_ENV === 'development') {

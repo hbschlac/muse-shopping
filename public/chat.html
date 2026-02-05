@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Muse - Chat</title>
+    <link rel="stylesheet" href="/chat.css" />
+  </head>
+  <body data-api-base="/api/v1">
+    <div class="stage">
+      <div class="phone">
+        <div class="screen">
+          <header class="status-bar">
+            <span class="time">9:41</span>
+            <div class="status-icons">
+              <span class="signal"></span>
+              <span class="wifi"></span>
+              <span class="battery"></span>
+            </div>
+          </header>
+
+          <header class="chat-header">
+            <a class="icon-btn" href="/muse-ui.html" aria-label="Back">
+              <span class="icon">←</span>
+            </a>
+            <div class="header-title">
+              <div class="wordmark">Muse</div>
+              <div class="subtitle">Shopping Assistant</div>
+            </div>
+            <div class="header-spacer"></div>
+          </header>
+
+          <section class="profile-strip" aria-label="Shopper profile">
+            <div class="profile-card">
+              <div class="profile-avatar" id="profileAvatar">HS</div>
+              <div>
+                <div class="profile-title">Your style profile</div>
+                <div class="profile-meta" id="profileMeta">Soft neutrals · Feminine classics · Under $150</div>
+              </div>
+            </div>
+            <div class="profile-tags" id="profileTags">
+              <span class="tag">size M</span>
+              <span class="tag">warm palette</span>
+              <span class="tag">weekend/casual</span>
+            </div>
+          </section>
+
+          <section class="tone-strip" aria-label="Tone selector">
+            <span class="tone-label">Tone</span>
+            <div class="tone-switch" role="tablist" aria-label="Chat tone">
+              <button class="tone-btn" type="button" data-tone="editorial" role="tab">Editorial</button>
+              <button class="tone-btn" type="button" data-tone="concierge" role="tab">Concierge</button>
+              <button class="tone-btn" type="button" data-tone="playful" role="tab">Playful</button>
+            </div>
+          </section>
+
+          <main class="chat-body" id="chatBody">
+            <section class="message-row">
+              <div class="avatar">m</div>
+              <div class="bubble assistant">
+                <span class="emoji">👋</span>
+                Hi there! How can I help you today?
+              </div>
+            </section>
+
+            <section class="quick-replies" id="quickReplies">
+              <button class="chip" type="button">Find a trench coat</button>
+              <button class="chip" type="button">I’m looking for spring outfits</button>
+            </section>
+
+            <section class="message-row user">
+              <div class="bubble user">
+                I like the striped dress. Can I see similar styles?
+                <span class="chevron">›</span>
+              </div>
+            </section>
+
+            <section class="message-row">
+              <div class="avatar">m</div>
+              <div class="bubble assistant">
+                Absolutely! Here are some similar striped dresses you might like…
+              </div>
+            </section>
+
+            <section class="message-row typing is-hidden" id="typingRow" aria-live="polite">
+              <div class="avatar">m</div>
+              <div class="bubble assistant typing-bubble">
+                <span class="typing-label">Muse is typing</span>
+                <span class="typing-dots" aria-hidden="true">
+                  <span></span><span></span><span></span>
+                </span>
+              </div>
+            </section>
+
+            <section class="carousel-card" id="carouselCard">
+              <div class="carousel-header">
+                <h3 id="carouselTitle">Similar striped dresses</h3>
+                <button class="ghost-btn" type="button" aria-label="Expand">›</button>
+              </div>
+
+              <div class="carousel">
+                <button class="carousel-btn left" type="button" aria-label="Previous">‹</button>
+                <div class="carousel-track" id="carouselTrack">
+                  <article class="product-card">
+                    <div class="product-photo photo-one"></div>
+                    <button class="heart" type="button" aria-label="Save">♡</button>
+                    <div class="product-name">Striped Dress</div>
+                    <div class="price">$98</div>
+                  </article>
+                  <article class="product-card">
+                    <div class="product-photo photo-two"></div>
+                    <button class="heart" type="button" aria-label="Save">♡</button>
+                    <div class="product-name">Striped Cardigan</div>
+                    <div class="price">$130</div>
+                  </article>
+                  <article class="product-card">
+                    <div class="product-photo photo-three"></div>
+                    <button class="heart" type="button" aria-label="Save">♡</button>
+                    <div class="product-name">Striped Sweater Dress</div>
+                    <div class="price">$120</div>
+                  </article>
+                </div>
+                <button class="carousel-btn right" type="button" aria-label="Next">›</button>
+              </div>
+
+              <div class="carousel-dots">
+                <span class="dot active"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+              </div>
+            </section>
+
+            <section class="action-row">
+              <button class="pill" type="button">Browse More</button>
+              <button class="pill" type="button">Refine Search</button>
+              <button class="pill" type="button">Start Over</button>
+            </section>
+          </main>
+
+          <footer class="composer">
+            <button class="icon-btn ghost" type="button" aria-label="Emoji">
+              <span class="icon">☺︎</span>
+            </button>
+            <input class="composer-input" id="composerInput" placeholder="Write a message…" />
+            <button class="send" type="button" id="sendBtn" aria-label="Send">
+              <span class="send-icon">➤</span>
+            </button>
+          </footer>
+
+          <nav class="bottom-nav" aria-label="Primary">
+            <a class="nav-item" href="/muse-ui.html">
+              <span class="nav-icon">⌂</span>
+              <span>Feed</span>
+            </a>
+            <button class="nav-item active" type="button">
+              <span class="nav-icon">▦</span>
+              <span>Chat</span>
+            </button>
+            <button class="nav-item" type="button">
+              <span class="nav-icon">♡</span>
+              <span>Saved</span>
+            </button>
+            <button class="nav-item" type="button">
+              <span class="nav-icon">👜</span>
+              <span>Cart</span>
+            </button>
+          </nav>
+        </div>
+      </div>
+    </div>
+    <script src="/chat.js"></script>
+  </body>
+</html>

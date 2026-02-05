@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Muse - Reviews</title>
+    <link rel="stylesheet" href="/pdp.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header class="topbar">
+        <button class="icon-btn" type="button" onclick="window.history.back()" aria-label="Back">
+          <span class="icon">←</span>
+        </button>
+        <div class="wordmark">
+          <img src="/muse-logo.png" alt="Muse" />
+        </div>
+        <div class="icon-row"></div>
+      </header>
+
+      <section class="reviews reviews-page">
+        <div class="section-header">
+          <h2>All Reviews</h2>
+          <div class="source-badges" id="reviewSources"></div>
+          <button class="ghost-btn" type="button" id="openReviewModal">Write a Review</button>
+        </div>
+        <div class="sort-row">
+          <label>
+            Sort by
+            <select id="sortSelect">
+              <option value="newest">Newest</option>
+              <option value="helpful">Most Helpful</option>
+            </select>
+          </label>
+        </div>
+        <div id="reviewList"></div>
+        <button class="ghost-btn" id="loadMoreBtn" type="button">Load more</button>
+      </section>
+    </div>
+
+    <div class="modal-backdrop" id="reviewModal" aria-hidden="true">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>Write a Review</h3>
+          <button class="icon-btn" type="button" id="closeReviewModal">×</button>
+        </div>
+        <form id="reviewForm">
+          <label>
+            Rating
+            <select name="rating" required>
+              <option value="5">5</option>
+              <option value="4">4</option>
+              <option value="3">3</option>
+              <option value="2">2</option>
+              <option value="1">1</option>
+            </select>
+          </label>
+          <label>
+            Title
+            <input name="title" placeholder="Short summary" />
+          </label>
+          <label>
+            Review
+            <textarea name="body" rows="4" placeholder="Share your thoughts" required></textarea>
+          </label>
+          <label>
+            Name (optional)
+            <input name="reviewer_name" placeholder="Your name" />
+          </label>
+          <button class="cta" type="submit">Submit Review</button>
+        </form>
+      </div>
+    </div>
+
+    <script src="/reviews.js"></script>
+  </body>
+</html>
