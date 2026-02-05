@@ -516,17 +516,8 @@ export default function Newsfeed() {
         </div>
       )}
 
-      {/* Error State */}
-      {error && (
-        <div className="px-4 pt-8 pb-24">
-          <div className="max-w-7xl mx-auto text-center">
-            <p className="text-red-500">Failed to load newsfeed. Please try again.</p>
-          </div>
-        </div>
-      )}
-
-      {/* Brand Modules */}
-      {!loading && !error && (
+      {/* Brand Modules - Always show (with fallback data if API fails) */}
+      {!loading && (
         <div className="px-4 pt-6 pb-24">
           <div className="max-w-7xl mx-auto">
             {/* Tabbed Recommendation Module - Brand Agnostic */}
