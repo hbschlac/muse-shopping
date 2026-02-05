@@ -227,7 +227,7 @@ export default function Newsfeed() {
       {/* Sidebar Navigation - Desktop Only */}
       <aside className="hidden md:block md:w-64 md:fixed md:left-0 md:top-0 md:h-screen bg-white border-r border-gray-200 z-30">
         <div className="p-6">
-          <img src="/logo-m.svg" alt="Muse" className="h-16 mb-8" />
+          <img src="/muse-wordmark-gradient.svg" alt="Muse" className="h-16 mb-8" />
           <nav className="space-y-2">
             <Link
               href="/home"
@@ -315,7 +315,7 @@ export default function Newsfeed() {
         {/* Header with Logo + Menu - Mobile Only */}
         <header className="md:hidden sticky top-0 z-20 bg-[var(--color-ecru)] pt-3 pb-4 px-4">
           <div className="max-w-7xl mx-auto flex items-center justify-between relative">
-            <img src="/logo-m.svg" alt="Muse" className="h-20" />
+            <img src="/muse-wordmark-gradient.svg" alt="Muse" className="h-20" />
             <button
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               onClick={() => setShowMenu(!showMenu)}
