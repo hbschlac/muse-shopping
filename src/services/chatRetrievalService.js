@@ -1,22 +1,39 @@
 const pool = require('../db/pool');
 const ItemService = require('./itemService');
+const PersonalizedRecommendationService = require('./personalizedRecommendationService');
 
 class ChatRetrievalService {
-  static async retrieve({ query, filters = {}, limit = 12, userId = null }) {
-    const pagination = { limit, offset: 0 };
-    const result = await ItemService.searchItems(query, {
-      minPrice: filters.min_price ?? null,
-      maxPrice: filters.max_price ?? null,
-      categories: Array.isArray(filters.categories) ? filters.categories : null,
-      subcategories: Array.isArray(filters.subcategories) ? filters.subcategories : null,
-      attributes: Array.isArray(filters.attributes) ? filters.attributes : null,
-      onSale: typeof filters.on_sale === 'boolean' ? filters.on_sale : null,
-      inStock: typeof filters.in_stock === 'boolean' ? filters.in_stock : true,
-      sortBy: filters.sort_by || 'newest',
-    }, pagination);
+  static async retrieve({ query, filters = {}, limit = 12, userId = null, mode = 'search' }) {
+    let items = [];
+    const sources = [];
 
-    const items = result.items || [];
-    const sources = ['items'];
+    if (mode === 'personalized' && !query) {
+      const category =
+        Array.isArray(filters.categories) && filters.categories.length === 1
+          ? filters.categories[0]
+          : null;
+      if (userId) {
+        items = await PersonalizedRecommendationService.getPersonalizedItems(userId, { category, limit });
+        sources.push('personalized_recommendations');
+      } else {
+        items = await PersonalizedRecommendationService.getGeneralRecommendations({ category, limit });
+        sources.push('general_recommendations');
+      }
+    } else {
+      const pagination = { limit, offset: 0 };
+      const result = await ItemService.searchItems(query, {
+        minPrice: filters.min_price ?? null,
+        maxPrice: filters.max_price ?? null,
+        categories: Array.isArray(filters.categories) ? filters.categories : null,
+        subcategories: Array.isArray(filters.subcategories) ? filters.subcategories : null,
+        attributes: Array.isArray(filters.attributes) ? filters.attributes : null,
+        onSale: typeof filters.on_sale === 'boolean' ? filters.on_sale : null,
+        inStock: typeof filters.in_stock === 'boolean' ? filters.in_stock : true,
+        sortBy: filters.sort_by || 'newest',
+      }, pagination);
+      items = result.items || [];
+      sources.push('items');
+    }
 
     const extra = await this._retrieveContext({ query, userId, limit: Math.min(limit, 8) });
     if (extra.brands.length) sources.push('brands');

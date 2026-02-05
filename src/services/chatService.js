@@ -149,7 +149,7 @@ class ChatService {
     let retrievalSources = [];
     let retrievalContext = {};
     if (intent.intent === 'search' || intent.intent === 'mixed') {
-      const retrieval = await this._searchItems(intent, trimmedMessage, userId);
+      const retrieval = await this._searchItems(intent, trimmedMessage, userId, context);
       items = retrieval.items;
       retrievalSources = retrieval.sources || [];
       retrievalContext = retrieval.context || {};
@@ -367,27 +367,18 @@ class ChatService {
     return parsed;
   }
 
-  static async _searchItems(intent, fallbackQuery, userId = null) {
+  static async _searchItems(intent, fallbackQuery, userId = null, context = {}) {
     const filters = intent.filters || {};
     const query = intent.query || fallbackQuery;
+    const recommendationMode = context && context.recommendation_mode;
+    const mode = recommendationMode === 'personalized' && !query ? 'personalized' : 'search';
 
-    const itemFilters = {
-      minPrice: typeof filters.min_price === 'number' ? filters.min_price : null,
-      maxPrice: typeof filters.max_price === 'number' ? filters.max_price : null,
-      categories: Array.isArray(filters.categories) ? filters.categories : null,
-      subcategories: Array.isArray(filters.subcategories) ? filters.subcategories : null,
-      attributes: Array.isArray(filters.attributes) ? filters.attributes : null,
-      onSale: typeof filters.on_sale === 'boolean' ? filters.on_sale : null,
-      inStock: typeof filters.in_stock === 'boolean' ? filters.in_stock : true,
-      sortBy: filters.sort_by || 'newest',
-    };
-
-    const pagination = { limit: MAX_ITEMS, offset: 0 };
     const { items, sources, context } = await ChatRetrievalService.retrieve({
       query,
       filters,
       limit: MAX_ITEMS,
       userId,
+      mode,
     });
     return { items, sources, context };
   }
