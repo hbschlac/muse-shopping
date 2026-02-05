@@ -176,21 +176,21 @@ export default function Newsfeed() {
   const defaultBrandModules = [
     {
       id: 'demo-1',
-      brand: { slug: 'target', name: 'Target', logo_url: 'https://corporate.target.com/_media/TargetCorp/news/2017/bullseye-logo.png' },
+      brand: { id: 'target', slug: 'target', name: 'Target', logo_url: 'https://corporate.target.com/_media/TargetCorp/news/2017/bullseye-logo.png', is_active: true },
       products: [
-        { id: 101, name: 'Oversized Cardigan', price: 34.99, image_url: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=400', brand: { name: 'Target' } },
-        { id: 102, name: 'Graphic Tee', price: 12.99, image_url: 'https://images.unsplash.com/photo-1503341504253-dff4815485f1?w=400', brand: { name: 'Target' } },
-        { id: 103, name: 'Wide Leg Pants', price: 29.99, original_price: 39.99, image_url: 'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=400', brand: { name: 'Target' } },
+        { id: '101', name: 'Oversized Cardigan', price: 34.99, image_url: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=400', brand_id: 'target', brand_name: 'Target', currency: 'USD', in_stock: true, retailer_name: 'Target', retailer_product_url: '#', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+        { id: '102', name: 'Graphic Tee', price: 12.99, image_url: 'https://images.unsplash.com/photo-1503341504253-dff4815485f1?w=400', brand_id: 'target', brand_name: 'Target', currency: 'USD', in_stock: true, retailer_name: 'Target', retailer_product_url: '#', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+        { id: '103', name: 'Wide Leg Pants', price: 29.99, original_price: 39.99, image_url: 'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=400', brand_id: 'target', brand_name: 'Target', currency: 'USD', in_stock: true, retailer_name: 'Target', retailer_product_url: '#', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
       ],
       is_favorite: false,
     },
     {
       id: 'demo-2',
-      brand: { slug: 'nordstrom', name: 'Nordstrom', logo_url: 'https://logowik.com/content/uploads/images/nordstrom1639.logowik.com.webp' },
+      brand: { id: 'nordstrom', slug: 'nordstrom', name: 'Nordstrom', logo_url: 'https://logowik.com/content/uploads/images/nordstrom1639.logowik.com.webp', is_active: true },
       products: [
-        { id: 201, name: 'Ribbed Knit Dress', price: 78.00, image_url: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=400', brand: { name: 'Nordstrom' } },
-        { id: 202, name: 'Leather Loafers', price: 129.00, image_url: 'https://images.unsplash.com/photo-1533867617858-e7b97e060509?w=400', brand: { name: 'Nordstrom' } },
-        { id: 203, name: 'Wool Blazer', price: 198.00, image_url: 'https://images.unsplash.com/photo-1591369822096-ffd140ec948f?w=400', brand: { name: 'Nordstrom' } },
+        { id: '201', name: 'Ribbed Knit Dress', price: 78.00, image_url: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=400', brand_id: 'nordstrom', brand_name: 'Nordstrom', currency: 'USD', in_stock: true, retailer_name: 'Nordstrom', retailer_product_url: '#', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+        { id: '202', name: 'Leather Loafers', price: 129.00, image_url: 'https://images.unsplash.com/photo-1533867617858-e7b97e060509?w=400', brand_id: 'nordstrom', brand_name: 'Nordstrom', currency: 'USD', in_stock: true, retailer_name: 'Nordstrom', retailer_product_url: '#', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+        { id: '203', name: 'Wool Blazer', price: 198.00, image_url: 'https://images.unsplash.com/photo-1591369822096-ffd140ec948f?w=400', brand_id: 'nordstrom', brand_name: 'Nordstrom', currency: 'USD', in_stock: true, retailer_name: 'Nordstrom', retailer_product_url: '#', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
       ],
       is_favorite: false,
     },
@@ -465,23 +465,13 @@ export default function Newsfeed() {
         </div>
       )}
 
-      {/* Search/Chat Bar - Enhanced Prominence */}
-      <div className="px-4 pt-6 pb-6">
-        <div className="max-w-2xl mx-auto">
-          {/* Prompt Text */}
-          <div className="text-center mb-3">
-            <h3 className="text-[17px] font-semibold text-gray-900 mb-1">
-              What are you looking for?
-            </h3>
-            <p className="text-[13px] text-gray-600">
-              Search for items or ask Muse for personalized recommendations
-            </p>
-          </div>
-
-          {/* Enhanced Search Box */}
-          <div className="relative h-auto min-h-[64px] max-h-[150px] bg-white rounded-[16px] shadow-[0_4px_20px_rgba(0,0,0,0.12)] border-2 border-transparent hover:border-[#F4C4B0] focus-within:border-[#F1785A] transition-all duration-200 flex items-center px-5 py-4">
+      {/* Chat Bar - Larger, closer to hero */}
+      <div className="px-4 pt-3 pb-6">
+        <div className="max-w-3xl mx-auto">
+          {/* Enhanced Chat Box */}
+          <div className="relative h-auto min-h-[72px] max-h-[180px] bg-white rounded-[16px] shadow-[0_4px_20px_rgba(0,0,0,0.12)] border-2 border-transparent hover:border-[#F4C4B0] focus-within:border-[#F1785A] transition-all duration-200 flex items-center px-6 py-5">
             <svg
-              className="w-6 h-6 text-[#F1785A] mr-3 flex-shrink-0"
+              className="w-6 h-6 text-[#F1785A] mr-4 flex-shrink-0"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -489,29 +479,42 @@ export default function Newsfeed() {
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                strokeWidth={2.5}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                strokeWidth={2}
+                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
               />
             </svg>
             <textarea
-              placeholder="Search or ask Muse..."
+              placeholder="Talk with Muse..."
               rows={1}
-              className="flex-1 bg-transparent border-none outline-none text-[16px] text-gray-900 placeholder-gray-500 resize-none overflow-y-auto max-h-[102px] leading-relaxed font-medium"
+              className="flex-1 bg-transparent border-none outline-none text-[17px] text-gray-900 placeholder-gray-400 resize-none overflow-y-auto max-h-[120px] leading-relaxed"
               onInput={(e) => {
                 const target = e.target as HTMLTextAreaElement;
                 target.style.height = 'auto';
                 target.style.height =
-                  Math.min(target.scrollHeight, 102) + 'px';
+                  Math.min(target.scrollHeight, 120) + 'px';
               }}
             />
             <button
-              className="ml-3 px-6 py-3 bg-gradient-to-r from-[#F4C4B0] to-[#F1785A] text-white text-[14px] font-semibold rounded-full hover:shadow-lg hover:scale-105 transition-all duration-200 flex-shrink-0"
+              className="ml-4 w-12 h-12 bg-gradient-to-r from-[#F4C4B0] to-[#F1785A] text-white rounded-full hover:shadow-lg hover:scale-105 transition-all duration-200 flex-shrink-0 flex items-center justify-center"
               onClick={() => {
                 // Handle chat submission
                 console.log('Chat submitted');
               }}
+              aria-label="Send message"
             >
-              Ask
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2.5}
+                  d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                />
+              </svg>
             </button>
           </div>
         </div>

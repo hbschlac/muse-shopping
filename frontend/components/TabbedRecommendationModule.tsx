@@ -18,13 +18,13 @@ interface TabbedRecommendationModuleProps {
 
 // Demo items for guests/fallback
 const getDemoItems = (tabKey: string): Product[] => {
-  const baseItems = [
-    { id: 1, name: 'Classic White Tee', price: 29.99, original_price: 39.99, image_url: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400', brand: { name: 'Everlane' } },
-    { id: 2, name: 'High-Rise Jeans', price: 89.00, image_url: 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=400', brand: { name: 'Madewell' } },
-    { id: 3, name: 'Leather Crossbody Bag', price: 128.00, image_url: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=400', brand: { name: 'Cuyana' } },
-    { id: 4, name: 'Cashmere Sweater', price: 148.00, original_price: 198.00, image_url: 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=400', brand: { name: 'Naadam' } },
-    { id: 5, name: 'Ankle Boots', price: 195.00, image_url: 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=400', brand: { name: 'Sam Edelman' } },
-    { id: 6, name: 'Silk Midi Skirt', price: 118.00, image_url: 'https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?w=400', brand: { name: 'Reformation' } },
+  const baseItems: Product[] = [
+    { id: '1', name: 'Classic White Tee', price: 29.99, original_price: 39.99, image_url: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400', brand_id: '1', brand_name: 'Everlane', currency: 'USD', in_stock: true, retailer_name: 'Everlane', retailer_product_url: '#', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: '2', name: 'High-Rise Jeans', price: 89.00, image_url: 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=400', brand_id: '2', brand_name: 'Madewell', currency: 'USD', in_stock: true, retailer_name: 'Madewell', retailer_product_url: '#', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: '3', name: 'Leather Crossbody Bag', price: 128.00, image_url: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=400', brand_id: '3', brand_name: 'Cuyana', currency: 'USD', in_stock: true, retailer_name: 'Cuyana', retailer_product_url: '#', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: '4', name: 'Cashmere Sweater', price: 148.00, original_price: 198.00, image_url: 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=400', brand_id: '4', brand_name: 'Naadam', currency: 'USD', in_stock: true, retailer_name: 'Naadam', retailer_product_url: '#', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: '5', name: 'Ankle Boots', price: 195.00, image_url: 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=400', brand_id: '5', brand_name: 'Sam Edelman', currency: 'USD', in_stock: true, retailer_name: 'Sam Edelman', retailer_product_url: '#', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: '6', name: 'Silk Midi Skirt', price: 118.00, image_url: 'https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?w=400', brand_id: '6', brand_name: 'Reformation', currency: 'USD', in_stock: true, retailer_name: 'Reformation', retailer_product_url: '#', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
   ];
   return baseItems;
 };
