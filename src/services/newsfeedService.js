@@ -1,16 +1,21 @@
 const pool = require('../db/pool');
 const PersonalizedRecommendationService = require('./personalizedRecommendationService');
 const SponsoredContentService = require('./sponsoredContentService');
+const ExperimentService = require('./experimentService');
+const StyleProfileService = require('./styleProfileService');
 
 class NewsfeedService {
   /**
    * Get brand stories for user's newsfeed (top carousel)
-   * Returns stories from brands the user follows
+   * Returns stories from brands the user follows, ranked by 100D profile match
    */
   static async getUserStories(userId) {
     const query = `SELECT * FROM get_user_stories($1)`;
     const result = await pool.query(query, [userId]);
-    return result.rows;
+
+    // Rank stories by 100D profile match
+    const rankedStories = await StyleProfileService.rankStoriesForUser(userId, result.rows);
+    return rankedStories;
   }
 
   /**
@@ -98,50 +103,187 @@ class NewsfeedService {
 
   /**
    * Get personalized feed modules for user
-   * Returns time-based content carousels from followed brands
+   * Returns time-based content carousels from followed brands, ranked by 100D profile match
    */
   static async getUserFeedModules(userId, limit = 20, offset = 0) {
     const query = `SELECT * FROM get_user_feed_modules($1, $2, $3)`;
     const result = await pool.query(query, [userId, limit, offset]);
-    return result.rows;
+
+    // Boost modules by 100D profile match
+    const boostedModules = await StyleProfileService.boostModulesForUser(userId, result.rows);
+    return boostedModules;
   }
 
   /**
    * Get items for a specific feed module
    * Enhanced with personalized scoring for the user
+   * Returns module configuration + items for Instagram-style layouts
    */
   static async getModuleItems(moduleId, userId = null) {
-    // If userId provided, use personalized recommendations
-    if (userId) {
-      return await PersonalizedRecommendationService.getPersonalizedModuleItems(userId, moduleId);
+    // Fetch module configuration with Instagram-style fields
+    const configQuery = `
+      SELECT
+        m.id as module_id,
+        m.brand_id,
+        m.title,
+        m.subtitle,
+        m.module_type,
+        m.layout_type,
+        m.items_per_view,
+        m.aspect_ratio,
+        m.hero_image_url,
+        m.hero_video_url,
+        m.video_poster_url,
+        m.hero_source,
+        m.background_color,
+        m.text_color,
+        m.gradient_overlay,
+        m.overlay_opacity,
+        m.header_cta_text,
+        m.show_brand_logo,
+        m.show_item_details,
+        m.featured_item_id,
+        m.display_config,
+        b.name as brand_name,
+        b.logo_url as brand_logo,
+        b.slug as brand_slug,
+        -- Auto-generate hero if not manually set
+        COALESCE(m.hero_image_url, get_module_hero_image(m.id)) as computed_hero_url
+      FROM feed_modules m
+      LEFT JOIN brands b ON m.brand_id = b.id
+      WHERE m.id = $1
+    `;
+    const configResult = await pool.query(configQuery, [moduleId]);
+
+    if (configResult.rows.length === 0) {
+      return null;
     }
 
-    // Fallback to basic query
-    const query = `SELECT * FROM get_module_items($1)`;
-    const result = await pool.query(query, [moduleId]);
-    return result.rows;
+    const config = configResult.rows[0];
+
+    // Get items (personalized if userId provided)
+    let items;
+    if (userId) {
+      items = await PersonalizedRecommendationService.getPersonalizedModuleItems(userId, moduleId);
+
+      // Boost items by 100D profile match
+      items = await StyleProfileService.boostItemsForUser(userId, items);
+    } else {
+      const itemsQuery = `SELECT * FROM get_module_items($1)`;
+      const itemsResult = await pool.query(itemsQuery, [moduleId]);
+      items = itemsResult.rows;
+    }
+
+    return {
+      config,
+      items
+    };
   }
 
   /**
    * Get complete feed (stories + modules + sponsored content) for user
    */
   static async getCompleteFeed(userId, modulesLimit = 20, modulesOffset = 0, userContext = {}) {
+    console.log('[NewsfeedService.getCompleteFeed] Called with userId:', userId);
+
     // Get stories
     const stories = await this.getUserStories(userId);
+    console.log('[NewsfeedService.getCompleteFeed] Stories count:', stories.length);
 
     // Get modules
     const modules = await this.getUserFeedModules(userId, modulesLimit, modulesOffset);
+    console.log('[NewsfeedService.getCompleteFeed] Modules from DB:', modules.length);
 
-    // For each module, get its items with personalization
+    // For each module, get its items with personalization and configuration
     const modulesWithItems = await Promise.all(
       modules.map(async (module) => {
-        const items = await this.getModuleItems(module.module_id, userId);
+        console.log('[NewsfeedService.getCompleteFeed] Processing module:', module.module_id);
+        const moduleData = await this.getModuleItems(module.module_id, userId);
+
+        if (!moduleData) {
+          console.log('[NewsfeedService.getCompleteFeed] Module data is null for module:', module.module_id);
+          return null;
+        }
+        console.log('[NewsfeedService.getCompleteFeed] Module data retrieved, items count:', moduleData.items?.length);
+
+        // Check for experiment assignment
+        const experimentAssignment = await ExperimentService.getModuleExperimentAssignment(
+          userId,
+          module.module_id
+        );
+
+        console.log('[NewsfeedService.getCompleteFeed] Experiment assignment:', experimentAssignment);
+
+        // Track impression if in experiment
+        if (experimentAssignment && experimentAssignment.in_experiment) {
+          await ExperimentService.trackModuleImpression(
+            userId,
+            module.module_id,
+            experimentAssignment.variant_id,
+            { position: modules.indexOf(module) }
+          );
+        }
+
+        // Merge module metadata with config and items
         return {
-          ...module,
-          items
+          id: moduleData.config.module_id,
+          brand_id: moduleData.config.brand_id,
+          // Layout configuration
+          layout: {
+            type: moduleData.config.layout_type || 'carousel',
+            items_per_view: moduleData.config.items_per_view || 3,
+            aspect_ratio: moduleData.config.aspect_ratio || 'portrait'
+          },
+          // Hero assets
+          hero: {
+            image_url: moduleData.config.computed_hero_url,
+            video_url: moduleData.config.hero_video_url,
+            poster_url: moduleData.config.video_poster_url,
+            source: moduleData.config.hero_source || 'auto_generated'
+          },
+          // Styling
+          styling: {
+            background_color: moduleData.config.background_color || '#FFFFFF',
+            text_color: moduleData.config.text_color || '#000000',
+            gradient_overlay: moduleData.config.gradient_overlay,
+            overlay_opacity: moduleData.config.overlay_opacity || 0.3
+          },
+          // Content
+          content: {
+            title: moduleData.config.title,
+            subtitle: moduleData.config.subtitle,
+            cta_text: moduleData.config.header_cta_text,
+            show_brand_logo: moduleData.config.show_brand_logo !== false,
+            show_item_details: moduleData.config.show_item_details !== false
+          },
+          // Brand info
+          brand: {
+            id: moduleData.config.brand_id,
+            name: moduleData.config.brand_name,
+            logo_url: moduleData.config.brand_logo,
+            slug: moduleData.config.brand_slug
+          },
+          // Items
+          products: moduleData.items,
+          featured_item_id: moduleData.config.featured_item_id,
+          display_config: moduleData.config.display_config || {},
+          // Legacy fields for compatibility
+          module_type: moduleData.config.module_type,
+          item_count: moduleData.items.length,
+          // Experiment data (if applicable)
+          experiment: experimentAssignment ? {
+            experiment_id: experimentAssignment.experiment_id,
+            variant_id: experimentAssignment.variant_id,
+            variant_name: experimentAssignment.variant_name,
+            in_experiment: experimentAssignment.in_experiment
+          } : null
         };
       })
     );
+
+    // Filter out null modules
+    const validModules = modulesWithItems.filter(m => m !== null);
+    console.log('[NewsfeedService.getCompleteFeed] Valid modules after filtering:', validModules.length);
 
     // Get sponsored content for homepage
     let sponsoredContent = null;
@@ -160,7 +302,7 @@ class NewsfeedService {
 
     // Insert sponsored modules at specific positions
     const feedWithSponsored = await this.insertSponsoredModules(
-      modulesWithItems,
+      validModules,
       userId,
       userContext
     );
