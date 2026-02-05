@@ -470,21 +470,8 @@ export default function Newsfeed() {
         <div className="max-w-3xl mx-auto">
           {/* Enhanced Chat Box */}
           <div className="relative h-auto min-h-[72px] max-h-[180px] bg-white rounded-[16px] shadow-[0_4px_20px_rgba(0,0,0,0.12)] border-2 border-transparent hover:border-[#F4C4B0] focus-within:border-[#F1785A] transition-all duration-200 flex items-center px-6 py-5">
-            <svg
-              className="w-6 h-6 text-[#F1785A] mr-4 flex-shrink-0"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-              />
-            </svg>
             <textarea
-              placeholder="Talk with Muse..."
+              placeholder="Talk with Muse"
               rows={1}
               className="flex-1 bg-transparent border-none outline-none text-[17px] text-gray-900 placeholder-gray-400 resize-none overflow-y-auto max-h-[120px] leading-relaxed"
               onInput={(e) => {
