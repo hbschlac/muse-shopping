@@ -9,16 +9,24 @@ const pool = require('../src/db/pool');
 const jwt = require('jsonwebtoken');
 
 describe('Security Tests', () => {
+  const runId = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  const userEmail = `testuser_${runId}@example.com`;
+  const adminEmail = `testadmin_${runId}@example.com`;
+  const userUsername = `testuser_${runId}`;
+  const adminUsername = `testadmin_${runId}`;
+
   let userToken;
   let adminToken;
   let userId;
   let adminId;
 
   beforeAll(async () => {
-    // Delete existing test users if they exist
-    await pool.query('DELETE FROM users WHERE email IN ($1, $2)', [
-      'testuser@example.com',
-      'testadmin@example.com'
+    // Best-effort cleanup for this test run identifiers
+    await pool.query('DELETE FROM users WHERE email IN ($1, $2) OR username IN ($3, $4)', [
+      userEmail,
+      adminEmail,
+      userUsername,
+      adminUsername
     ]);
 
     // Create test user
@@ -26,7 +34,7 @@ describe('Security Tests', () => {
       `INSERT INTO users (email, password_hash, username, full_name, role)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING id`,
-      ['testuser@example.com', 'hash123', 'testuser', 'Test User', 'user']
+      [userEmail, 'hash123', userUsername, 'Test User', 'user']
     );
     userId = userResult.rows[0].id;
 
@@ -35,7 +43,7 @@ describe('Security Tests', () => {
       `INSERT INTO users (email, password_hash, username, full_name, role)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING id`,
-      ['testadmin@example.com', 'hash123', 'testadmin', 'Test Admin', 'admin']
+      [adminEmail, 'hash123', adminUsername, 'Test Admin', 'admin']
     );
     adminId = adminResult.rows[0].id;
 
@@ -46,7 +54,14 @@ describe('Security Tests', () => {
 
   afterAll(async () => {
     // Cleanup
-    await pool.query('DELETE FROM users WHERE id IN ($1, $2)', [userId, adminId]);
+    await pool.query('DELETE FROM users WHERE id IN ($1, $2) OR email IN ($3, $4) OR username IN ($5, $6)', [
+      userId,
+      adminId,
+      userEmail,
+      adminEmail,
+      userUsername,
+      adminUsername
+    ]);
     await pool.query('DELETE FROM security_events WHERE user_id IN ($1, $2)', [userId, adminId]);
     await pool.query('DELETE FROM audit_logs WHERE user_id IN ($1, $2)', [userId, adminId]);
     await pool.query('DELETE FROM rate_limit_tracking WHERE identifier IN ($1, $2)', [
