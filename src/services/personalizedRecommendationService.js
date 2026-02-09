@@ -45,7 +45,7 @@ class PersonalizedRecommendationService {
 
       // If no profile exists, return general recommendations
       if (!profile) {
-        return this.getGeneralRecommendations({ brandId, storeId, category, limit, excludeItemIds });
+        return this.getGeneralRecommendations({ userId, brandId, storeId, category, limit, excludeItemIds });
       }
 
       // Build personalized query based on profile
@@ -163,6 +163,7 @@ class PersonalizedRecommendationService {
    */
   static async getGeneralRecommendations(options = {}) {
     const {
+      userId = null,
       brandId = null,
       storeId = null,
       category = null,
@@ -171,6 +172,9 @@ class PersonalizedRecommendationService {
     } = options;
 
     try {
+      const preferences = userId ? await PreferencesService.getPreferences(userId).catch(() => null) : null;
+      const brandAffinity = userId ? await BrandAffinityService.getBrandAffinity(userId).catch(() => []) : [];
+
       let query = `
         SELECT
           i.id,
@@ -316,6 +320,7 @@ class PersonalizedRecommendationService {
       );
 
       const profile = profileResult.rows[0];
+      const preferences = await PreferencesService.getPreferences(userId).catch(() => null);
 
       // Get module items with scoring
       let query;
@@ -391,7 +396,8 @@ class PersonalizedRecommendationService {
       }
 
       const result = await pool.query(query, params);
-      return this.applyChatReranking(result.rows, preferences, brandAffinity);
+      // Return items directly - chat reranking not applicable for module items
+      return result.rows;
     } catch (error) {
       logger.error('Failed to get personalized module items:', error);
       throw error;
@@ -460,39 +466,60 @@ class PersonalizedRecommendationService {
 
   static applyChatReranking(items, preferences, brandAffinity = []) {
     if (!preferences) return items;
-    const preferredColors = new Set(preferences.preferred_colors || []);
-    const preferredStyles = new Set(preferences.preferred_styles || []);
-    const preferredFits = new Set(preferences.fit_preferences || []);
-    const avoidedMaterials = new Set(preferences.avoided_materials || []);
+
+    const toLowerSet = (values) => new Set((Array.isArray(values) ? values : []).map((v) => String(v).toLowerCase()));
+
+    const fitValues = Array.isArray(preferences.fit_preferences)
+      ? preferences.fit_preferences
+      : preferences.fit_preferences && typeof preferences.fit_preferences === 'object'
+        ? Object.values(preferences.fit_preferences)
+            .flatMap((v) => (Array.isArray(v) ? v : [v]))
+            .filter(Boolean)
+        : [];
+
+    const preferredColors = toLowerSet(preferences.preferred_colors);
+    const preferredStyles = toLowerSet(preferences.preferred_styles);
+    const preferredFits = toLowerSet(fitValues);
+    const avoidedMaterials = toLowerSet(preferences.avoided_materials);
     const affinityMap = new Map((brandAffinity || []).map((b) => [b.brand_id, b.affinity_score]));
 
     return items
       .map((item) => {
         let boost = 0;
-        if (item.colors && item.colors.some((c) => preferredColors.has(String(c).toLowerCase()))) {
+        const itemColors = Array.isArray(item.colors) ? item.colors : [];
+
+        if (itemColors.some((c) => preferredColors.has(String(c).toLowerCase()))) {
           boost += 10;
         }
+
         if (item.description) {
+          const description = item.description.toLowerCase();
+
           preferredStyles.forEach((style) => {
-            if (item.description.toLowerCase().includes(style.toLowerCase())) {
+            if (description.includes(style)) {
               boost += 5;
             }
           });
-        }
-        const affinityBoost = affinityMap.has(item.brand_id) ? Math.min(20, affinityMap.get(item.brand_id)) : 0;
-        let materialPenalty = 0;
-        if (item.description) {
-          avoidedMaterials.forEach((m) => {
-            if (item.description.toLowerCase().includes(m.toLowerCase())) {
-              materialPenalty -= 5;
-            }
-          });
+
           preferredFits.forEach((fit) => {
-            if (item.description.toLowerCase().includes(fit.toLowerCase())) {
+            if (description.includes(fit)) {
               boost += 3;
             }
           });
         }
+
+        const affinityBoost = affinityMap.has(item.brand_id) ? Math.min(20, affinityMap.get(item.brand_id)) : 0;
+
+        let materialPenalty = 0;
+        if (item.description) {
+          const description = item.description.toLowerCase();
+          avoidedMaterials.forEach((m) => {
+            if (description.includes(m)) {
+              materialPenalty -= 5;
+            }
+          });
+        }
+
         return { ...item, relevance_score: (item.relevance_score || 0) + boost + affinityBoost + materialPenalty };
       })
       .sort((a, b) => (b.relevance_score || 0) - (a.relevance_score || 0));

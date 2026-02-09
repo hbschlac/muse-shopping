@@ -235,5 +235,7 @@
 
   setTone(state.tone);
   renderProfile();
+  renderFollowups([]);
+  renderItems([]);
   showTyping(false);
 })();

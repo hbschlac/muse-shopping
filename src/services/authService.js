@@ -1,8 +1,10 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const User = require('../models/User');
 const pool = require('../db/pool');
-const { ValidationError, AuthenticationError, ConflictError } = require('../utils/errors');
+const { sendPasswordResetEmail } = require('./emailService');
+const { ValidationError, AuthenticationError, ConflictError, NotFoundError } = require('../utils/errors');
 
 class AuthService {
   static async registerUser({ email, password, full_name, username = null, age, location_city, location_state, location_country }) {
@@ -43,6 +45,20 @@ class AuthService {
     if (location_country !== undefined) profileData.location_country = location_country;
 
     await User.createProfile(user.id, profileData);
+
+    // Initialize personalization records immediately at registration
+    await pool.query(
+      `INSERT INTO user_fashion_preferences (user_id) VALUES ($1) ON CONFLICT (user_id) DO NOTHING`,
+      [user.id]
+    );
+
+    // Seed a baseline shopper profile so personalization does not start as null
+    await pool.query(
+      `INSERT INTO shopper_profiles (user_id, favorite_categories, common_sizes, price_range, interests)
+       VALUES ($1, '{}'::jsonb, '[]'::jsonb, '{"min":0,"max":999999,"avg":0}'::jsonb, '[]'::jsonb)
+       ON CONFLICT (user_id) DO NOTHING`,
+      [user.id]
+    );
 
     // Auto-follow default brands for new user
     try {
@@ -208,6 +224,85 @@ class AuthService {
 
     // Update password
     await User.updatePassword(userId, newPasswordHash);
+  }
+
+  static async requestPasswordReset(email) {
+    // Find user by email (but don't reveal if user exists for security)
+    const user = await User.findByEmail(email);
+    if (!user) {
+      // Return success anyway to prevent email enumeration
+      return;
+    }
+
+    // Generate secure random token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const tokenHash = this.hashToken(resetToken);
+
+    // Token expires in 1 hour
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+    // Store token in database
+    await pool.query(
+      'INSERT INTO password_reset_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, $3)',
+      [user.id, tokenHash, expiresAt]
+    );
+
+    // Send email with reset link
+    try {
+      await sendPasswordResetEmail(user.email, resetToken, user.full_name || user.username);
+    } catch (error) {
+      console.error('Failed to send password reset email:', error);
+      // Don't throw error to prevent revealing if user exists
+    }
+  }
+
+  static async verifyResetToken(token) {
+    if (!token) {
+      return false;
+    }
+
+    const tokenHash = this.hashToken(token);
+
+    // Check if token exists, is not used, and is not expired
+    const result = await pool.query(
+      'SELECT * FROM password_reset_tokens WHERE token_hash = $1 AND is_used = FALSE AND expires_at > NOW()',
+      [tokenHash]
+    );
+
+    return result.rows.length > 0;
+  }
+
+  static async resetPassword(token, newPassword) {
+    if (!token) {
+      throw new ValidationError('Reset token is required');
+    }
+
+    const tokenHash = this.hashToken(token);
+
+    // Get token record
+    const result = await pool.query(
+      'SELECT * FROM password_reset_tokens WHERE token_hash = $1 AND is_used = FALSE AND expires_at > NOW()',
+      [tokenHash]
+    );
+
+    if (result.rows.length === 0) {
+      throw new ValidationError('Invalid or expired reset token');
+    }
+
+    const tokenRecord = result.rows[0];
+
+    // Hash new password
+    const bcryptRounds = parseInt(process.env.BCRYPT_ROUNDS) || 12;
+    const newPasswordHash = await bcrypt.hash(newPassword, bcryptRounds);
+
+    // Update password
+    await User.updatePassword(tokenRecord.user_id, newPasswordHash);
+
+    // Mark token as used
+    await pool.query(
+      'UPDATE password_reset_tokens SET is_used = TRUE, used_at = NOW() WHERE id = $1',
+      [tokenRecord.id]
+    );
   }
 }
 

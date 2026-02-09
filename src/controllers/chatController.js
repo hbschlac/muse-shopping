@@ -30,6 +30,23 @@ class ChatController {
   }
 
   /**
+   * GET /api/v1/chat/sessions/:sessionId/messages
+   */
+  static async getSessionMessages(req, res, next) {
+    try {
+      const sessionId = parseInt(req.params.sessionId, 10);
+      if (Number.isNaN(sessionId)) {
+        throw new ValidationError('sessionId must be a valid number');
+      }
+
+      const messages = await ChatService.getSessionMessages(sessionId);
+      res.status(200).json(successResponse(messages));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
    * POST /api/v1/chat/feedback
    * Body: { message_id: number, rating: 1-5, notes?: string }
    */
@@ -41,7 +58,7 @@ class ChatController {
         throw new ValidationError('message_id and rating are required');
       }
 
-      const ratingInt = parseInt(rating);
+      const ratingInt = parseInt(rating, 10);
       if (Number.isNaN(ratingInt) || ratingInt < 1 || ratingInt > 5) {
         throw new ValidationError('rating must be between 1 and 5');
       }

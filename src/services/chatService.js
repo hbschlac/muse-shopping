@@ -13,6 +13,7 @@ const ChatUsageService = require('./chatUsageService');
 const ChatSessionSummaryService = require('./chatSessionSummaryService');
 const ChatNotificationService = require('./chatNotificationService');
 const StyleProfileService = require('./styleProfileService');
+const ImageContentModerationService = require('./imageContentModerationService');
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const OPENAI_API_BASE = process.env.OPENAI_API_BASE || 'https://api.openai.com/v1';
@@ -69,14 +70,35 @@ const replySchema = {
 
 class ChatService {
   static async getChatResponse({ message, history = [], context = {}, userId = null, sessionId = null }) {
-    const demoMode = process.env.CHAT_DEMO_MODE === 'true';
-    if (!OPENAI_API_KEY && !demoMode) {
-      throw new AppError('OpenAI API key not configured', 500, 'OPENAI_CONFIG_ERROR');
+    const configuredDemoMode = process.env.CHAT_DEMO_MODE === 'true';
+    const demoMode = configuredDemoMode || !OPENAI_API_KEY;
+    if (!OPENAI_API_KEY && !configuredDemoMode) {
+      console.warn('[chat] OPENAI_API_KEY missing, falling back to CHAT_DEMO_MODE behavior');
     }
 
     const trimmedMessage = String(message || '').trim().slice(0, MAX_MESSAGE_CHARS);
     if (!trimmedMessage) {
       throw new ValidationError('message cannot be empty');
+    }
+
+    // Validate and moderate image if provided
+    if (context && context.image) {
+      const validation = await ImageContentModerationService.validateImageData(context.image);
+      if (!validation.valid) {
+        throw new ValidationError(validation.error || 'Invalid image');
+      }
+
+      const moderation = await ImageContentModerationService.moderateImage(context.image, {
+        userId,
+        sessionId,
+        messageId: null, // Will be set after message is created
+      });
+
+      if (!moderation.safe) {
+        throw new ValidationError(
+          moderation.reason || 'The uploaded image contains inappropriate content. Please share fashion-related images only.'
+        );
+      }
     }
 
     if (demoMode) {
@@ -321,6 +343,7 @@ class ChatService {
       'If items are provided, curate up to 5 picks, each with a reason grounded in the provided data.',
       'Never invent products. Only reference items provided in the catalog data.',
       'If no items are provided, offer editorial guidance and ask for one missing detail.',
+      'If an image is provided, analyze the style, colors, and aesthetics to provide styling advice.',
       'Return JSON that matches the schema. The response MUST be valid JSON.',
     ].join(' ');
 
@@ -341,14 +364,44 @@ class ChatService {
       preferences,
       intent,
       items: itemSummaries,
-      context,
+      context: { ...context, image: undefined }, // Don't include image data in JSON payload
     };
 
+    // Check if image is provided and use vision model
+    const hasImage = context && context.image;
+    const modelToUse = hasImage ? 'gpt-4o' : OPENAI_MODEL;
+
+    let userMessage;
+    if (hasImage) {
+      // Use vision format with image
+      userMessage = {
+        role: 'user',
+        content: [
+          {
+            type: 'text',
+            text: `Return JSON only. Input: ${JSON.stringify(userPayload)}`,
+          },
+          {
+            type: 'image_url',
+            image_url: {
+              url: context.image,
+            },
+          },
+        ],
+      };
+    } else {
+      // Standard text-only format
+      userMessage = {
+        role: 'user',
+        content: `Return JSON only. Input: ${JSON.stringify(userPayload)}`,
+      };
+    }
+
     const content = await this._callOpenAI({
-      model: OPENAI_MODEL,
+      model: modelToUse,
       messages: [
         { role: 'system', content: system },
-        { role: 'user', content: `Return JSON only. Input: ${JSON.stringify(userPayload)}` },
+        userMessage,
       ],
       response_format: { type: 'json_schema', json_schema: replySchema },
       temperature: 0.6,
@@ -373,14 +426,14 @@ class ChatService {
     const recommendationMode = context && context.recommendation_mode;
     const mode = recommendationMode === 'personalized' && !query ? 'personalized' : 'search';
 
-    const { items, sources, context } = await ChatRetrievalService.retrieve({
+    const { items, sources, context: retrievalContext } = await ChatRetrievalService.retrieve({
       query,
       filters,
       limit: MAX_ITEMS,
       userId,
       mode,
     });
-    return { items, sources, context };
+    return { items, sources, context: retrievalContext };
   }
 
   static async _callOpenAI({ model, messages, response_format, temperature, max_tokens, sessionId = null, messageId = null }) {
@@ -839,7 +892,7 @@ class ChatService {
 
   static async createFlag(sessionId, reason, adminUserId) {
     const result = await pool.query(
-      'INSERT INTO chat_session_flags (session_id, reason, status, created_by) VALUES ($1, $2, "open", $3) RETURNING *',
+      'INSERT INTO chat_session_flags (session_id, reason, status, created_by) VALUES ($1, $2, \'open\', $3) RETURNING *',
       [sessionId, reason, adminUserId]
     );
     return result.rows[0];
@@ -847,7 +900,7 @@ class ChatService {
 
   static async resolveFlag(flagId, adminUserId) {
     const result = await pool.query(
-      'UPDATE chat_session_flags SET status = "resolved", resolved_at = CURRENT_TIMESTAMP, resolved_by = $1 WHERE id = $2 RETURNING *',
+      'UPDATE chat_session_flags SET status = \'resolved\', resolved_at = CURRENT_TIMESTAMP, resolved_by = $1 WHERE id = $2 RETURNING *',
       [adminUserId, flagId]
     );
     return result.rows[0] || null;
