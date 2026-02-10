@@ -22,6 +22,32 @@ const validate = (schema) => {
   };
 };
 
+// Feedback submission schema
+const feedbackSubmissionSchema = Joi.object({
+  category: Joi.string().valid('bug', 'feature_request', 'tech_help', 'complaint', 'question', 'other').required().messages({
+    'any.only': 'Category must be one of: bug, feature_request, tech_help, complaint, question, other',
+    'any.required': 'Category is required',
+  }),
+  subject: Joi.string().min(5).max(255).required().messages({
+    'string.min': 'Subject must be at least 5 characters',
+    'string.max': 'Subject cannot exceed 255 characters',
+    'any.required': 'Subject is required',
+  }),
+  message: Joi.string().min(20).max(5000).required().messages({
+    'string.min': 'Message must be at least 20 characters',
+    'string.max': 'Message cannot exceed 5000 characters',
+    'any.required': 'Message is required',
+  }),
+  email: Joi.string().email().required().messages({
+    'string.email': 'Please provide a valid email address',
+    'any.required': 'Email is required',
+  }),
+  fullName: Joi.string().min(2).max(255).optional().messages({
+    'string.min': 'Full name must be at least 2 characters',
+    'string.max': 'Full name cannot exceed 255 characters',
+  }),
+});
+
 // Authentication schemas
 const registerSchema = Joi.object({
   email: Joi.string().email().required().messages({
@@ -33,11 +59,12 @@ const registerSchema = Joi.object({
     'string.pattern.base': 'Password must contain at least one uppercase letter, one lowercase letter, and one number',
     'any.required': 'Password is required',
   }),
-  full_name: Joi.string().min(2).max(255).required().messages({
+  full_name: Joi.string().min(2).max(255).optional().messages({
     'string.min': 'Full name must be at least 2 characters',
     'string.max': 'Full name cannot exceed 255 characters',
-    'any.required': 'Full name is required',
   }),
+  firstName: Joi.string().min(1).max(255).optional(),
+  lastName: Joi.string().allow('').max(255).optional(),
   username: Joi.string().alphanum().min(3).max(100).optional().messages({
     'string.alphanum': 'Username must contain only alphanumeric characters',
     'string.min': 'Username must be at least 3 characters',
@@ -103,6 +130,11 @@ const updateProfileSchema = Joi.object({
   }).optional(),
   privacy_settings: Joi.object().optional(),
   notification_settings: Joi.object().optional(),
+  // Admin account management fields
+  full_name: Joi.string().min(2).max(255).optional(),
+  password: Joi.string().min(8).optional().messages({
+    'string.min': 'Password must be at least 8 characters',
+  }),
 });
 
 const updateUserSchema = Joi.object({
@@ -155,6 +187,9 @@ const onboardingSchema = Joi.object({
   }).optional(),
 });
 
+// Create validation middleware
+const validateFeedbackSubmission = validate(feedbackSubmissionSchema);
+
 module.exports = {
   validate,
   registerSchema,
@@ -166,4 +201,5 @@ module.exports = {
   followBrandSchema,
   updatePreferencesSchema,
   onboardingSchema,
+  validateFeedbackSubmission,
 };

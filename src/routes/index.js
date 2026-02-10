@@ -1,6 +1,7 @@
 const express = require('express');
 const authRoutes = require('./authRoutes');
 const googleAuthRoutes = require('./googleAuthRoutes');
+const appleAuthRoutes = require('./appleAuthRoutes');
 const userRoutes = require('./userRoutes');
 const brandRoutes = require('./brandRoutes');
 const preferencesRoutes = require('./preferencesRoutes');
@@ -17,8 +18,10 @@ const returnRoutes = require('./returnRoutes');
 const webhookRoutes = require('./webhookRoutes');
 const socialConnectionRoutes = require('./socialConnectionRoutes');
 const experimentRoutes = require('./experimentRoutes');
+const moduleExperimentRoutes = require('./moduleExperimentRoutes');
 const chatRoutes = require('./chatRoutes');
 const influencerRoutes = require('./influencers');
+const instagramScanRoutes = require('./instagramScanRoutes');
 // Use secured analytics routes with rate limiting, validation, and audit logging
 const analyticsRoutes = require('./analyticsRoutes.secured');
 const dataDeletionRoutes = require('./dataDeletionRoutes');
@@ -30,46 +33,26 @@ const adminChatRoutes = require('./admin/chat');
 const adminExperimentRoutes = require('./admin/experiments');
 const adminManualOrderRoutes = require('./admin/manualOrders');
 const adminReviewRoutes = require('./admin/reviews');
+const adminEmailRoutes = require('./admin/emails');
+const adminEmailUIRoutes = require('./admin/emailUI');
+const adminSignupRequestRoutes = require('./admin/signupRequests');
+const adminCacheRoutes = require('./admin/cacheRoutes');
+const shopperDataRoutes = require('./shopperDataRoutes');
+const recommendationRoutes = require('./recommendationRoutes');
+const collectionRoutes = require('./collectionRoutes');
+const waitlistRoutes = require('./waitlistRoutes');
+const feedbackRoutes = require('./feedbackRoutes');
 
 const router = express.Router();
 const path = require('path');
-const pool = require('../db/pool');
+const HealthCheckController = require('../controllers/healthCheckController');
 
-// Health check endpoint
-router.get('/health', (req, res) => {
-  res.status(200).json({
-    success: true,
-    data: {
-      status: 'healthy',
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
-    },
-  });
-});
-
-// Readiness check endpoint
-router.get('/health/ready', async (req, res) => {
-  const checks = {
-    db: false,
-    openai: Boolean(process.env.OPENAI_API_KEY),
-  };
-  try {
-    await pool.query('SELECT 1');
-    checks.db = true;
-  } catch (error) {
-    checks.db = false;
-  }
-
-  const ready = checks.db && checks.openai;
-  res.status(ready ? 200 : 503).json({
-    success: ready,
-    data: {
-      status: ready ? 'ready' : 'not_ready',
-      checks,
-      timestamp: new Date().toISOString(),
-    },
-  });
-});
+// Health check endpoints - using new comprehensive controller
+router.get('/health', HealthCheckController.liveness);
+router.get('/health/ready', HealthCheckController.readiness);
+router.get('/health/detailed', HealthCheckController.detailed);
+router.get('/health/circuit-breakers', HealthCheckController.circuitBreakers);
+router.get('/health/metrics', HealthCheckController.metrics);
 
 // Legal pages
 router.get('/privacy', (req, res) => {
@@ -88,6 +71,7 @@ router.get('/pdp', (req, res) => {
 // API routes
 router.use('/auth', authRoutes);
 router.use('/auth', googleAuthRoutes); // Google OAuth routes
+router.use('/auth', appleAuthRoutes); // Apple OAuth routes
 router.use('/users', userRoutes);
 router.use('/brands', brandRoutes);
 router.use('/preferences', preferencesRoutes);
@@ -104,10 +88,17 @@ router.use('/returns', returnRoutes);
 router.use('/webhooks', webhookRoutes);
 router.use('/social', socialConnectionRoutes);
 router.use('/experiments', experimentRoutes);
+router.use('/experiments/modules', moduleExperimentRoutes);
 router.use('/chat', chatRoutes);
 router.use('/analytics', analyticsRoutes);
 router.use('/sponsored', sponsoredContentRoutes);
 router.use('/influencers', influencerRoutes);
+router.use('/instagram', instagramScanRoutes);
+router.use('/shopper', shopperDataRoutes);
+router.use('/recommendations', recommendationRoutes);
+router.use('/collections', collectionRoutes);
+router.use('/waitlist', waitlistRoutes);
+router.use('/feedback', feedbackRoutes);
 
 // Data deletion callback (Meta/Facebook compliance)
 router.use('/', dataDeletionRoutes);
@@ -120,5 +111,9 @@ router.use('/admin/experiments', adminExperimentRoutes);
 router.use('/admin/chat', adminChatRoutes);
 router.use('/admin/manual-orders', adminManualOrderRoutes);
 router.use('/admin/reviews', adminReviewRoutes);
+router.use('/admin/emails', adminEmailRoutes);
+router.use('/admin/email-ui', adminEmailUIRoutes);
+router.use('/admin/signup-requests', adminSignupRequestRoutes);
+router.use('/admin/cache', adminCacheRoutes);
 
 module.exports = router;
