@@ -58,66 +58,82 @@ class ChatRetrievalService {
   static async _retrieveContext({ query, userId, limit = 8 }) {
     const context = { brands: [], favorites: [], recentOrders: [], recentCart: [], recentViews: [] };
 
-    if (query) {
-      const brands = await pool.query(
-        `SELECT id, name, logo_url
-         FROM brands
-         WHERE name ILIKE $1
-         ORDER BY name ASC
-         LIMIT $2`,
-        [`%${query}%`, limit]
-      );
-      context.brands = brands.rows;
-    }
+    // Parallelize all queries for better performance
+    const [brands, favorites, orders, cart, views] = await Promise.all([
+      // Brand search (only if query provided)
+      query
+        ? pool.query(
+            `SELECT id, name, logo_url
+             FROM brands
+             WHERE name ILIKE $1
+             ORDER BY name ASC
+             LIMIT $2`,
+            [`%${query}%`, limit]
+          )
+        : Promise.resolve({ rows: [] }),
 
-    if (userId) {
-      const favorites = await pool.query(
-        `SELECT i.id, i.canonical_name, b.name as brand_name, i.primary_image_url
-         FROM user_favorites uf
-         JOIN items i ON uf.item_id = i.id
-         JOIN brands b ON i.brand_id = b.id
-         WHERE uf.user_id = $1
-         ORDER BY uf.created_at DESC
-         LIMIT $2`,
-        [userId, limit]
-      );
-      context.favorites = favorites.rows;
+      // User favorites (only if userId provided)
+      userId
+        ? pool.query(
+            `SELECT i.id, i.canonical_name, b.name as brand_name, i.primary_image_url
+             FROM user_favorites uf
+             JOIN items i ON uf.item_id = i.id
+             JOIN brands b ON i.brand_id = b.id
+             WHERE uf.user_id = $1
+             ORDER BY uf.created_at DESC
+             LIMIT $2`,
+            [userId, limit]
+          )
+        : Promise.resolve({ rows: [] }),
 
-      const orders = await pool.query(
-        `SELECT product_name, category, price_cents, brand_name, order_date
-         FROM order_products
-         WHERE user_id = $1
-         ORDER BY order_date DESC
-         LIMIT $2`,
-        [userId, limit]
-      );
-      context.recentOrders = orders.rows;
+      // Recent orders (only if userId provided)
+      userId
+        ? pool.query(
+            `SELECT product_name, category, price_cents, brand_name, order_date
+             FROM order_products
+             WHERE user_id = $1
+             ORDER BY order_date DESC
+             LIMIT $2`,
+            [userId, limit]
+          )
+        : Promise.resolve({ rows: [] }),
 
-      const cart = await pool.query(
-        `SELECT i.id, i.canonical_name, b.name as brand_name, i.primary_image_url, ci.quantity
-         FROM cart_items ci
-         JOIN carts c ON ci.cart_id = c.id
-         JOIN items i ON ci.item_id = i.id
-         JOIN brands b ON i.brand_id = b.id
-         WHERE c.user_id = $1
-         ORDER BY ci.created_at DESC
-         LIMIT $2`,
-        [userId, limit]
-      );
-      context.recentCart = cart.rows;
+      // Recent cart (only if userId provided)
+      userId
+        ? pool.query(
+            `SELECT i.id, i.canonical_name, b.name as brand_name, i.primary_image_url, ci.quantity
+             FROM cart_items ci
+             JOIN carts c ON ci.cart_id = c.id
+             JOIN items i ON ci.item_id = i.id
+             JOIN brands b ON i.brand_id = b.id
+             WHERE c.user_id = $1
+             ORDER BY ci.created_at DESC
+             LIMIT $2`,
+            [userId, limit]
+          )
+        : Promise.resolve({ rows: [] }),
 
-      const views = await pool.query(
-        `SELECT i.id, i.canonical_name, b.name as brand_name, i.primary_image_url, ui.created_at
-         FROM user_item_interactions ui
-         JOIN items i ON ui.item_id = i.id
-         JOIN brands b ON i.brand_id = b.id
-         WHERE ui.user_id = $1 AND ui.interaction_type = 'view'
-         ORDER BY ui.created_at DESC
-         LIMIT $2`,
-        [userId, limit]
-      );
-      context.recentViews = views.rows;
-    }
+      // Recent views (only if userId provided)
+      userId
+        ? pool.query(
+            `SELECT i.id, i.canonical_name, b.name as brand_name, i.primary_image_url, ui.created_at
+             FROM user_item_interactions ui
+             JOIN items i ON ui.item_id = i.id
+             JOIN brands b ON i.brand_id = b.id
+             WHERE ui.user_id = $1 AND ui.interaction_type = 'view'
+             ORDER BY ui.created_at DESC
+             LIMIT $2`,
+            [userId, limit]
+          )
+        : Promise.resolve({ rows: [] }),
+    ]);
+
+    // Populate context with query results
+    context.brands = brands.rows;
+    context.favorites = favorites.rows;
+    context.recentOrders = orders.rows;
+    context.recentCart = cart.rows;
+    context.recentViews = views.rows;
 
     return context;
   }

@@ -1,7 +1,22 @@
 const Joi = require('joi');
+const { validationResult } = require('express-validator');
 const { ValidationError } = require('../utils/errors');
 
-const validate = (schema) => {
+// Express-validator middleware (used by waitlist routes)
+const validate = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    const details = errors.array().map(error => ({
+      field: error.path || error.param,
+      message: error.msg,
+    }));
+    return next(new ValidationError('Validation failed', details));
+  }
+  next();
+};
+
+// Joi-based validation (used by other routes)
+const validateJoi = (schema) => {
   return (req, res, next) => {
     const { error, value } = schema.validate(req.body, {
       abortEarly: false,
@@ -188,10 +203,11 @@ const onboardingSchema = Joi.object({
 });
 
 // Create validation middleware
-const validateFeedbackSubmission = validate(feedbackSubmissionSchema);
+const validateFeedbackSubmission = validateJoi(feedbackSubmissionSchema);
 
 module.exports = {
-  validate,
+  validate, // Express-validator middleware
+  validateJoi, // Joi-based middleware
   registerSchema,
   loginSchema,
   refreshTokenSchema,

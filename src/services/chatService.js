@@ -107,18 +107,28 @@ class ChatService {
 
     let normalizedHistory = this._normalizeHistory(history);
     let activeSessionId = sessionId || null;
-    const preferences = await this._getPreferencesSafe(userId);
-    const unifiedProfile = userId ? await PersonalizationHubService.getUnifiedProfile(userId, activeSessionId) : null;
-    const userProfile = await ChatPersonalizationService.getUserProfile(userId);
-    const sessionMemory = activeSessionId ? await ChatPersonalizationService.getSessionMemory(activeSessionId) : null;
-    if (activeSessionId && normalizedHistory.length === 0) {
-      normalizedHistory = await this._loadHistoryFromSession(activeSessionId, MAX_HISTORY_ITEMS);
+
+    // Parallelize all independent data fetching operations for better performance
+    const [preferences, unifiedProfile, userProfile, sessionMemory, loadedHistory] = await Promise.all([
+      this._getPreferencesSafe(userId),
+      userId ? PersonalizationHubService.getUnifiedProfile(userId, activeSessionId) : Promise.resolve(null),
+      ChatPersonalizationService.getUserProfile(userId),
+      activeSessionId ? ChatPersonalizationService.getSessionMemory(activeSessionId) : Promise.resolve(null),
+      activeSessionId && normalizedHistory.length === 0
+        ? this._loadHistoryFromSession(activeSessionId, MAX_HISTORY_ITEMS)
+        : Promise.resolve([]),
+    ]);
+
+    // Use loaded history if normalized history was empty
+    if (loadedHistory.length > 0) {
+      normalizedHistory = loadedHistory;
     }
 
     const intent = await this._extractIntent({
       message: trimmedMessage,
       history: normalizedHistory,
       preferences,
+      unifiedProfile,
       context,
       sessionId: activeSessionId,
     });
@@ -141,10 +151,24 @@ class ChatService {
         metadata: { context },
       });
 
+      if (userId) {
+        try {
+          await ChatPreferenceIngestionService.ingestFromIntent({
+            userId,
+            sessionId: activeSessionId,
+            messageId: userMessageId,
+            intent,
+            originalMessage: trimmedMessage,
+          });
+        } catch (error) {
+          console.warn('Failed to ingest clarification intent:', error.message);
+        }
+      }
+
       const assistantMessage = intent.clarification_question || 'What are you shopping for? Any price range or size?';
       await ChatSessionSummaryService.upsertSummary(activeSessionId, null, [intent.intent]);
 
-    const assistantMessageId = await this._appendMessage({
+      const assistantMessageId = await this._appendMessage({
         sessionId: activeSessionId,
         role: 'assistant',
         content: assistantMessage,
@@ -194,6 +218,7 @@ class ChatService {
       message: trimmedMessage,
       history: normalizedHistory,
       preferences,
+      unifiedProfile,
       intent,
       items,
       context,
@@ -227,17 +252,6 @@ class ChatService {
         preferences: preferences || null,
       });
     }
-
-    if (userId) {
-      await ChatPreferenceIngestionService.ingestFromIntent({
-        userId,
-        sessionId: activeSessionId,
-        messageId: null,
-        intent,
-        originalMessage: trimmedMessage,
-      });
-    }
-
     const sessionTitle = this._inferTitle(trimmedMessage);
     const ensuredSessionId = await this._ensureSession({
       sessionId: activeSessionId,
@@ -256,6 +270,20 @@ class ChatService {
       metadata: { context },
     });
 
+    if (userId) {
+      try {
+        await ChatPreferenceIngestionService.ingestFromIntent({
+          userId,
+          sessionId: activeSessionId,
+          messageId: userMessageId,
+          intent,
+          originalMessage: trimmedMessage,
+        });
+      } catch (error) {
+        console.warn('Failed to ingest chat intent:', error.message);
+      }
+    }
+
     const safety = await ChatSafetyService.evaluate({
       sessionId: activeSessionId,
       userId,
@@ -267,7 +295,7 @@ class ChatService {
 
     await ChatSessionSummaryService.upsertSummary(activeSessionId, null, [intent.intent]);
 
-    const assistantMessageId = await this._appendMessage({
+      const assistantMessageId = await this._appendMessage({
       sessionId: activeSessionId,
       role: 'assistant',
       content: finalReply,
@@ -294,7 +322,7 @@ class ChatService {
     };
   }
 
-  static async _extractIntent({ message, history, preferences, context, sessionId = null }) {
+  static async _extractIntent({ message, history, preferences, unifiedProfile = null, context, sessionId = null }) {
     const system = [
       'You are Muse, a fashion shopping assistant.',
       'Classify the user intent and extract explicit filters.',
@@ -307,6 +335,7 @@ class ChatService {
       message,
       history,
       preferences,
+      unified_profile: unifiedProfile,
       context,
     };
 
@@ -336,7 +365,7 @@ class ChatService {
     return parsed;
   }
 
-  static async _generateReply({ message, history, preferences, intent, items, context, sessionId = null }) {
+  static async _generateReply({ message, history, preferences, unifiedProfile = null, intent, items, context, sessionId = null }) {
     const system = [
       'You are Muse, an editorial fashion assistant and search curator.',
       'Be warm, concise, and practical. Use short paragraphs and clear guidance.',
@@ -362,6 +391,7 @@ class ChatService {
       message,
       history,
       preferences,
+      unified_profile: unifiedProfile,
       intent,
       items: itemSummaries,
       context: { ...context, image: undefined }, // Don't include image data in JSON payload
@@ -967,37 +997,68 @@ static async getSessionMessages(sessionId) {
   }
 
   static _buildDemoResponse(message) {
-    const reply = [
-      "Totally — here’s a minimalist 5-piece capsule that’s neutral, arm-friendly, and long-lasting:",
-      "1. Long-sleeve rib knit tee (oatmeal or taupe)",
-      "2. Structured overshirt or light jacket (olive or stone)",
-      "3. Straight-leg trouser (charcoal or espresso)",
-      "4. Midi skirt or wide-leg pant (sand or camel)",
-      "5. Longline cardigan or knit blazer (mocha or warm gray)",
-      "",
-      "If you share your sizes and whether you prefer pants over skirts, I can curate exact pieces.",
-    ].join("\n");
+    const lowerMessage = message.toLowerCase();
+
+    // Detect shopping intent keywords
+    const isLookingForClothes = /\b(dress|jeans|shirt|sweater|jacket|coat|pants|skirt|top|shoes|boots|sneakers|bag|outfit|wear|clothing|fashion|style)\b/.test(lowerMessage);
+    const hasPriceKeyword = /\b(under|budget|cheap|affordable|expensive|price|cost|\$|dollar)\b/.test(lowerMessage);
+    const hasColorKeyword = /\b(black|white|blue|red|green|yellow|pink|purple|gray|grey|beige|brown|tan|navy|cream)\b/.test(lowerMessage);
+
+    let reply, followups, categories = [];
+
+    if (isLookingForClothes) {
+      // Extract potential categories from message
+      if (/\b(dress)\b/.test(lowerMessage)) categories.push("dresses");
+      if (/\b(jeans|pants)\b/.test(lowerMessage)) categories.push("bottoms");
+      if (/\b(shirt|top|tee|blouse)\b/.test(lowerMessage)) categories.push("tops");
+      if (/\b(sweater|cardigan|knit)\b/.test(lowerMessage)) categories.push("knitwear");
+      if (/\b(jacket|coat)\b/.test(lowerMessage)) categories.push("outerwear");
+      if (/\b(shoes|boots|sneakers)\b/.test(lowerMessage)) categories.push("footwear");
+
+      reply = `I'd love to help you find that! I'm currently in demo mode (OpenAI API key not configured), but I can still show you some options.\n\nTo give you the best recommendations, could you share:\n- Your size preferences\n- Any specific brands you love\n- Your budget range`;
+
+      followups = [
+        "What's your size?",
+        "Any favorite brands?",
+        "What's your budget?",
+        "Any specific occasion?",
+      ];
+    } else if (lowerMessage.includes("help") || lowerMessage.includes("how") || lowerMessage.includes("what")) {
+      reply = "I'm Muse, your personal shopping assistant! I can help you:\n\n• Find clothes that match your style\n• Discover new brands and products\n• Get personalized recommendations\n• Shop across all your favorite stores\n\nWhat are you looking to shop for today?";
+
+      followups = [
+        "Show me dresses",
+        "I need a new outfit",
+        "What's trending?",
+        "Show me under $100",
+      ];
+    } else {
+      reply = `Thanks for your message! I'm currently in demo mode (OpenAI API key not configured).\n\nI can help you find clothes, discover new brands, and get personalized recommendations. What are you shopping for today?`;
+
+      followups = [
+        "Show me casual tops",
+        "I need a dress for an event",
+        "What's on sale?",
+        "Show me trending items",
+      ];
+    }
 
     return {
-      intent: "mixed",
+      intent: isLookingForClothes ? "search" : "editorial",
       query: message,
       filters: {
         min_price: null,
         max_price: null,
-        categories: ["tops", "outerwear", "bottoms", "knitwear"],
+        categories: categories.length > 0 ? categories : null,
         subcategories: null,
-        attributes: ["minimalist", "neutral", "earth-tones", "long-sleeve"],
+        attributes: null,
         on_sale: null,
         in_stock: null,
         sort_by: null,
       },
-      needs_clarification: true,
+      needs_clarification: false,
       message: reply,
-      followups: [
-        "What sizes do you typically wear for tops and bottoms?",
-        "Do you prefer pants only, or are skirts okay?",
-        "Any specific budget range per item?",
-      ],
+      followups: followups,
       items: [],
       session_id: `demo-${Date.now()}`,
       message_id: null,

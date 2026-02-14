@@ -1,0 +1,42 @@
+Connected to Neon database
+(node:18633) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+⊘ 001_initial_schema.sql (already executed)
+⊘ 002_items_and_recommendations.sql (already executed)
+⊘ 003_newsfeed.sql (already executed)
+⊘ 004_user_profile_fields.sql (already executed)
+⊘ 005_add_age_range.sql (already executed)
+⊘ 006_default_brand_experience.sql (skipped - optional)
+Running migration: 007_email_connections.sql
+✓ 007_email_connections.sql
+Running migration: 008_add_item_media.sql
+Migration failed: cannot change return type of existing function
+error: cannot change return type of existing function
+    at /Users/hannahschlacter/Desktop/muse-shopping/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async runMigrations (/Users/hannahschlacter/Desktop/muse-shopping/migrate-neon.js:64:7) {
+  length: 209,
+  severity: 'ERROR',
+  code: '42P13',
+  detail: 'Row type defined by OUT parameters is different.',
+  hint: 'Use DROP FUNCTION get_module_items(integer) first.',
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pg_proc.c',
+  line: '441',
+  routine: 'ProcedureCreate'
+}

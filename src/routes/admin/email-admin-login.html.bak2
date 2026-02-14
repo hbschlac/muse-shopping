@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Muse Admin Email - Login</title>
+  <style>
+    :root {
+      --muse-cream: #FEFDFB;
+      --muse-sand: #F4EFE7;
+      --muse-taupe: #E9E5DF;
+      --muse-peach: #F4C4B0;
+      --muse-brown: #6B625C;
+      --muse-dark: #333333;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, var(--muse-sand) 0%, var(--muse-cream) 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .login-container {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+      padding: 48px;
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .logo h1 {
+      font-size: 36px;
+      font-weight: 600;
+      color: var(--muse-dark);
+      margin-bottom: 8px;
+    }
+
+    .logo p {
+      font-size: 14px;
+      color: var(--muse-brown);
+    }
+
+    .form-group {
+      margin-bottom: 24px;
+    }
+
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--muse-dark);
+      margin-bottom: 8px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid var(--muse-taupe);
+      border-radius: 8px;
+      font-size: 16px;
+      transition: border-color 0.3s;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--muse-peach);
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px 24px;
+      background: var(--muse-peach);
+      color: var(--muse-dark);
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(244, 196, 176, 0.4);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .error-message {
+      background: #fee;
+      border: 1px solid #fcc;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 20px;
+      color: #c33;
+      font-size: 14px;
+      display: none;
+    }
+
+    .error-message.show {
+      display: block;
+    }
+
+    .footer {
+      margin-top: 24px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--muse-brown);
+    }
+
+    .request-access-link {
+      display: block;
+      margin-top: 16px;
+      text-align: center;
+      color: var(--muse-brown);
+      text-decoration: none;
+      font-size: 14px;
+      transition: color 0.2s;
+    }
+
+    .request-access-link:hover {
+      color: var(--muse-peach);
+    }
+
+    .success-message {
+      background: #d1fae5;
+      border: 1px solid #10b981;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 20px;
+      color: #065f46;
+      font-size: 14px;
+      display: none;
+    }
+
+    .success-message.show {
+      display: block;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 500px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      margin-bottom: 24px;
+    }
+
+    .modal-header h2 {
+      margin: 0 0 8px 0;
+      font-size: 24px;
+      color: var(--muse-dark);
+    }
+
+    .modal-header p {
+      margin: 0;
+      color: var(--muse-brown);
+      font-size: 14px;
+    }
+
+    .btn-secondary {
+      background: var(--muse-taupe);
+      color: var(--muse-dark);
+    }
+
+    .btn-secondary:hover {
+      background: var(--muse-brown);
+      color: white;
+      box-shadow: 0 4px 12px rgba(107, 98, 92, 0.3);
+    }
+
+    .button-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .loading {
+      display: none;
+      text-align: center;
+      margin-top: 16px;
+    }
+
+    .loading.show {
+      display: block;
+    }
+
+    .spinner {
+      border: 3px solid var(--muse-taupe);
+      border-top: 3px solid var(--muse-peach);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="logo">
+      <h1>Muse</h1>
+      <p>Admin Email Management</p>
+    </div>
+
+    <div id="errorMessage" class="error-message"></div>
+
+    <form id="loginForm">
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          required
+          autocomplete="email"
+          placeholder="admin@muse.shopping"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          required
+          autocomplete="current-password"
+          placeholder="Enter your password"
+        >
+      </div>
+
+      <button type="submit" class="btn" id="loginBtn">
+        Sign In
+      </button>
+    </form>
+
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+    </div>
+
+    <a href="#" class="request-access-link" onclick="showRequestModal(); return false;">
+      Request Admin Access
+    </a>
+
+    <div class="footer">
+      Authorized personnel only
+    </div>
+  </div>
+
+  <!-- Request Access Modal -->
+  <div class="modal" id="requestModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Request Admin Access</h2>
+        <p>Submit a request to gain access to the admin email system</p>
+      </div>
+
+      <div id="requestErrorMessage" class="error-message"></div>
+      <div id="requestSuccessMessage" class="success-message"></div>
+
+      <form id="requestForm">
+        <div class="form-group">
+          <label for="requestName">Full Name</label>
+          <input
+            type="text"
+            id="requestName"
+            name="full_name"
+            required
+            placeholder="John Doe"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="requestEmail">Email Address</label>
+          <input
+            type="email"
+            id="requestEmail"
+            name="email"
+            required
+            placeholder="john@muse.shopping"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="requestReason">Reason for Access</label>
+          <textarea
+            id="requestReason"
+            name="reason"
+            rows="4"
+            placeholder="Please explain why you need admin access..."
+            style="resize: vertical; font-family: inherit;"
+          ></textarea>
+        </div>
+
+        <div class="button-group">
+          <button type="submit" class="btn" id="submitRequestBtn">
+            Submit Request
+          </button>
+          <button type="button" class="btn btn-secondary" onclick="hideRequestModal()">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('loginForm');
+    const loginBtn = document.getElementById('loginBtn');
+    const errorMessage = document.getElementById('errorMessage');
+    const loading = document.getElementById('loading');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+
+    // Check if already logged in
+    if (localStorage.getItem('adminToken')) {
+      window.location.href = '/api/v1/admin/email-ui';
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+
+      // Hide error, show loading
+      errorMessage.classList.remove('show');
+      loginBtn.disabled = true;
+      loginBtn.textContent = 'Signing in...';
+      loading.classList.add('show');
+
+      try {
+        const response = await fetch('/api/v1/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (data.success && data.data) {
+          const token = data.data.token || (data.data.tokens && data.data.tokens.access_token) || data.data.access_token;
+          if (token) {
+          // Store token
+          localStorage.setItem('adminToken', data.data.token);
+          localStorage.setItem('adminUser', JSON.stringify(data.data.user));
+
+          // Redirect to admin interface
+          window.location.href = '/api/v1/admin/email-ui';
+        } else {
+          throw new Error(data.error || 'Login failed');
+        }
+      } catch (error) {
+        errorMessage.textContent = error.message || 'Invalid credentials. Please try again.';
+        errorMessage.classList.add('show');
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Sign In';
+        loading.classList.remove('show');
+      }
+    });
+
+    // Enter key support
+    emailInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        passwordInput.focus();
+      }
+    });
+
+    // Request Access Modal Functions
+    function showRequestModal() {
+      document.getElementById('requestModal').classList.add('show');
+      document.getElementById('requestErrorMessage').classList.remove('show');
+      document.getElementById('requestSuccessMessage').classList.remove('show');
+    }
+
+    function hideRequestModal() {
+      document.getElementById('requestModal').classList.remove('show');
+      document.getElementById('requestForm').reset();
+    }
+
+    // Handle request form submission
+    document.getElementById('requestForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const submitBtn = document.getElementById('submitRequestBtn');
+      const errorMsg = document.getElementById('requestErrorMessage');
+      const successMsg = document.getElementById('requestSuccessMessage');
+
+      const fullName = document.getElementById('requestName').value.trim();
+      const email = document.getElementById('requestEmail').value.trim();
+      const reason = document.getElementById('requestReason').value.trim();
+
+      // Hide messages
+      errorMsg.classList.remove('show');
+      successMsg.classList.remove('show');
+
+      // Disable button
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting...';
+
+      try {
+        const response = await fetch('/api/v1/admin/signup-requests', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            full_name: fullName,
+            email: email,
+            reason: reason
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          successMsg.textContent = 'Request submitted successfully! An administrator will review your request.';
+          successMsg.classList.add('show');
+          document.getElementById('requestForm').reset();
+
+          // Close modal after 3 seconds
+          setTimeout(() => {
+            hideRequestModal();
+          }, 3000);
+        } else {
+          throw new Error(data.error || 'Failed to submit request');
+        }
+      } catch (error) {
+        errorMsg.textContent = error.message;
+        errorMsg.classList.add('show');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Request';
+      }
+    });
+
+    // Close modal on background click
+    document.getElementById('requestModal').addEventListener('click', (e) => {
+      if (e.target.id === 'requestModal') {
+        hideRequestModal();
+      }
+    });
+  </script>
+</body>
+</html>

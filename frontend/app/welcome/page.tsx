@@ -1,37 +1,58 @@
+'use client';
+
 import Link from 'next/link';
+import { initiateGoogleAuth, initiateAppleAuth } from '@/lib/api/auth';
 
 export default function WelcomePage() {
+  const handleGoogleAuth = async () => {
+    try {
+      await initiateGoogleAuth();
+    } catch (error) {
+      console.error('Google auth failed:', error);
+      alert('Failed to start Google sign in. Please try again.');
+    }
+  };
+
+  const handleAppleAuth = async () => {
+    try {
+      await initiateAppleAuth();
+    } catch (error) {
+      console.error('Apple auth failed:', error);
+      alert('Failed to start Apple sign in. Please try again.');
+    }
+  };
+
   return (
     <div className="app-hero welcome-cream-gradient">
       <div className="app-hero__grain" />
       <div className="app-hero__content">
         {/* Logo */}
-        <div className="text-center mb-6">
-        <div className="flex justify-center mb-6">
-          <img src="/muse-wordmark-gradient.svg" alt="Muse" className="h-96" />
+        <div className="text-center mb-16">
+        <div className="flex justify-center mb-8">
+          <img src="/muse-wordmark-gradient.svg" alt="Muse" className="h-64 md:h-80" />
         </div>
-        <p className="text-lg text-gray-600 font-light">
+        <p className="text-xl md:text-2xl text-gray-600 font-light px-6 max-w-md mx-auto">
           Shop all your favorites in one place
         </p>
       </div>
 
       {/* Auth Options */}
-      <div className="w-full max-w-sm space-y-4">
+      <div className="w-full max-w-sm space-y-4 px-6">
         {/* Continue with Apple */}
-        <Link
-          href="/welcome/email"
-          className="block w-full h-14 bg-gray-900/20 backdrop-blur-md text-gray-900 rounded-[12px] flex items-center justify-center font-medium border border-gray-900/10 transition-all duration-150 hover:scale-[1.02] hover:bg-gray-900/30 active:scale-[0.98] cursor-pointer shadow-subtle"
+        <button
+          onClick={handleAppleAuth}
+          className="w-full h-14 bg-gray-900/20 backdrop-blur-md text-gray-900 rounded-[12px] flex items-center justify-center font-medium border border-gray-900/10 transition-all duration-150 hover:scale-[1.02] hover:bg-gray-900/30 active:scale-[0.98] cursor-pointer shadow-subtle"
         >
           Continue with Apple
-        </Link>
+        </button>
 
         {/* Continue with Google */}
-        <Link
-          href="/welcome/email"
-          className="block w-full h-14 bg-white/40 backdrop-blur-md text-gray-900 rounded-[12px] flex items-center justify-center font-medium border border-gray-900/10 transition-all duration-150 hover:scale-[1.02] hover:bg-white/60 active:scale-[0.98] cursor-pointer shadow-subtle"
+        <button
+          onClick={handleGoogleAuth}
+          className="w-full h-14 bg-white/40 backdrop-blur-md text-gray-900 rounded-[12px] flex items-center justify-center font-medium border border-gray-900/10 transition-all duration-150 hover:scale-[1.02] hover:bg-white/60 active:scale-[0.98] cursor-pointer shadow-subtle"
         >
           Continue with Google
-        </Link>
+        </button>
 
         {/* Email Option */}
         <Link
@@ -50,6 +71,25 @@ export default function WelcomePage() {
         >
           Browse as guest
         </Link>
+      </div>
+
+      {/* Privacy & Terms Footer */}
+      <div className="mt-8 text-center">
+        <p className="text-gray-500 text-sm">
+          <Link
+            href="/profile/privacy"
+            className="text-gray-600 hover:text-gray-900 transition-colors duration-150 underline"
+          >
+            Privacy Policy
+          </Link>
+          {' · '}
+          <Link
+            href="/terms"
+            className="text-gray-600 hover:text-gray-900 transition-colors duration-150 underline"
+          >
+            Terms of Service
+          </Link>
+        </p>
       </div>
 
       {/* Spacing */}

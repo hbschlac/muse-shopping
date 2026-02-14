@@ -13,27 +13,6 @@ const router = express.Router();
 router.use(authMiddleware);
 
 /**
- * @route   GET /api/v1/products/:productId
- * @desc    Get real-time product details (when user clicks into product page)
- * @access  Private
- */
-router.get('/:productId', ProductController.getProductDetails);
-
-/**
- * @route   GET /api/v1/products/:productId/checkout-link
- * @desc    Generate affiliate checkout link
- * @access  Private
- */
-router.get('/:productId/checkout-link', ProductController.getCheckoutLink);
-
-/**
- * @route   POST /api/v1/products/:productId/cart
- * @desc    Add product to cart (triggers real-time price refresh)
- * @access  Private
- */
-router.post('/:productId/cart', ProductController.addToCart);
-
-/**
  * @route   POST /api/v1/products/cart-batch
  * @desc    Get real-time data for multiple cart items
  * @access  Private
@@ -67,5 +46,26 @@ router.get('/stats/batch-imports', ProductController.getBatchImportStats);
  * @access  Private (Admin)
  */
 router.post('/admin/batch-import', ProductController.triggerBatchImport);
+
+/**
+ * @route   GET /api/v1/products/:productId
+ * @desc    Get real-time product details (when user clicks into product page)
+ * @access  Private
+ */
+router.get('/:productId', ProductController.getProductDetails);
+
+/**
+ * @route   GET /api/v1/products/:productId/checkout-link
+ * @desc    Generate affiliate checkout link
+ * @access  Private
+ */
+router.get('/:productId/checkout-link', ProductController.getCheckoutLink);
+
+/**
+ * @route   POST /api/v1/products/:productId/cart
+ * @desc    Add product to cart (triggers real-time price refresh)
+ * @access  Private
+ */
+router.post('/:productId/cart', ProductController.addToCart);
 
 module.exports = router;

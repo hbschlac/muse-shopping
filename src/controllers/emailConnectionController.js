@@ -49,7 +49,9 @@ class EmailConnectionController {
 
       const connection = await EmailScannerService.connectGmail(userId, code);
 
-      // Return friendly HTML page
+      // Return friendly HTML page with redirect to frontend callback handler
+      const FRONTEND_URL = process.env.CORS_ORIGIN || 'http://localhost:3001';
+
       res.status(200).send(`
         <html>
           <head>
@@ -58,23 +60,17 @@ class EmailConnectionController {
               body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 100px auto; padding: 40px; text-align: center; }
               h1 { color: #10b981; font-size: 32px; margin-bottom: 16px; }
               p { color: #6b7280; font-size: 18px; line-height: 1.6; }
-              .button { display: inline-block; background: #667eea; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; margin-top: 24px; }
-              .button:hover { background: #5a67d8; }
               .emoji { font-size: 64px; margin-bottom: 24px; }
             </style>
+            <script>
+              // Redirect to frontend OAuth callback handler
+              window.location.href = '${FRONTEND_URL}/oauth/callback';
+            </script>
           </head>
           <body>
             <div class="emoji">✅</div>
             <h1>Gmail Connected Successfully!</h1>
-            <p>Your Gmail account has been securely connected to Muse Shopping.</p>
-            <p>We'll now scan your order confirmations to find brands you already shop at and automatically follow them for you.</p>
-            <a href="http://localhost:8080/demo.html" class="button">Return to Muse</a>
-            <script>
-              // Auto-close this window after 3 seconds
-              setTimeout(() => {
-                window.close();
-              }, 3000);
-            </script>
+            <p>Redirecting...</p>
           </body>
         </html>
       `);

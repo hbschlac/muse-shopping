@@ -272,6 +272,171 @@ class StoreAccountService {
 
     return result.rows[0];
   }
+
+  /**
+   * Save retailer payment method for a store
+   * @param {number} userId - User ID
+   * @param {number} storeId - Store ID
+   * @param {Object} paymentMethod - Payment method data { token, type, last4, expiryMonth, expiryYear }
+   * @returns {Promise<Object>} Saved payment method
+   */
+  static async savePaymentMethod(userId, storeId, paymentMethod) {
+    const { token, type = 'card', last4, expiryMonth, expiryYear } = paymentMethod;
+
+    const result = await pool.query(
+      `INSERT INTO user_store_payment_methods (
+        user_id,
+        store_id,
+        payment_token,
+        payment_type,
+        last4,
+        expiry_month,
+        expiry_year,
+        is_default
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, false)
+      ON CONFLICT (user_id, store_id, payment_token)
+      DO UPDATE SET
+        last4 = EXCLUDED.last4,
+        expiry_month = EXCLUDED.expiry_month,
+        expiry_year = EXCLUDED.expiry_year,
+        updated_at = NOW()
+      RETURNING *`,
+      [userId, storeId, token, type, last4 || null, expiryMonth || null, expiryYear || null]
+    );
+
+    logger.info(`Payment method saved for user ${userId}, store ${storeId}`);
+    return result.rows[0];
+  }
+
+  /**
+   * Get payment methods for multiple stores
+   * Returns map of storeId -> payment token
+   * @param {number} userId - User ID
+   * @param {Array<number>} storeIds - Array of store IDs
+   * @returns {Promise<Object>} Map of storeId to payment token
+   */
+  static async getPaymentMethodsForStores(userId, storeIds) {
+    if (!storeIds || storeIds.length === 0) {
+      return {};
+    }
+
+    const result = await pool.query(
+      `SELECT
+        store_id,
+        payment_token,
+        payment_type,
+        last4,
+        expiry_month,
+        expiry_year,
+        is_default
+       FROM user_store_payment_methods
+       WHERE user_id = $1 AND store_id = ANY($2::int[])
+       ORDER BY is_default DESC, created_at DESC`,
+      [userId, storeIds]
+    );
+
+    // Build map of storeId -> payment token (use first/default method per store)
+    const paymentMap = {};
+    const seen = new Set();
+
+    for (const row of result.rows) {
+      const storeIdStr = String(row.store_id);
+      if (!seen.has(storeIdStr)) {
+        paymentMap[storeIdStr] = row.payment_token;
+        seen.add(storeIdStr);
+      }
+    }
+
+    return paymentMap;
+  }
+
+  /**
+   * Get all payment methods for a specific store
+   * @param {number} userId - User ID
+   * @param {number} storeId - Store ID
+   * @returns {Promise<Array>} Array of payment methods
+   */
+  static async getPaymentMethodsForStore(userId, storeId) {
+    const result = await pool.query(
+      `SELECT
+        id,
+        payment_token,
+        payment_type,
+        last4,
+        expiry_month,
+        expiry_year,
+        is_default,
+        created_at
+       FROM user_store_payment_methods
+       WHERE user_id = $1 AND store_id = $2
+       ORDER BY is_default DESC, created_at DESC`,
+      [userId, storeId]
+    );
+
+    return result.rows;
+  }
+
+  /**
+   * Delete a payment method
+   * @param {number} userId - User ID
+   * @param {number} paymentMethodId - Payment method ID
+   * @returns {Promise<void>}
+   */
+  static async deletePaymentMethod(userId, paymentMethodId) {
+    const result = await pool.query(
+      `DELETE FROM user_store_payment_methods
+       WHERE id = $1 AND user_id = $2
+       RETURNING id`,
+      [paymentMethodId, userId]
+    );
+
+    if (result.rows.length === 0) {
+      throw new NotFoundError('Payment method not found');
+    }
+
+    logger.info(`Payment method ${paymentMethodId} deleted for user ${userId}`);
+  }
+
+  /**
+   * Set payment method as default for a store
+   * @param {number} userId - User ID
+   * @param {number} paymentMethodId - Payment method ID
+   * @returns {Promise<Object>} Updated payment method
+   */
+  static async setDefaultPaymentMethod(userId, paymentMethodId) {
+    // First, get the store_id for this payment method
+    const pmResult = await pool.query(
+      `SELECT store_id FROM user_store_payment_methods WHERE id = $1 AND user_id = $2`,
+      [paymentMethodId, userId]
+    );
+
+    if (pmResult.rows.length === 0) {
+      throw new NotFoundError('Payment method not found');
+    }
+
+    const storeId = pmResult.rows[0].store_id;
+
+    // Unset all defaults for this user/store
+    await pool.query(
+      `UPDATE user_store_payment_methods
+       SET is_default = false, updated_at = NOW()
+       WHERE user_id = $1 AND store_id = $2`,
+      [userId, storeId]
+    );
+
+    // Set the new default
+    const result = await pool.query(
+      `UPDATE user_store_payment_methods
+       SET is_default = true, updated_at = NOW()
+       WHERE id = $1 AND user_id = $2
+       RETURNING *`,
+      [paymentMethodId, userId]
+    );
+
+    logger.info(`Payment method ${paymentMethodId} set as default for user ${userId}`);
+    return result.rows[0];
+  }
 }
 
 module.exports = StoreAccountService;

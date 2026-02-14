@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Muse">
+  <g transform="translate(10, 5) scale(1.0)">
+    <path fill="#1F1F1F" stroke="#1F1F1F" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" d="M 10,65 L 15,35 Q 18,25 22,20 L 25,50 Q 28,30 32,22 Q 35,15 40,12 L 45,50 Q 48,28 52,18 Q 55,10 60,8 L 63,55"/>
+    <path fill="none" stroke="#1F1F1F" stroke-width="6" stroke-linecap="round" d="M 25,75 L 70,70"/>
+  </g>
+</svg>

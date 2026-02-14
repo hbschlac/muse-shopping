@@ -25,4 +25,12 @@ router.get('/google', GoogleAuthController.initiateGoogleAuth);
  */
 router.get('/google/callback', GoogleAuthController.handleGoogleCallback);
 
+/**
+ * @route   POST /api/v1/auth/google/callback
+ * @desc    Handle Google OAuth callback from frontend
+ * @access  Public
+ * @body    code - Authorization code from Google
+ */
+router.post('/google/callback', GoogleAuthController.handleGoogleCallbackPost);
+
 module.exports = router;

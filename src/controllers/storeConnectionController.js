@@ -11,6 +11,45 @@ const pool = require('../db/pool');
 
 class StoreConnectionController {
   /**
+   * Get all available retailers
+   * GET /api/store-connections/retailers
+   */
+  static async getAllRetailers(req, res, next) {
+    try {
+      const result = await pool.query(
+        `SELECT
+          id,
+          name,
+          display_name,
+          slug,
+          logo_url,
+          website_url,
+          integration_type,
+          supports_checkout,
+          (integration_type = 'oauth') as supports_oauth,
+          category,
+          is_active
+         FROM stores
+         WHERE is_active = true
+         ORDER BY display_name ASC`
+      );
+
+      const retailers = result.rows.map(store => ({
+        id: store.slug, // Use slug as ID for frontend compatibility
+        name: store.display_name || store.name,
+        logo_url: store.logo_url,
+        supports_oauth: store.supports_oauth,
+        website_url: store.website_url,
+        category: store.category
+      }));
+
+      res.json(retailers);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
    * Get all user's store connections
    * GET /api/store-connections
    */
@@ -18,12 +57,45 @@ class StoreConnectionController {
     try {
       const userId = req.user.id;
 
-      const connections = await StoreConnectionService.getUserConnections(userId);
+      // Get stores the user shops at (detected from emails or manually added)
+      // and their connection status
+      const result = await pool.query(
+        `SELECT DISTINCT
+          s.id as store_id,
+          s.slug as retailer_id,
+          s.display_name as retailer_name,
+          s.logo_url,
+          s.integration_type,
+          (s.integration_type = 'oauth') as supports_oauth,
+          COALESCE(usc.is_connected, false) as is_connected,
+          usc.connection_status,
+          usc.scopes_granted,
+          usc.last_synced_at,
+          usc.connected_at,
+          usa.total_orders_detected,
+          usa.last_order_detected_at
+         FROM user_store_accounts usa
+         JOIN stores s ON s.id = usa.store_id
+         LEFT JOIN user_store_connections usc ON usc.user_id = usa.user_id AND usc.store_id = usa.store_id AND usc.is_connected = true
+         WHERE usa.user_id = $1
+         ORDER BY usa.total_orders_detected DESC NULLS LAST, s.display_name ASC`,
+        [userId]
+      );
 
-      res.json({
-        success: true,
-        connections,
-      });
+      const connections = result.rows.map(conn => ({
+        retailer_id: conn.retailer_id,
+        retailer_name: conn.retailer_name,
+        is_connected: conn.is_connected,
+        scopes: conn.scopes_granted,
+        last_synced_at: conn.last_synced_at,
+        connected_at: conn.connected_at,
+        logo_url: conn.logo_url,
+        supports_oauth: conn.supports_oauth,
+        total_orders: conn.total_orders_detected || 0,
+        last_order_date: conn.last_order_detected_at
+      }));
+
+      res.json(connections);
     } catch (error) {
       next(error);
     }

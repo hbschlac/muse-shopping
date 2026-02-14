@@ -59,14 +59,15 @@ class CartController {
 
       // Track style profile events for successfully added items
       try {
-        if (result.items && result.items.length > 0) {
-          for (const cartItem of result.items) {
-            if (cartItem.item_id) {
+        if (result.success && result.success.length > 0) {
+          for (const cartItem of result.success) {
+            const itemId = cartItem.itemId || cartItem.item_id;
+            if (itemId) {
               await StyleProfileService.updateProfile(
                 userId,
                 'add_to_cart',
                 'product',
-                cartItem.item_id
+                itemId
               );
             }
           }
@@ -113,6 +114,22 @@ class CartController {
       return res.status(200).json(successResponse(summary, 'Cart summary retrieved'));
     } catch (error) {
       logger.error('Error in getCartSummary controller:', error);
+      next(error);
+    }
+  }
+
+  /**
+   * Get lightweight cart count for global cart badge
+   * GET /api/v1/cart/count
+   */
+  static async getCartCount(req, res, next) {
+    try {
+      const userId = req.userId;
+      const count = await CartService.getCartCount(userId);
+
+      return res.status(200).json(successResponse(count, 'Cart count retrieved'));
+    } catch (error) {
+      logger.error('Error in getCartCount controller:', error);
       next(error);
     }
   }
@@ -181,6 +198,33 @@ class CartController {
       return res.status(200).json(successResponse(null, 'Item removed from cart'));
     } catch (error) {
       logger.error('Error in removeItem controller:', error);
+      next(error);
+    }
+  }
+
+  /**
+   * Move item to favorites and remove from cart
+   * POST /api/v1/cart/items/:id/move-to-favorites
+   */
+  static async moveItemToFavorites(req, res, next) {
+    try {
+      const userId = req.userId;
+      const itemId = parseInt(req.params.id, 10);
+      const { notes = null, itemId: itemIdOverride = null, removeFromCart = true } = req.body || {};
+
+      if (isNaN(itemId)) {
+        return res.status(400).json(errorResponse('VALIDATION_ERROR', 'Invalid item ID'));
+      }
+
+      const result = await CartService.moveItemToFavorites(userId, itemId, {
+        notes,
+        itemIdOverride,
+        removeFromCart,
+      });
+
+      return res.status(200).json(successResponse(result, 'Cart item moved to favorites'));
+    } catch (error) {
+      logger.error('Error in moveItemToFavorites controller:', error);
       next(error);
     }
   }

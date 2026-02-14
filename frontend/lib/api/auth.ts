@@ -102,30 +102,164 @@ export async function getCurrentUser(): Promise<User> {
 /**
  * Initiate Google OAuth flow
  */
-export function initiateGoogleAuth(): void {
-  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-  const redirectUri = `${window.location.origin}/auth/google/callback`;
-  const scope = 'email profile';
+export async function initiateGoogleAuth(): Promise<void> {
+  try {
+    // Get the auth URL from backend
+    const response = await api.get<{ success: boolean; data: { authUrl: string; state: string } }>('/auth/google');
 
-  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
-    `client_id=${clientId}&` +
-    `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-    `response_type=code&` +
-    `scope=${encodeURIComponent(scope)}`;
-
-  window.location.href = authUrl;
+    if (response.data?.authUrl) {
+      // Redirect to Google's authorization page
+      window.location.href = response.data.authUrl;
+    } else {
+      throw new Error('No authorization URL received from server');
+    }
+  } catch (error) {
+    console.error('Failed to initiate Google auth:', error);
+    throw error;
+  }
 }
 
 /**
  * Complete Google OAuth flow
  */
 export async function completeGoogleAuth(code: string): Promise<AuthResponse> {
-  const response = await api.post<AuthResponse>('/auth/google/callback', { code });
-  if (response.token) {
-    saveAuthToken(response.token);
-    if (response.refreshToken) {
-      localStorage.setItem('refresh_token', response.refreshToken);
+  const response = await api.post<{
+    success: boolean;
+    data: {
+      user: User;
+      tokens: {
+        access_token: string;
+        refresh_token: string;
+        expires_in: number;
+      };
+    };
+  }>('/auth/google/callback', { code });
+
+  // Backend wraps response in { success: true, data: {...} }
+  const authData = response.data;
+
+  console.log('completeGoogleAuth - response:', response);
+  console.log('completeGoogleAuth - user:', authData.user);
+  console.log('completeGoogleAuth - onboarding_completed:', authData.user.onboarding_completed);
+
+  // Save tokens
+  if (authData.tokens?.access_token) {
+    saveAuthToken(authData.tokens.access_token);
+    if (authData.tokens.refresh_token) {
+      localStorage.setItem('refresh_token', authData.tokens.refresh_token);
     }
   }
-  return response;
+
+  // Return normalized format
+  return {
+    user: authData.user,
+    token: authData.tokens.access_token,
+    refreshToken: authData.tokens.refresh_token,
+  };
 }
+
+/**
+ * Request password reset
+ */
+export async function requestPasswordReset(email: string): Promise<void> {
+  await api.post('/auth/forgot-password', { email });
+}
+
+/**
+ * Request password reset (alias for requestPasswordReset)
+ */
+export async function forgotPassword(email: string): Promise<void> {
+  return requestPasswordReset(email);
+}
+
+/**
+ * Verify password reset token
+ */
+export async function verifyResetToken(token: string): Promise<{ valid: boolean }> {
+  return api.get<{ valid: boolean }>(`/auth/verify-reset-token?token=${token}`);
+}
+
+/**
+ * Reset password with token
+ */
+export async function resetPassword(token: string, newPassword: string): Promise<void> {
+  await api.post('/auth/reset-password', { token, new_password: newPassword });
+}
+
+/**
+ * Initiate Apple OAuth flow
+ */
+export async function initiateAppleAuth(): Promise<void> {
+  try {
+    // Get the auth URL from backend
+    const response = await api.get<{ success: boolean; data: { authUrl: string; state: string; nonce: string } }>('/auth/apple');
+
+    if (response.data?.authUrl) {
+      // Redirect to Apple's authorization page
+      window.location.href = response.data.authUrl;
+    } else {
+      throw new Error('No authorization URL received from server');
+    }
+  } catch (error) {
+    console.error('Failed to initiate Apple auth:', error);
+    throw error;
+  }
+}
+
+/**
+ * Complete Apple OAuth flow
+ */
+export async function completeAppleAuth(data: { code?: string; id_token?: string; state?: string; user?: string }): Promise<AuthResponse> {
+  const response = await api.post<{
+    success: boolean;
+    data: {
+      user: User;
+      tokens: {
+        access_token: string;
+        refresh_token: string;
+        expires_in: number;
+      };
+    };
+  }>('/auth/apple/callback', data);
+
+  // Backend wraps response in { success: true, data: {...} }
+  const authData = response.data;
+
+  console.log('completeAppleAuth - response:', response);
+  console.log('completeAppleAuth - user:', authData.user);
+  console.log('completeAppleAuth - onboarding_completed:', authData.user.onboarding_completed);
+
+  // Save tokens
+  if (authData.tokens?.access_token) {
+    saveAuthToken(authData.tokens.access_token);
+    if (authData.tokens.refresh_token) {
+      localStorage.setItem('refresh_token', authData.tokens.refresh_token);
+    }
+  }
+
+  // Return normalized format
+  return {
+    user: authData.user,
+    token: authData.tokens.access_token,
+    refreshToken: authData.tokens.refresh_token,
+  };
+}
+
+/**
+ * Auth API object (legacy export for compatibility)
+ */
+export const authApi = {
+  register,
+  login,
+  logout,
+  refreshToken,
+  changePassword,
+  getCurrentUser,
+  initiateGoogleAuth,
+  completeGoogleAuth,
+  requestPasswordReset,
+  forgotPassword,
+  verifyResetToken,
+  resetPassword,
+  completeAppleAuth,
+};

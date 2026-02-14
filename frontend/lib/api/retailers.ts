@@ -54,6 +54,12 @@ export interface RetailerAuthStatus {
   is_connected: boolean;
   access_token_expires_at?: string;
   scopes?: string[];
+  logo_url?: string;
+  supports_oauth?: boolean;
+  total_orders?: number;
+  last_order_date?: string;
+  connected_at?: string;
+  last_synced_at?: string;
 }
 
 /**

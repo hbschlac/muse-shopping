@@ -459,27 +459,25 @@ class ItemService {
     const prices = listings
       .filter(l => l.in_stock)
       .map(l => ({
-        regular: parseFloat(l.price),
-        sale: l.sale_price ? parseFloat(l.sale_price) : null,
+        current: parseFloat(l.price),
+        original: l.original_price ? parseFloat(l.original_price) : null,
         retailer: l.retailer_name,
         url: l.affiliate_url || l.product_url
       }));
 
     if (prices.length === 0) return null;
 
-    // Find lowest price (considering sale prices)
+    // Find lowest current price
     let best = prices[0];
     prices.forEach(p => {
-      const currentBest = best.sale || best.regular;
-      const thisPrice = p.sale || p.regular;
-      if (thisPrice < currentBest) {
+      if (p.current < best.current) {
         best = p;
       }
     });
 
     return {
-      price: best.sale || best.regular,
-      was: best.sale ? best.regular : null,
+      price: best.current,
+      was: (best.original && best.original > best.current) ? best.original : null,
       retailer: best.retailer,
       url: best.url
     };

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Search as SearchIcon, SlidersHorizontal } from 'lucide-react';
 import ProductCard from '@/components/ProductCard';
 import BottomNav from '@/components/BottomNav';
+import PageHeader from '@/components/PageHeader';
 
 // Mock data
 const recentSearches = [
@@ -24,11 +25,13 @@ const products = [
 export default function SearchPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
 
   return (
     <div className="min-h-screen bg-[var(--color-ecru)] pb-24">
-      {/* Header with Search */}
-      <div className="bg-[var(--color-ecru)] pt-12 pb-4 px-4">
+      <PageHeader />
+      {/* Search Bar */}
+      <div className="bg-[var(--color-ecru)] pb-4 px-4">
         <div className="relative">
           <div className="h-[56px] bg-white rounded-[28px] shadow-[0_2px_8px_rgba(0,0,0,0.05)] flex items-center px-4">
             <SearchIcon className="w-5 h-5 text-gray-400 mr-3" />
@@ -37,7 +40,7 @@ export default function SearchPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search or ask Muse..."
-              className="flex-1 bg-transparent border-none outline-none text-[15px] text-gray-900 placeholder:text-gray-400"
+              className="flex-1 bg-transparent border-none outline-none text-base text-gray-900 placeholder:text-gray-400"
             />
             <button
               onClick={() => setShowFilters(!showFilters)}
@@ -60,7 +63,7 @@ export default function SearchPage() {
               <button
                 key={index}
                 onClick={() => setSearchQuery(search)}
-                className="w-full text-left px-4 py-3 bg-white rounded-[12px] text-[15px] text-gray-900 hover:bg-gray-50 transition-colors duration-150 shadow-sm"
+                className="w-full text-left px-4 py-3 bg-white rounded-[12px] text-base text-gray-900 hover:bg-gray-50 transition-colors duration-150 shadow-sm"
               >
                 {search}
               </button>
@@ -74,14 +77,36 @@ export default function SearchPage() {
         <div className="px-4 pt-4">
           <div className="mb-4">
             <p className="text-sm text-gray-600">
-              {products.length} results for "{searchQuery}"
+              {products.length} {products.length === 1 ? 'result' : 'results'} for "{searchQuery}"
             </p>
           </div>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
-            {products.map((product) => (
-              <ProductCard key={product.id} {...product} />
-            ))}
-          </div>
+          {products.length > 0 ? (
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+              {products.map((product) => (
+                <ProductCard key={product.id} {...product} />
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
+              <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">
+                No results found
+              </h3>
+              <p className="text-sm text-[var(--color-text-tertiary)] mb-6">
+                We couldn't find any items matching "{searchQuery}". Try different keywords or browse our collections.
+              </p>
+              <a
+                href="/discover"
+                className="px-6 py-3 bg-[var(--gradient-coral)] text-white font-semibold rounded-[12px] hover:shadow-lg transition-shadow duration-150"
+              >
+                Explore Collections
+              </a>
+            </div>
+          )}
         </div>
       )}
 

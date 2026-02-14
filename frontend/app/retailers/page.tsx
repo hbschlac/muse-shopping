@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRetailerProducts } from '@/lib/hooks/useRetailerProducts';
 import RetailerProductCard from '@/components/RetailerProductCard';
 import BottomNav from '@/components/BottomNav';
+import PageHeader from '@/components/PageHeader';
 import { saveProduct, unsaveProduct, isProductSaved } from '@/lib/api/saves';
 
 export default function RetailersPage() {
@@ -53,13 +54,11 @@ export default function RetailersPage() {
 
   return (
     <div className="min-h-screen bg-[var(--color-ecru)] pb-24">
-      {/* Header */}
-      <header className="sticky top-0 z-20 bg-[var(--color-ecru)] pt-3 pb-4 px-4 border-b border-gray-200">
+      <PageHeader title="Shop Retailers" />
+
+      {/* Retailer Filters */}
+      <div className="bg-[var(--color-ecru)] px-4 pb-4 border-b border-gray-200">
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-xl font-semibold text-gray-900">Shop Retailers</h1>
-            <img src="/logo-m.svg" alt="Muse" className="h-8" />
-          </div>
 
           {/* Retailer Tabs */}
           <div className="flex gap-2 overflow-x-auto hide-scrollbar mb-4">
@@ -87,7 +86,7 @@ export default function RetailersPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search products..."
-                className="w-full h-12 pl-12 pr-4 bg-white rounded-[12px] border border-gray-300 text-[15px] text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900"
+                className="w-full h-12 pl-12 pr-4 bg-white rounded-[12px] border border-gray-300 text-base text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900"
               />
               <svg
                 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
@@ -128,7 +127,7 @@ export default function RetailersPage() {
             ))}
           </div>
         </div>
-      </header>
+      </div>
 
       {/* Products Grid */}
       <main className="px-4 pt-4">

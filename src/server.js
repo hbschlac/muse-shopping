@@ -3,7 +3,8 @@
  * Starts the Express server and handles database connection
  */
 
-require('dotenv').config();
+const loadEnv = require('./config/loadEnv');
+loadEnv();
 const app = require('./app');
 const logger = require('./utils/logger');
 const pool = require('./db/pool');

@@ -1,0 +1,152 @@
+#!/usr/bin/env node
+
+const fs = require('fs');
+const path = require('path');
+
+/**
+ * Complete redesign based on feedback:
+ * - Single cohesive message (not split headline/subtext)
+ * - Much larger iPhone (dominant hero element)
+ * - Modern, clean typography
+ * - Muse M logo prominently displayed
+ */
+
+const tiles = [
+  {
+    name: '01-all-your-favorites-one-cart',
+    message: 'All your favorites.\nOne cart.',
+    screenshotNote: 'Cart page'
+  },
+  {
+    name: '02-we-show-you-where-to-buy',
+    message: 'We show you\nwhere to buy.',
+    screenshotNote: 'Product Detail Page'
+  },
+  {
+    name: '03-shop-with-ease',
+    message: 'Shop with\nease.',
+    screenshotNote: 'Home/Inspire feed'
+  }
+];
+
+// Muse brand gradient (peach to blue)
+const gradientStops = [
+  { offset: '0%', color: '#F4C4B0' },
+  { offset: '25%', color: '#E8C5D4' },
+  { offset: '50%', color: '#D8D0E8' },
+  { offset: '75%', color: '#C8D8F0' },
+  { offset: '100%', color: '#B8D8F8' }
+];
+
+// Muse M logo path (from favicon.svg)
+const museMLogoPath = 'M 160,700 L 180,680 L 180,620 L 200,630 L 230,590 L 350,280 L 340,265 L 260,310 L 300,150 L 340,150 L 370,165 L 410,135 L 440,135 L 460,155 L 400,190 L 490,330 L 540,280 L 600,160 L 680,90 L 160,700 Z M 720,90 L 695,105 L 730,145 L 722,185 L 742,205 L 755,200 L 748,360 L 680,415 L 650,405 L 680,270 L 680,245 L 665,230 L 680,215 L 650,205 L 600,310 L 615,325 L 610,345 L 570,400 L 550,540 L 525,580 L 505,580 L 470,560 L 455,535 L 490,538 L 500,525 L 470,495 L 450,520 L 450,360 L 465,265 L 455,245 L 430,275 L 390,420 L 330,680 L 720,90 Z M 850,690 L 830,570 L 842,340 L 850,690 Z M 735,770 L 685,755 L 655,730 L 655,550 L 662,585 L 673,595 L 685,590 L 745,545 L 748,515 L 737,753 L 735,770 Z M 745,90 L 760,105 L 756,205 L 722,185 L 730,145 L 685,100 L 745,90 Z M 490,330 L 480,327 L 435,220 L 415,205 L 455,165 L 480,180 L 515,305 L 490,330 Z M 570,375 L 600,245 L 640,200 L 665,200 L 675,215 L 630,250 L 570,375 Z M 175,690 L 165,685 L 245,305 L 290,280 L 330,245 L 333,255 L 280,400 L 175,690 Z M 650,605 L 648,515 L 658,505 L 680,515 L 725,475 L 748,470 L 745,545 L 650,605 Z M 490,538 L 470,538 L 458,530 L 455,495 L 500,530 L 525,530 L 555,510 L 540,540 L 490,538 Z';
+
+const outputDir = path.join(__dirname, 'mockups-output');
+if (!fs.existsSync(outputDir)) {
+  fs.mkdirSync(outputDir);
+}
+
+tiles.forEach(tile => {
+  const stops = gradientStops.map(stop =>
+    `      <stop offset="${stop.offset}" stop-color="${stop.color}" stop-opacity="1" />`
+  ).join('\n');
+
+  const svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1242" height="2208" viewBox="0 0 1242 2208" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Brand gradient -->
+    <linearGradient id="museGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+${stops}
+    </linearGradient>
+
+    <!-- Logo gradient -->
+    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#F4C4B4" stop-opacity="1" />
+      <stop offset="50%" stop-color="#D5C4DC" stop-opacity="1" />
+      <stop offset="100%" stop-color="#B4C8E8" stop-opacity="1" />
+    </linearGradient>
+
+    <!-- Phone shadow - dramatic depth -->
+    <filter id="phoneShadow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="60" result="blur1"/>
+      <feOffset in="blur1" dx="0" dy="50" result="offset1"/>
+      <feFlood flood-color="#000000" flood-opacity="0.3"/>
+      <feComposite in2="offset1" operator="in" result="shadow1"/>
+
+      <feGaussianBlur in="SourceAlpha" stdDeviation="30" result="blur2"/>
+      <feOffset in="blur2" dx="0" dy="25" result="offset2"/>
+      <feFlood flood-color="#000000" flood-opacity="0.2"/>
+      <feComposite in2="offset2" operator="in" result="shadow2"/>
+
+      <feMerge>
+        <feMergeNode in="shadow1"/>
+        <feMergeNode in="shadow2"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background gradient -->
+  <rect width="1242" height="2208" fill="url(#museGradient)"/>
+
+  <!-- Muse M Logo - top left corner -->
+  <g transform="translate(60, 60) scale(0.08)">
+    <path d="${museMLogoPath}" fill="url(#logoGradient)" fill-rule="evenodd" opacity="0.9"/>
+  </g>
+
+  <!-- Message - clean, modern, SINGLE font size -->
+  <text x="80" y="280" font-family="'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, sans-serif"
+        font-size="72" font-weight="500" fill="#1F1F1F" letter-spacing="-1.5" line-height="1.2">
+    ${tile.message.split('\n').map((line, i) =>
+      `<tspan x="80" dy="${i > 0 ? '86' : '0'}">${line}</tspan>`
+    ).join('\n    ')}
+  </text>
+
+  <!-- iPhone Mockup - DOMINANT HERO (60% of canvas height) -->
+  <g transform="translate(150, 480)">
+    <g transform="rotate(-5)">
+      <!-- Phone body -->
+      <rect x="0" y="0" width="740" height="1512" rx="95"
+            fill="#0a0a0a" filter="url(#phoneShadow)"/>
+
+      <!-- Screen bezel -->
+      <rect x="20" y="20" width="700" height="1472" rx="82" fill="#000000"/>
+
+      <!-- Actual screen -->
+      <rect x="26" y="26" width="688" height="1460" rx="76" fill="#FAFAF8"/>
+
+      <!-- Dynamic Island -->
+      <ellipse cx="370" cy="70" rx="92" ry="31" fill="#000000"/>
+
+      <!-- Screenshot area -->
+      <defs>
+        <clipPath id="screenClip">
+          <rect x="26" y="120" width="688" height="1366" rx="76"/>
+        </clipPath>
+      </defs>
+
+      <rect x="26" y="120" width="688" height="1366" fill="#FFFFFF" fill-opacity="0.35"
+            clip-path="url(#screenClip)"/>
+
+      <!-- Screenshot placeholder -->
+      <text x="370" y="790" font-family="-apple-system, sans-serif" font-size="24"
+            fill="#999999" text-anchor="middle" opacity="0.4">
+        [${tile.screenshotNote}]
+      </text>
+    </g>
+  </g>
+
+</svg>`;
+
+  const filePath = path.join(outputDir, `${tile.name}.svg`);
+  fs.writeFileSync(filePath, svg);
+  console.log(`✓ ${tile.name}.svg`);
+});
+
+console.log('\n🎨 Redesigned mockups created!');
+console.log('\nKey changes:');
+console.log('  ✓ Muse M logo prominently displayed (top left)');
+console.log('  ✓ Single cohesive message (72px, not split)');
+console.log('  ✓ iPhone dominates canvas (740×1512 - 60% height)');
+console.log('  ✓ Cleaner, more modern composition');
+console.log('  ✓ Dramatic shadow for depth');

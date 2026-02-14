@@ -75,7 +75,7 @@ const requireAdmin = async (req, res, next) => {
 
     // Check if user has admin role
     const result = await pool.query(
-      'SELECT id, email, role, account_locked FROM users WHERE id = $1',
+      'SELECT id, email, role, is_admin, account_locked FROM users WHERE id = $1',
       [decoded.userId]
     );
 
@@ -99,9 +99,12 @@ const requireAdmin = async (req, res, next) => {
       throw new AuthenticationError('Account is locked');
     }
 
-    // Check if user is admin or super_admin
-    if (!['admin', 'super_admin'].includes(user.role)) {
-      logger.warn(`Non-admin user attempted admin access: ${user.email} (role: ${user.role})`);
+    // Check if user is admin (either by role or is_admin flag)
+    const isAdminByRole = ['admin', 'super_admin'].includes(user.role);
+    const isAdminByFlag = user.is_admin === true;
+
+    if (!isAdminByRole && !isAdminByFlag) {
+      logger.warn(`Non-admin user attempted admin access: ${user.email} (role: ${user.role}, is_admin: ${user.is_admin})`);
 
       // Log security event
       await pool.query(
@@ -115,6 +118,7 @@ const requireAdmin = async (req, res, next) => {
 
     // Attach role to request for further checks
     req.userRole = user.role;
+    req.isAdmin = isAdminByFlag || isAdminByRole;
 
     next();
   } catch (error) {

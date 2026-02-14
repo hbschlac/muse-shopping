@@ -6,6 +6,8 @@
 const pool = require('../db/pool');
 const logger = require('../utils/logger');
 const { NotFoundError, ValidationError, ConflictError } = require('../utils/errors');
+const RequirementAdapterService = require('./requirementAdapterService');
+const ItemService = require('./itemService');
 
 class CartService {
   /**
@@ -29,6 +31,8 @@ class CartService {
       color,
       quantity = 1,
       inStock = true,
+      currency = 'USD',
+      productType = null,
       metadata = {},
     } = itemData;
 
@@ -45,6 +49,13 @@ class CartService {
       throw new ValidationError('Quantity must be between 1 and 99');
     }
 
+    RequirementAdapterService.assertCurrencyAllowed(currency);
+    RequirementAdapterService.assertItemQuantityAllowed(quantity);
+    RequirementAdapterService.assertStoreAllowedForCart(storeId);
+    RequirementAdapterService.assertProductTypeAllowedForCart(
+      productType || metadata.productType || metadata.product_type
+    );
+
     try {
       // Check if item already exists (same product, size, color)
       const existingItem = await pool.query(
@@ -58,17 +69,21 @@ class CartService {
       if (existingItem.rows.length > 0) {
         // Update quantity instead of adding duplicate
         const newQuantity = existingItem.rows[0].quantity + quantity;
+        RequirementAdapterService.assertItemQuantityAllowed(newQuantity);
+        await RequirementAdapterService.assertCartCapacity(userId, quantity, 0);
         return await this.updateItemQuantity(userId, existingItem.rows[0].id, newQuantity);
       }
+
+      await RequirementAdapterService.assertCartCapacity(userId, quantity, 1);
 
       // Add new item to cart
       const result = await pool.query(
         `INSERT INTO cart_items (
           user_id, store_id, brand_id, product_name, product_sku, product_url,
           product_image_url, product_description, price_cents, original_price_cents,
-          size, color, quantity, in_stock, metadata, last_stock_check
+          currency, size, color, quantity, in_stock, metadata, last_stock_check
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW())
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW())
         RETURNING *`,
         [
           userId,
@@ -81,11 +96,15 @@ class CartService {
           productDescription,
           priceCents,
           originalPriceCents,
+          String(currency || 'USD').toUpperCase(),
           size,
           color,
           quantity,
           inStock,
-          JSON.stringify(metadata),
+          JSON.stringify({
+            ...(metadata || {}),
+            ...(productType ? { productType: String(productType).toUpperCase() } : {}),
+          }),
         ]
       );
 
@@ -151,7 +170,7 @@ class CartService {
        JOIN stores s ON ci.store_id = s.id
        LEFT JOIN brands b ON ci.brand_id = b.id
        WHERE ci.user_id = $1
-       ORDER BY s.display_name, ci.added_at DESC`,
+       ORDER BY ci.added_at DESC`,
       [userId]
     );
 
@@ -182,9 +201,13 @@ class CartService {
       store.itemCount += formattedItem.quantity;
     }
 
+    const stores = Array.from(storesMap.values());
+    const summary = this.calculateCartSummary(stores);
+
     return {
-      stores: Array.from(storesMap.values()),
-      summary: this.calculateCartSummary(Array.from(storesMap.values())),
+      stores,
+      summary,
+      requirements: RequirementAdapterService.buildCartRequirementState(summary),
     };
   }
 
@@ -200,6 +223,24 @@ class CartService {
       throw new ValidationError('Quantity must be between 1 and 99');
     }
 
+    RequirementAdapterService.assertItemQuantityAllowed(quantity);
+
+    const existingResult = await pool.query(
+      `SELECT quantity FROM cart_items
+       WHERE id = $1 AND user_id = $2`,
+      [itemId, userId]
+    );
+
+    if (existingResult.rows.length === 0) {
+      throw new NotFoundError('Cart item not found');
+    }
+
+    const currentQuantity = existingResult.rows[0].quantity;
+    const delta = quantity - currentQuantity;
+    if (delta > 0) {
+      await RequirementAdapterService.assertCartCapacity(userId, delta, 0);
+    }
+
     const result = await pool.query(
       `UPDATE cart_items
        SET quantity = $1
@@ -207,10 +248,6 @@ class CartService {
        RETURNING *`,
       [quantity, itemId, userId]
     );
-
-    if (result.rows.length === 0) {
-      throw new NotFoundError('Cart item not found');
-    }
 
     logger.info(`Cart item ${itemId} quantity updated to ${quantity} for user ${userId}`);
 
@@ -236,6 +273,25 @@ class CartService {
 
     if (Object.keys(validUpdates).length === 0) {
       throw new ValidationError('No valid fields to update');
+    }
+
+    const existingResult = await pool.query(
+      `SELECT quantity FROM cart_items WHERE id = $1 AND user_id = $2`,
+      [itemId, userId]
+    );
+
+    if (existingResult.rows.length === 0) {
+      throw new NotFoundError('Cart item not found');
+    }
+
+    const currentQuantity = existingResult.rows[0].quantity;
+
+    if (validUpdates.quantity !== undefined) {
+      RequirementAdapterService.assertItemQuantityAllowed(validUpdates.quantity);
+      const delta = validUpdates.quantity - currentQuantity;
+      if (delta > 0) {
+        await RequirementAdapterService.assertCartCapacity(userId, delta, 0);
+      }
     }
 
     // Build dynamic SET clause
@@ -316,6 +372,24 @@ class CartService {
   }
 
   /**
+   * Get total cart item count (sum of quantities)
+   * @param {number} userId
+   * @returns {Promise<Object>}
+   */
+  static async getCartCount(userId) {
+    const result = await pool.query(
+      `SELECT COALESCE(SUM(quantity), 0) AS total_item_count
+       FROM cart_items
+       WHERE user_id = $1`,
+      [userId]
+    );
+
+    return {
+      totalItemCount: parseInt(result.rows[0].total_item_count, 10) || 0,
+    };
+  }
+
+  /**
    * Check if product is already in cart
    * @param {number} userId - User ID
    * @param {number} storeId - Store ID
@@ -337,6 +411,57 @@ class CartService {
   }
 
   /**
+   * Move cart item to favorites and remove from cart.
+   * This is scaffold behavior: if no catalog itemId mapping exists, we still remove.
+   * @param {number} userId
+   * @param {number} itemId
+   * @param {Object} options
+   * @returns {Promise<Object>}
+   */
+  static async moveItemToFavorites(userId, itemId, options = {}) {
+    const { notes = null, itemIdOverride = null, removeFromCart = true } = options;
+
+    const itemResult = await pool.query(
+      `SELECT * FROM cart_items WHERE id = $1 AND user_id = $2`,
+      [itemId, userId]
+    );
+
+    if (itemResult.rows.length === 0) {
+      throw new NotFoundError('Cart item not found');
+    }
+
+    const cartItem = itemResult.rows[0];
+    const metadata = cartItem.metadata || {};
+    const favoriteItemIdCandidate = itemIdOverride || metadata.itemId || metadata.item_id || null;
+    const favoriteItemId = favoriteItemIdCandidate ? parseInt(favoriteItemIdCandidate, 10) : null;
+
+    let favorite = {
+      status: 'skipped',
+      reason: 'missing_catalog_item_id',
+      itemId: null,
+    };
+
+    if (favoriteItemId && Number.isInteger(favoriteItemId) && favoriteItemId > 0) {
+      await ItemService.addToFavorites(userId, favoriteItemId, notes);
+      favorite = {
+        status: 'added',
+        reason: null,
+        itemId: favoriteItemId,
+      };
+    }
+
+    if (removeFromCart) {
+      await this.removeItem(userId, itemId);
+    }
+
+    return {
+      removedFromCart: !!removeFromCart,
+      favorite,
+      item: this.formatCartItem(cartItem),
+    };
+  }
+
+  /**
    * Format cart item for response
    * @param {Object} item - Raw cart item from database
    * @returns {Object} Formatted cart item
@@ -353,11 +478,13 @@ class CartService {
       productName: item.product_name,
       productSku: item.product_sku,
       productUrl: item.product_url,
+      pdpUrl: item.product_url,
       productImageUrl: item.product_image_url,
       productDescription: item.product_description,
       priceCents,
       priceDisplay: this.formatPrice(priceCents),
       originalPriceCents: item.original_price_cents,
+      currency: item.currency || 'USD',
       originalPriceDisplay: item.original_price_cents
         ? this.formatPrice(item.original_price_cents)
         : null,
@@ -376,10 +503,21 @@ class CartService {
       lastStockCheck: item.last_stock_check,
       metadata: item.metadata,
       addedAt: item.added_at,
+      addedAtMs: item.added_at ? new Date(item.added_at).getTime() : null,
       updatedAt: item.updated_at,
       // Include store/brand info if present
       storeName: item.store_display_name || item.store_name,
       brandName: item.brand_name || item.brand_name,
+      // Frontend convenience for cart module tap-through behavior
+      pdp: {
+        url: item.product_url,
+        cartQuantity: quantity,
+      },
+      actions: {
+        removePath: `/api/v1/cart/items/${item.id}`,
+        moveToFavoritesPath: `/api/v1/cart/items/${item.id}/move-to-favorites`,
+        updateQuantityPath: `/api/v1/cart/items/${item.id}/quantity`,
+      },
     };
   }
 
@@ -393,10 +531,12 @@ class CartService {
     let totalStoreCount = stores.length;
     let totalCents = 0;
     let totalDiscount = 0;
+    let totalDistinctItems = 0;
 
     for (const store of stores) {
       totalItemCount += store.itemCount;
       totalCents += store.subtotalCents;
+      totalDistinctItems += store.items.length;
 
       // Calculate total discount
       for (const item of store.items) {
@@ -409,6 +549,7 @@ class CartService {
     return {
       totalStoreCount,
       totalItemCount,
+      totalDistinctItems,
       totalCents,
       totalDisplay: this.formatPrice(totalCents),
       totalDiscount,

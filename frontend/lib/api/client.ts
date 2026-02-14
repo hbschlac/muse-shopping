@@ -55,9 +55,9 @@ async function apiRequest<T>(
 ): Promise<T> {
   const { requiresAuth = false, headers = {}, ...restOptions } = options;
 
-  const requestHeaders: HeadersInit = {
+  const requestHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...headers,
+    ...(headers as Record<string, string>),
   };
 
   // Add auth token if required
@@ -94,7 +94,11 @@ async function apiRequest<T>(
       return null as T;
     }
 
-    return isJson ? await response.json() : await response.text();
+    if (isJson) {
+      return (await response.json()) as T;
+    }
+
+    return (await response.text()) as unknown as T;
   } catch (error) {
     if (error instanceof APIError) {
       throw error;

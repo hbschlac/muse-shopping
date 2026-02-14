@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Muse Admin - Email Management</title>
+  <style>
+    :root {
+      --muse-cream: #FEFDFB;
+      --muse-sand: #F4EFE7;
+      --muse-taupe: #E9E5DF;
+      --muse-peach: #F4C4B0;
+      --muse-brown: #6B625C;
+      --muse-dark: #333333;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+      background: var(--muse-cream);
+      color: var(--muse-dark);
+    }
+
+    .header {
+      background: white;
+      border-bottom: 1px solid var(--muse-taupe);
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--muse-dark);
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .user-name {
+      font-size: 14px;
+      color: var(--muse-brown);
+    }
+
+    .btn-logout {
+      padding: 8px 16px;
+      background: var(--muse-taupe);
+      color: var(--muse-dark);
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-logout:hover {
+      background: var(--muse-brown);
+      color: white;
+    }
+
+    .account-menu {
+      position: relative;
+      display: inline-block;
+    }
+
+    .account-btn {
+      padding: 8px 16px;
+      background: white;
+      color: var(--muse-dark);
+      border: 2px solid var(--muse-taupe);
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .account-btn:hover {
+      border-color: var(--muse-peach);
+      background: var(--muse-sand);
+    }
+
+    .dropdown-menu {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 100%;
+      margin-top: 8px;
+      background: white;
+      border: 1px solid var(--muse-taupe);
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      min-width: 200px;
+      z-index: 1000;
+    }
+
+    .dropdown-menu.show {
+      display: block;
+    }
+
+    .dropdown-item {
+      padding: 12px 16px;
+      cursor: pointer;
+      transition: background 0.2s;
+      border-bottom: 1px solid var(--muse-sand);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muse-dark);
+      text-decoration: none;
+    }
+
+    .dropdown-item:last-child {
+      border-bottom: none;
+    }
+
+    .dropdown-item:hover {
+      background: var(--muse-sand);
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      border-bottom: 2px solid var(--muse-taupe);
+    }
+
+    .tab {
+      padding: 12px 24px;
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--muse-brown);
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-bottom: -2px;
+    }
+
+    .tab.active {
+      color: var(--muse-dark);
+      border-bottom-color: var(--muse-peach);
+    }
+
+    .tab:hover {
+      color: var(--muse-dark);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      margin-bottom: 24px;
+    }
+
+    .card h2 {
+      font-size: 20px;
+      margin-bottom: 16px;
+      color: var(--muse-dark);
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--muse-dark);
+      margin-bottom: 8px;
+    }
+
+    label .optional {
+      color: var(--muse-brown);
+      font-weight: 400;
+      font-size: 12px;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid var(--muse-taupe);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      transition: border-color 0.3s;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: var(--muse-peach);
+    }
+
+    textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--muse-peach);
+      color: var(--muse-dark);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(244, 196, 176, 0.4);
+    }
+
+    .btn-secondary {
+      background: var(--muse-taupe);
+      color: var(--muse-dark);
+    }
+
+    .btn-secondary:hover {
+      background: var(--muse-brown);
+      color: white;
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    .radio-group {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .radio-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .radio-option input[type="radio"] {
+      width: auto;
+    }
+
+    .alert {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+
+    .alert-success {
+      background: #d1fae5;
+      border: 1px solid #10b981;
+      color: #065f46;
+    }
+
+    .alert-error {
+      background: #fee2e2;
+      border: 1px solid #ef4444;
+      color: #991b1b;
+    }
+
+    .alert-info {
+      background: #dbeafe;
+      border: 1px solid #3b82f6;
+      color: #1e40af;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--muse-brown);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-value {
+      font-size: 32px;
+      font-weight: 600;
+      color: var(--muse-dark);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 12px;
+      border-bottom: 1px solid var(--muse-taupe);
+    }
+
+    th {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muse-brown);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    tr:hover {
+      background: var(--muse-sand);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .badge-success {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .badge-error {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .badge-marketing {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .badge-transactional {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    .preview-box {
+      background: var(--muse-sand);
+      border: 2px dashed var(--muse-taupe);
+      border-radius: 8px;
+      padding: 24px;
+      margin-top: 16px;
+    }
+
+    .preview-box h3 {
+      font-size: 18px;
+      margin-bottom: 12px;
+      color: var(--muse-dark);
+    }
+
+    .preview-email {
+      background: white;
+      border-radius: 8px;
+      padding: 24px;
+      max-width: 600px;
+    }
+
+    .preview-email .logo {
+      text-align: center;
+      font-size: 28px;
+      font-weight: 600;
+      margin-bottom: 24px;
+      color: var(--muse-dark);
+    }
+
+    .preview-email h2 {
+      color: var(--muse-dark);
+      margin-bottom: 16px;
+    }
+
+    .preview-email .btn-preview {
+      display: inline-block;
+      padding: 12px 24px;
+      background: var(--muse-peach);
+      color: var(--muse-dark);
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 500;
+      margin: 16px 0;
+    }
+
+    .loading-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .loading-overlay.show {
+      display: flex;
+    }
+
+    .spinner {
+      border: 4px solid var(--muse-taupe);
+      border-top: 4px solid var(--muse-peach);
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .criteria-builder {
+      background: var(--muse-sand);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+
+    .criteria-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+
+    @media (max-width: 768px) {
+      .criteria-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">Muse Email Admin</div>
+    <div class="user-info">
+      <span class="user-name" id="userName"></span>
+      <div class="account-menu">
+        <button class="account-btn" onclick="toggleAccountMenu()">
+          <span>Account</span>
+          <span>▼</span>
+        </button>
+        <div class="dropdown-menu" id="accountDropdown">
+          <div class="dropdown-item" id="manageAccountBtn">
+            👤 Manage My Account
+          </div>
+          <div class="dropdown-item" id="createAdminBtn">
+            ➕ Create Admin Account
+          </div>
+          <div class="dropdown-item" id="logoutBtn" style="color: var(--danger);">
+            🚪 Sign Out
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('compose')">Compose Email</button>
+      <button class="tab" onclick="switchTab('history')">Email History</button>
+      <button class="tab" onclick="switchTab('campaigns')">Campaigns</button>
+    </div>
+
+    <!-- Compose Tab -->
+    <div class="tab-content active" id="compose-tab">
+      <div class="card">
+        <h2>Compose & Send Email</h2>
+
+        <div id="composeAlert"></div>
+
+        <div class="radio-group">
+          <div class="radio-option">
+            <input type="radio" id="sendTypeSingle" name="sendType" value="single" checked onchange="updateSendType()">
+            <label for="sendTypeSingle" style="margin: 0;">Single User</label>
+          </div>
+          <div class="radio-option">
+            <input type="radio" id="sendTypeBulk" name="sendType" value="bulk" onchange="updateSendType()">
+            <label for="sendTypeBulk" style="margin: 0;">Multiple Users</label>
+          </div>
+          <div class="radio-option">
+            <input type="radio" id="sendTypeCriteria" name="sendType" value="criteria" onchange="updateSendType()">
+            <label for="sendTypeCriteria" style="margin: 0;">Target by Criteria</label>
+          </div>
+        </div>
+
+        <!-- Single User -->
+        <div id="singleUserFields">
+          <div class="form-group">
+            <label for="userId">User ID</label>
+            <input type="number" id="userId" placeholder="Enter user ID (e.g., 123)">
+          </div>
+        </div>
+
+        <!-- Bulk Users -->
+        <div id="bulkUserFields" style="display: none;">
+          <div class="form-group">
+            <label for="userIds">User IDs <span class="optional">(comma-separated)</span></label>
+            <input type="text" id="userIds" placeholder="e.g., 123, 456, 789">
+          </div>
+        </div>
+
+        <!-- Criteria Fields -->
+        <div id="criteriaFields" style="display: none;">
+          <div class="criteria-builder">
+            <h3 style="margin-bottom: 12px; font-size: 16px;">Target Criteria</h3>
+            <div class="criteria-row">
+              <div class="form-group">
+                <label for="minOrderValue">Min Spent ($) <span class="optional">(optional)</span></label>
+                <input type="number" id="minOrderValue" placeholder="e.g., 500">
+              </div>
+              <div class="form-group">
+                <label for="maxOrderValue">Max Spent ($) <span class="optional">(optional)</span></label>
+                <input type="number" id="maxOrderValue" placeholder="e.g., 1000">
+              </div>
+            </div>
+            <div class="criteria-row">
+              <div class="form-group">
+                <label for="signupAfter">Signed Up After <span class="optional">(optional)</span></label>
+                <input type="date" id="signupAfter">
+              </div>
+              <div class="form-group">
+                <label for="signupBefore">Signed Up Before <span class="optional">(optional)</span></label>
+                <input type="date" id="signupBefore">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="brandIds">Brand IDs <span class="optional">(comma-separated, optional)</span></label>
+              <input type="text" id="brandIds" placeholder="e.g., 5, 12, 23">
+            </div>
+          </div>
+        </div>
+
+        <!-- Email Content -->
+        <div class="form-group">
+          <label for="emailType">Email Type</label>
+          <select id="emailType">
+            <option value="marketing">Marketing (includes unsubscribe)</option>
+            <option value="transactional">Transactional</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="subject">Subject Line</label>
+          <input type="text" id="subject" placeholder="Your Weekly Style Picks" maxlength="100">
+        </div>
+
+        <div class="form-group">
+          <label for="preheader">Preview Text <span class="optional">(optional, marketing emails only)</span></label>
+          <input type="text" id="preheader" placeholder="New arrivals selected just for you">
+        </div>
+
+        <div class="form-group">
+          <label for="heading">Email Heading</label>
+          <input type="text" id="heading" placeholder="Curated Just for You">
+        </div>
+
+        <div class="form-group">
+          <label for="body">Email Body <span class="optional">(supports HTML)</span></label>
+          <textarea id="body" placeholder="<p>Based on your recent activity, we think you'll love these new arrivals!</p><p>Shop now and get free shipping on orders over $50.</p>"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="buttonText">Button Text <span class="optional">(optional)</span></label>
+          <input type="text" id="buttonText" placeholder="Shop Now">
+        </div>
+
+        <div class="form-group">
+          <label for="buttonUrl">Button URL <span class="optional">(optional)</span></label>
+          <input type="url" id="buttonUrl" placeholder="https://muse.shopping/new-arrivals">
+        </div>
+
+        <div class="form-group">
+          <label for="scheduledFor">Schedule Send <span class="optional">(optional - leave empty to send now)</span></label>
+          <input type="datetime-local" id="scheduledFor" placeholder="Schedule for later">
+          <small style="color: var(--muse-brown); font-size: 12px; margin-top: 4px; display: block;">
+            Leave empty to send immediately, or select a future date/time to schedule
+          </small>
+        </div>
+
+        <div style="display: flex; gap: 12px;">
+          <button type="button" class="btn btn-secondary" id="previewBtn">Preview Email</button>
+          <button type="button" class="btn btn-primary" id="sendBtn">Send Email</button>
+        </div>
+
+        <div id="previewContainer" style="display: none;" class="preview-box">
+          <h3>Email Preview</h3>
+          <div class="preview-email">
+            <div class="logo">Muse</div>
+            <div id="previewContent"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- History Tab -->
+    <div class="tab-content" id="history-tab">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Total Sent</div>
+          <div class="stat-value" id="totalSent">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Successful</div>
+          <div class="stat-value" id="totalSuccess" style="color: var(--success);">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Failed</div>
+          <div class="stat-value" id="totalFailed" style="color: var(--danger);">0</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Email History</h2>
+        <div style="margin-bottom: 16px; display: flex; gap: 12px;">
+          <button class="btn btn-secondary" onclick="loadHistory()">Refresh</button>
+          <select id="statusFilter" onchange="loadHistory()" style="width: auto;">
+            <option value="">All Status</option>
+            <option value="sent">Sent</option>
+            <option value="failed">Failed</option>
+          </select>
+        </div>
+        <div style="overflow-x: auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Recipient</th>
+                <th>Subject</th>
+                <th>Type</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="historyTable">
+              <tr><td colspan="5" style="text-align: center; color: var(--muse-brown);">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Campaigns Tab -->
+    <div class="tab-content" id="campaigns-tab">
+      <div class="card">
+        <h2>Bulk Email Campaigns</h2>
+        <div style="margin-bottom: 16px;">
+          <button class="btn btn-secondary" onclick="loadCampaigns()">Refresh</button>
+        </div>
+        <div style="overflow-x: auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Subject</th>
+                <th>Recipients</th>
+                <th>Sent</th>
+                <th>Failed</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="campaignsTable">
+              <tr><td colspan="6" style="text-align: center; color: var(--muse-brown);">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Confirmation Modal -->
+  <div id="confirmModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: white; border-radius: 12px; padding: 32px; max-width: 500px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+      <h2 style="margin: 0 0 16px 0; color: var(--muse-dark); font-size: 24px;">Confirm Send Email</h2>
+      <div id="confirmMessage" style="margin-bottom: 24px; color: var(--muse-brown); line-height: 1.6;"></div>
+      <div style="display: flex; gap: 12px; justify-content: flex-end;">
+        <button class="btn btn-secondary" onclick="closeConfirmModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="executeEmailSend()" id="confirmSendBtn">Confirm & Send</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Manage Account Modal -->
+  <div id="manageAccountModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000;">
+    <div style="background: white; border-radius: 12px; padding: 32px; max-width: 500px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); margin: 100px auto;">
+      <h2 style="margin: 0 0 16px 0; color: var(--muse-dark); font-size: 24px;">Manage My Account</h2>
+      <div style="margin-bottom: 24px;">
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 500;">Full Name</label>
+          <input type="text" id="accountFullName" style="width: 100%; padding: 10px; border: 2px solid var(--muse-taupe); border-radius: 6px;">
+        </div>
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 500;">Email</label>
+          <input type="email" id="accountEmail" disabled style="width: 100%; padding: 10px; border: 2px solid var(--muse-taupe); border-radius: 6px; background: var(--muse-sand);">
+        </div>
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 500;">New Password <span style="color: var(--muse-brown); font-weight: normal;">(leave empty to keep current)</span></label>
+          <input type="password" id="accountNewPassword" placeholder="Enter new password" style="width: 100%; padding: 10px; border: 2px solid var(--muse-taupe); border-radius: 6px;">
+        </div>
+      </div>
+      <div id="manageAccountAlert" style="display: none; padding: 12px; border-radius: 6px; margin-bottom: 16px;"></div>
+      <div style="display: flex; gap: 12px; justify-content: flex-end;">
+        <button type="button" class="btn btn-secondary" onclick="closeManageAccount()">Cancel</button>
+        <button type="button" class="btn btn-primary" id="saveAccountBtn">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Admin Modal -->
+  <div id="createAdminModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000;">
+    <div style="background: white; border-radius: 12px; padding: 32px; max-width: 500px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); margin: 100px auto;">
+      <h2 style="margin: 0 0 16px 0; color: var(--muse-dark); font-size: 24px;">Create Admin Account</h2>
+      <div style="margin-bottom: 24px;">
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 500;">Full Name</label>
+          <input type="text" id="newAdminFullName" placeholder="John Doe" style="width: 100%; padding: 10px; border: 2px solid var(--muse-taupe); border-radius: 6px;">
+        </div>
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 500;">Email</label>
+          <input type="email" id="newAdminEmail" placeholder="john@muse.shopping" style="width: 100%; padding: 10px; border: 2px solid var(--muse-taupe); border-radius: 6px;">
+        </div>
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 500;">Password</label>
+          <input type="password" id="newAdminPassword" placeholder="Minimum 8 characters" style="width: 100%; padding: 10px; border: 2px solid var(--muse-taupe); border-radius: 6px;">
+        </div>
+      </div>
+      <div id="createAdminAlert" style="display: none; padding: 12px; border-radius: 6px; margin-bottom: 16px;"></div>
+      <div style="display: flex; gap: 12px; justify-content: flex-end;">
+        <button type="button" class="btn btn-secondary" onclick="closeCreateAdmin()">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="createAdminAccount()">Create Account</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Inline critical functions to ensure they work even if external JS fails to load
+    function updateSendType() {
+      const sendType = document.querySelector('input[name="sendType"]:checked').value;
+      document.getElementById('singleUserFields').style.display = sendType === 'single' ? 'block' : 'none';
+      document.getElementById('bulkUserFields').style.display = sendType === 'bulk' ? 'block' : 'none';
+      document.getElementById('criteriaFields').style.display = sendType === 'criteria' ? 'block' : 'none';
+    }
+
+    function switchTab(tabName) {
+      // Hide all tabs
+      document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+      });
+
+      // Remove active from all tab buttons
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+
+      // Show selected tab
+      document.getElementById(tabName + '-tab').classList.add('active');
+
+      // Mark tab button as active
+      const activeButton = document.querySelector(`[onclick="switchTab('${tabName}')"]`);
+      if (activeButton) {
+        activeButton.classList.add('active');
+      }
+
+      // Load data for the tab
+      if (tabName === 'history' && typeof loadHistory === 'function') {
+        loadHistory();
+      } else if (tabName === 'campaigns' && typeof loadCampaigns === 'function') {
+        loadCampaigns();
+      }
+    }
+
+    // Account menu functions
+    function toggleAccountMenu() {
+      const dropdown = document.getElementById('accountDropdown');
+      dropdown.classList.toggle('show');
+    }
+
+    // Attach dropdown item event listeners
+    document.addEventListener('DOMContentLoaded', function() {
+      const manageAccountBtn = document.getElementById('manageAccountBtn');
+      if (manageAccountBtn) {
+        manageAccountBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          showManageAccount();
+        });
+      }
+
+      const createAdminBtn = document.getElementById('createAdminBtn');
+      if (createAdminBtn) {
+        createAdminBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          showCreateAdmin();
+        });
+      }
+
+      const logoutBtn = document.getElementById('logoutBtn');
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          logout();
+        });
+      }
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(event) {
+      const accountMenu = document.querySelector('.account-menu');
+      const dropdown = document.getElementById('accountDropdown');
+      if (accountMenu && !accountMenu.contains(event.target)) {
+        dropdown.classList.remove('show');
+      }
+    });
+
+    function showManageAccount() {
+      document.getElementById('accountDropdown').classList.remove('show');
+      const adminUser = JSON.parse(localStorage.getItem('adminUser') || '{}');
+      document.getElementById('accountFullName').value = adminUser.full_name || '';
+      document.getElementById('accountEmail').value = adminUser.email || '';
+      document.getElementById('accountNewPassword').value = '';
+      document.getElementById('manageAccountModal').style.display = 'block';
+    }
+
+    function closeManageAccount() {
+      document.getElementById('manageAccountModal').style.display = 'none';
+    }
+
+    async function saveAccountChanges() {
+      console.log('=== saveAccountChanges called ===');
+      const fullName = document.getElementById('accountFullName').value.trim();
+      const newPassword = document.getElementById('accountNewPassword').value;
+      const alertDiv = document.getElementById('manageAccountAlert');
+
+      console.log('Full Name:', fullName);
+      console.log('New Password:', newPassword ? '***' : '(empty)');
+
+      if (!fullName) {
+        console.log('Validation failed: no full name');
+        alertDiv.textContent = 'Please enter your full name';
+        alertDiv.style.display = 'block';
+        alertDiv.style.background = '#fee';
+        alertDiv.style.color = '#c33';
+        return;
+      }
+
+      try {
+        const payload = { full_name: fullName };
+        if (newPassword) {
+          if (newPassword.length < 8) {
+            console.log('Validation failed: password too short');
+            alertDiv.textContent = 'Password must be at least 8 characters';
+            alertDiv.style.display = 'block';
+            alertDiv.style.background = '#fee';
+            alertDiv.style.color = '#c33';
+            return;
+          }
+          payload.password = newPassword;
+        }
+
+        console.log('Payload:', { ...payload, password: payload.password ? '***' : undefined });
+
+        const adminToken = localStorage.getItem('adminToken');
+        console.log('Admin token:', adminToken ? 'Found' : 'NOT FOUND');
+
+        console.log('Making API call to /api/v1/users/me/profile');
+        const response = await fetch('/api/v1/users/me/profile', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${adminToken}`
+          },
+          body: JSON.stringify(payload)
+        });
+
+        console.log('Response status:', response.status);
+        console.log('Response ok:', response.ok);
+
+        const data = await response.json();
+        console.log('Response data:', data);
+
+        if (data.success) {
+          console.log('Success! Updating UI...');
+          // Update localStorage
+          const adminUser = JSON.parse(localStorage.getItem('adminUser') || '{}');
+          adminUser.full_name = fullName;
+          localStorage.setItem('adminUser', JSON.stringify(adminUser));
+          document.getElementById('userName').textContent = fullName;
+
+          alertDiv.textContent = 'Account updated successfully!';
+          alertDiv.style.display = 'block';
+          alertDiv.style.background = '#d1fae5';
+          alertDiv.style.color = '#065f46';
+
+          setTimeout(() => {
+            closeManageAccount();
+          }, 1500);
+        } else {
+          console.log('API returned success=false');
+          throw new Error(data.error || 'Failed to update account');
+        }
+      } catch (error) {
+        console.error('ERROR in saveAccountChanges:', error);
+        console.error('Error stack:', error.stack);
+        alertDiv.textContent = error.message || 'Failed to update account';
+        alertDiv.style.display = 'block';
+        alertDiv.style.background = '#fee';
+        alertDiv.style.color = '#c33';
+      }
+    }
+
+    function showCreateAdmin() {
+      document.getElementById('accountDropdown').classList.remove('show');
+      document.getElementById('newAdminFullName').value = '';
+      document.getElementById('newAdminEmail').value = '';
+      document.getElementById('newAdminPassword').value = '';
+      document.getElementById('createAdminModal').style.display = 'block';
+    }
+
+    function closeCreateAdmin() {
+      document.getElementById('createAdminModal').style.display = 'none';
+    }
+
+    async function createAdminAccount() {
+      const fullName = document.getElementById('newAdminFullName').value.trim();
+      const email = document.getElementById('newAdminEmail').value.trim();
+      const password = document.getElementById('newAdminPassword').value;
+      const alertDiv = document.getElementById('createAdminAlert');
+
+      if (!fullName || !email || !password) {
+        alertDiv.textContent = 'Please fill in all fields';
+        alertDiv.style.display = 'block';
+        alertDiv.style.background = '#fee';
+        alertDiv.style.color = '#c33';
+        return;
+      }
+
+      if (password.length < 8) {
+        alertDiv.textContent = 'Password must be at least 8 characters';
+        alertDiv.style.display = 'block';
+        alertDiv.style.background = '#fee';
+        alertDiv.style.color = '#c33';
+        return;
+      }
+
+      try {
+        const adminToken = localStorage.getItem('adminToken');
+        const response = await fetch('/api/v1/admin/users', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${adminToken}`
+          },
+          body: JSON.stringify({
+            full_name: fullName,
+            email: email,
+            password: password,
+            is_admin: true
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          alertDiv.textContent = `Admin account created successfully for ${email}!`;
+          alertDiv.style.display = 'block';
+          alertDiv.style.background = '#d1fae5';
+          alertDiv.style.color = '#065f46';
+
+          setTimeout(() => {
+            closeCreateAdmin();
+          }, 2000);
+        } else {
+          throw new Error(data.error || 'Failed to create admin account');
+        }
+      } catch (error) {
+        alertDiv.textContent = error.message || 'Failed to create admin account';
+        alertDiv.style.display = 'block';
+        alertDiv.style.background = '#fee';
+        alertDiv.style.color = '#c33';
+      }
+    }
+
+    // Preview email function (needs to be global for onclick handler)
+    function previewEmail() {
+      const heading = document.getElementById('heading').value;
+      const body = document.getElementById('body').value;
+      const buttonText = document.getElementById('buttonText').value;
+      const buttonUrl = document.getElementById('buttonUrl').value;
+
+      if (!heading || !body) {
+        const alertDiv = document.getElementById('composeAlert');
+        alertDiv.textContent = 'Please fill in heading and body to preview';
+        alertDiv.style.display = 'block';
+        alertDiv.style.background = '#fee';
+        alertDiv.style.color = '#c33';
+        return;
+      }
+
+      const previewContent = document.getElementById('previewContent');
+      let html = `
+        <h2 style="color: var(--muse-dark); margin-top: 0;">${heading}</h2>
+        <p>Hi {User Name},</p>
+        ${body}
+      `;
+
+      if (buttonText && buttonUrl) {
+        html += `
+          <div style="text-align: center; margin: 24px 0;">
+            <a href="${buttonUrl}" style="display: inline-block; padding: 12px 32px; background: var(--muse-peach); color: var(--muse-dark); text-decoration: none; border-radius: 8px; font-weight: 600;">${buttonText}</a>
+          </div>
+        `;
+      }
+
+      html += `
+        <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--muse-taupe); font-size: 14px; color: var(--muse-brown);">
+          <p>Shop all your favorites in one place,<br>The Muse Team</p>
+        </div>
+      `;
+
+      previewContent.innerHTML = html;
+      document.getElementById('previewContainer').style.display = 'block';
+
+      // Scroll to preview
+      document.getElementById('previewContainer').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    // Attach button listeners immediately (don't wait for external JS)
+    window.addEventListener('load', function() {
+      console.log('Attaching button listeners...');
+
+      const previewBtn = document.getElementById('previewBtn');
+      const sendBtn = document.getElementById('sendBtn');
+      const saveAccountBtn = document.getElementById('saveAccountBtn');
+
+      if (previewBtn) {
+        console.log('Preview button found, attaching listener');
+        previewBtn.addEventListener('click', function() {
+          console.log('Preview button clicked');
+          previewEmail();
+        });
+      } else {
+        console.error('Preview button not found!');
+      }
+
+      if (sendBtn) {
+        console.log('Send button found, will use external JS handler');
+      } else {
+        console.error('Send button not found!');
+      }
+
+      if (saveAccountBtn) {
+        console.log('Save Account button found, attaching listener');
+        saveAccountBtn.addEventListener('click', function() {
+          console.log('Save Account button clicked!');
+          saveAccountChanges();
+        });
+      } else {
+        console.error('Save Account button not found!');
+      }
+    });
+  </script>
+  <script src="/api/v1/admin/email-ui/email-admin.js"></script>
+</body>
+</html>

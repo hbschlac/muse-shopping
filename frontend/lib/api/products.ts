@@ -107,3 +107,133 @@ export async function getCheckoutLink(
     `/products/${productId}/checkout-link?${params.toString()}`
   );
 }
+
+/**
+ * Get product reviews
+ */
+export async function getProductReviews(
+  productId: string,
+  limit: number = 5,
+  offset: number = 0,
+  sortBy: 'newest' | 'helpful' = 'newest'
+): Promise<{
+  summary: {
+    total_reviews: number;
+    rating: number;
+    count_5: number;
+    count_4: number;
+    count_3: number;
+    count_2: number;
+    count_1: number;
+  };
+  reviews: Array<{
+    id: number;
+    rating: number;
+    title: string;
+    body: string;
+    helpful_count: number;
+    created_at: string;
+    source_retailer: string | null;
+    source_url: string | null;
+    reviewer_name: string;
+  }>;
+}> {
+  const response: any = await api.get(
+    `/items/${productId}/reviews?limit=${limit}&offset=${offset}&sort_by=${sortBy}`
+  );
+  return response.data || response;
+}
+
+/**
+ * Get product listings (price comparison)
+ */
+export async function getProductListings(productId: string): Promise<{
+  listings: Array<{
+    id: number;
+    retailer_id: number;
+    retailer_name: string;
+    retailer_logo: string | null;
+    product_url: string;
+    affiliate_url: string | null;
+    price: number;
+    sale_price: number | null;
+    currency: string;
+    in_stock: boolean;
+    sizes_available: string[] | null;
+    colors_available: string[] | null;
+    last_scraped_at: string;
+  }>;
+}> {
+  const response: any = await api.get(`/items/${productId}`);
+  const itemDetails = response.data || response;
+  return {
+    listings: itemDetails.listings || [],
+  };
+}
+
+/**
+ * Mark review as helpful
+ */
+export async function markReviewHelpful(
+  productId: string,
+  reviewId: number
+): Promise<{ helpful_count: number }> {
+  return api.post(`/items/${productId}/reviews/${reviewId}/helpful`, {});
+}
+
+/**
+ * Create a product review
+ */
+export async function createProductReview(
+  productId: string,
+  review: {
+    rating: number;
+    title?: string;
+    body: string;
+    reviewer_name?: string;
+  }
+): Promise<{
+  id: number;
+  rating: number;
+  title: string | null;
+  body: string;
+  created_at: string;
+}> {
+  return api.post(`/items/${productId}/reviews`, review);
+}
+
+/**
+ * Get user's favorited items
+ */
+export async function getFavorites(
+  limit: number = 50,
+  offset: number = 0
+): Promise<{ items: any[]; total: number }> {
+  const response: any = await api.get(
+    `/items/favorites?limit=${limit}&offset=${offset}`,
+    { requiresAuth: true }
+  );
+  return response.data || response;
+}
+
+/**
+ * Add item to favorites
+ */
+export async function addToFavorites(
+  itemId: string,
+  notes?: string
+): Promise<any> {
+  const response: any = await api.post(
+    `/items/${itemId}/favorite`,
+    { notes },
+    { requiresAuth: true }
+  );
+  return response.data || response;
+}
+
+/**
+ * Remove item from favorites
+ */
+export async function removeFromFavorites(itemId: string): Promise<void> {
+  await api.delete(`/items/${itemId}/favorite`, { requiresAuth: true });
+}

@@ -8,9 +8,22 @@ import type { NewsfeedResponse, Story, BrandModule } from '../types/api';
 /**
  * Get newsfeed content (hero campaigns, stories, brand modules)
  */
-export async function getNewsfeed(userId?: string): Promise<NewsfeedResponse> {
-  const endpoint = userId ? `/newsfeed?user_id=${userId}` : '/newsfeed';
-  return api.get<NewsfeedResponse>(endpoint, { requiresAuth: !!userId });
+export async function getNewsfeed(
+  userId?: string,
+  limit: number = 20,
+  offset: number = 0
+): Promise<NewsfeedResponse> {
+  const params = new URLSearchParams();
+  if (userId) params.append('user_id', userId);
+  params.append('limit', limit.toString());
+  params.append('offset', offset.toString());
+
+  const endpoint = `/newsfeed?${params.toString()}`;
+  const response = await api.get<{ success: boolean; data: NewsfeedResponse }>(
+    endpoint,
+    { requiresAuth: !!userId }
+  );
+  return response.data;
 }
 
 /**

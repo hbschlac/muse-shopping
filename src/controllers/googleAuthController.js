@@ -130,7 +130,7 @@ class GoogleAuthController {
 
               // Redirect to app
               setTimeout(() => {
-                window.location.href = '${process.env.CORS_ORIGIN || 'http://localhost:3001'}${user.isNewUser ? '/onboarding' : '/feed'}';
+                window.location.href = '${process.env.CORS_ORIGIN || 'http://localhost:3001'}${user.isNewUser ? '/onboarding/intro' : '/home'}';
               }, 2000);
             </script>
           </head>
@@ -170,6 +170,66 @@ class GoogleAuthController {
           </body>
         </html>
       `);
+    }
+  }
+
+  /**
+   * Handle Google OAuth callback from frontend (POST)
+   * @route   POST /api/v1/auth/google/callback
+   * @access  Public
+   */
+  static async handleGoogleCallbackPost(req, res, next) {
+    try {
+      const { code } = req.body;
+
+      if (!code) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'MISSING_CODE',
+            message: 'Authorization code is required',
+          },
+        });
+      }
+
+      // Handle Google auth
+      const { user, googleData } = await GoogleAuthService.handleGoogleAuth(code);
+
+      // Generate JWT tokens
+      const AuthService = require('../services/authService');
+      const tokens = await AuthService.generateTokens(user.id);
+
+      // Determine onboarding status
+      const onboardingCompleted = !user.isNewUser;
+
+      logger.info(
+        `Google auth for user ${user.id} (${user.email}) - isNewUser: ${user.isNewUser}, onboarding_completed: ${onboardingCompleted}`
+      );
+
+      // Return user data and tokens
+      res.status(200).json(
+        successResponse(
+          {
+            user: {
+              id: user.id,
+              email: user.email,
+              username: null,
+              full_name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || null,
+              is_verified: true,
+              onboarding_completed: onboardingCompleted,
+            },
+            tokens,
+          },
+          user.isNewUser ? 'Account created successfully' : 'Login successful'
+        )
+      );
+
+      logger.info(
+        `Google auth successful for user ${user.id} (${user.email})${user.isNewUser ? ' - NEW USER' : ' - EXISTING USER'}`
+      );
+    } catch (error) {
+      logger.error('Error in Google auth callback (POST):', error);
+      next(error);
     }
   }
 }

@@ -8,6 +8,9 @@ const router = express.Router();
 const StoreConnectionController = require('../controllers/storeConnectionController');
 const requireAuth = require('../middleware/authMiddleware');
 
+// Get all available retailers (public endpoint - must come before /:storeId)
+router.get('/retailers', StoreConnectionController.getAllRetailers);
+
 // Get all user's store connections
 router.get('/', requireAuth, StoreConnectionController.getUserConnections);
 

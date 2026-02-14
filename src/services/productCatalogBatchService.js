@@ -163,7 +163,15 @@ class ProductCatalogBatchService {
     `;
 
     const result = await pool.query(query);
-    return result.rows;
+    return result.rows.map(row => ({
+      ...row,
+      job_count: Number(row.job_count || 0),
+      total_processed: Number(row.total_processed || 0),
+      total_created: Number(row.total_created || 0),
+      total_updated: Number(row.total_updated || 0),
+      total_failed: Number(row.total_failed || 0),
+      avg_duration_seconds: Number(row.avg_duration_seconds || 0),
+    }));
   }
 
   // ==========================================

@@ -9,7 +9,8 @@ import type { Cart, CartItem } from '../types/api';
  * Get user's cart
  */
 export async function getCart(): Promise<Cart> {
-  return api.get<Cart>('/cart', { requiresAuth: true });
+  const response: any = await api.get('/cart', { requiresAuth: true });
+  return response.data || response;
 }
 
 /**
@@ -21,11 +22,12 @@ export async function addToCart(
   size?: string,
   color?: string
 ): Promise<CartItem> {
-  return api.post<CartItem>(
+  const response: any = await api.post(
     '/cart/items',
     { product_id: productId, quantity, size, color },
     { requiresAuth: true }
   );
+  return response.data || response;
 }
 
 /**

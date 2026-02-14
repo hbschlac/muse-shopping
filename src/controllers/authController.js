@@ -5,7 +5,11 @@ class AuthController {
   static async register(req, res, next) {
     try {
       const result = await AuthService.registerUser(req.body);
-      res.status(201).json(successResponse(result, 'Registration successful'));
+      res.status(201).json({
+        ...successResponse(result, 'Registration successful'),
+        user: result.user,
+        tokens: result.tokens,
+      });
     } catch (error) {
       next(error);
     }
@@ -45,6 +49,37 @@ class AuthController {
       const { current_password, new_password } = req.body;
       await AuthService.changePassword(req.userId, current_password, new_password);
       res.status(200).json(successResponse(null, 'Password changed successfully'));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async forgotPassword(req, res, next) {
+    try {
+      const { email } = req.body;
+      await AuthService.requestPasswordReset(email);
+      // Always return success to prevent email enumeration
+      res.status(200).json(successResponse(null, 'If an account exists with this email, a password reset link has been sent'));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async verifyResetToken(req, res, next) {
+    try {
+      const { token } = req.query;
+      const valid = await AuthService.verifyResetToken(token);
+      res.status(200).json(successResponse({ valid }, 'Token verification complete'));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async resetPassword(req, res, next) {
+    try {
+      const { token, new_password } = req.body;
+      await AuthService.resetPassword(token, new_password);
+      res.status(200).json(successResponse(null, 'Password reset successfully'));
     } catch (error) {
       next(error);
     }

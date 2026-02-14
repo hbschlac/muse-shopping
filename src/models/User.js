@@ -1,12 +1,12 @@
 const pool = require('../db/pool');
 
 class User {
-  static async create({ email, password_hash, username, full_name }) {
+  static async create({ email, password_hash, username, full_name, privacy_consent = null }) {
     const result = await pool.query(
-      `INSERT INTO users (email, password_hash, username, full_name)
-       VALUES ($1, $2, $3, $4)
-       RETURNING id, email, username, full_name, is_verified, is_active, created_at`,
-      [email, password_hash, username, full_name]
+      `INSERT INTO users (email, password_hash, username, full_name, privacy_consent)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING id, email, username, full_name, is_verified, is_active, created_at, privacy_consent`,
+      [email, password_hash, username, full_name, privacy_consent ? JSON.stringify(privacy_consent) : null]
     );
     return result.rows[0];
   }

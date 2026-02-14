@@ -117,10 +117,10 @@ html {
   min-height: 100vh;
   position: relative;
   background:
-    radial-gradient(120% 80% at 15% 10%, rgba(255,255,255,0.92), transparent 60%),
-    radial-gradient(140% 100% at 85% 20%, rgba(252,246,240,0.80), transparent 65%),
-    radial-gradient(160% 120% at 50% 85%, rgba(215,205,195,0.18), transparent 70%),
-    linear-gradient(160deg, #FBF6F1 0%, #F5EEE6 55%, #EFE5D9 100%);
+    radial-gradient(120% 80% at 15% 10%, rgba(255,255,255,0.95), transparent 60%),
+    radial-gradient(140% 100% at 85% 20%, rgba(255,252,250,0.85), transparent 65%),
+    radial-gradient(160% 120% at 50% 85%, rgba(245,242,240,0.15), transparent 70%),
+    linear-gradient(160deg, #FFFFFF 0%, #FEFDFB 55%, #FDFAF7 100%);
   background-repeat: no-repeat;
 }
 
@@ -150,7 +150,7 @@ html {
   overflow: hidden;
   isolation: isolate; /* ensure overlays blend correctly */
   background:
-    linear-gradient(160deg, #efe3d7 0%, #e7d7c7 55%, #dccab9 100%);
+    linear-gradient(160deg, #FFFFFF 0%, #FEFDFB 55%, #FDFAF7 100%);
   display: grid;
   place-items: center;
 }

@@ -5,7 +5,7 @@
 
 const productRealtimeService = require('../services/productRealtimeService');
 const productCatalogBatchService = require('../services/productCatalogBatchService');
-const responseFormatter = require('../utils/responseFormatter');
+const { successResponse, errorResponse } = require('../utils/responseFormatter');
 
 class ProductController {
   /**
@@ -15,21 +15,22 @@ class ProductController {
   async getProductDetails(req, res) {
     try {
       const { productId } = req.params;
-      const userId = req.user.id;
+      const parsedProductId = Number.parseInt(productId, 10);
+      const userId = req.userId;
+
+      if (!Number.isInteger(parsedProductId)) {
+        return res.status(400).json(errorResponse('BAD_REQUEST', 'Invalid productId'));
+      }
 
       const productData = await productRealtimeService.getRealtimeProductData(
-        parseInt(productId),
+        parsedProductId,
         userId
       );
 
-      return responseFormatter.success(
-        res,
-        productData,
-        'Product details retrieved successfully'
-      );
+      return res.status(200).json(successResponse(productData, 'Product details retrieved successfully'));
     } catch (error) {
       console.error('[ProductController] Error getting product details:', error);
-      return responseFormatter.error(res, error.message, 500);
+      return res.status(500).json(errorResponse('INTERNAL_ERROR', error.message));
     }
   }
 
@@ -39,21 +40,22 @@ class ProductController {
   async getCheckoutLink(req, res) {
     try {
       const { productId } = req.params;
-      const userId = req.user.id;
+      const parsedProductId = Number.parseInt(productId, 10);
+      const userId = req.userId;
+
+      if (!Number.isInteger(parsedProductId)) {
+        return res.status(400).json(errorResponse('BAD_REQUEST', 'Invalid productId'));
+      }
 
       const affiliateLink = await productRealtimeService.generateAffiliateLink(
-        parseInt(productId),
+        parsedProductId,
         userId
       );
 
-      return responseFormatter.success(
-        res,
-        { checkout_url: affiliateLink },
-        'Checkout link generated successfully'
-      );
+      return res.status(200).json(successResponse({ checkout_url: affiliateLink }, 'Checkout link generated successfully'));
     } catch (error) {
       console.error('[ProductController] Error generating checkout link:', error);
-      return responseFormatter.error(res, error.message, 500);
+      return res.status(500).json(errorResponse('INTERNAL_ERROR', error.message));
     }
   }
 
@@ -63,21 +65,22 @@ class ProductController {
   async addToCart(req, res) {
     try {
       const { productId } = req.params;
-      const userId = req.user.id;
+      const parsedProductId = Number.parseInt(productId, 10);
+      const userId = req.userId;
+
+      if (!Number.isInteger(parsedProductId)) {
+        return res.status(400).json(errorResponse('BAD_REQUEST', 'Invalid productId'));
+      }
 
       const productData = await productRealtimeService.trackCartAdd(
         userId,
-        parseInt(productId)
+        parsedProductId
       );
 
-      return responseFormatter.success(
-        res,
-        productData,
-        'Product added to cart successfully'
-      );
+      return res.status(200).json(successResponse(productData, 'Product added to cart successfully'));
     } catch (error) {
       console.error('[ProductController] Error adding to cart:', error);
-      return responseFormatter.error(res, error.message, 500);
+      return res.status(500).json(errorResponse('INTERNAL_ERROR', error.message));
     }
   }
 
@@ -87,10 +90,10 @@ class ProductController {
   async getCartItemsData(req, res) {
     try {
       const { productIds } = req.body;
-      const userId = req.user.id;
+      const userId = req.userId;
 
       if (!Array.isArray(productIds)) {
-        return responseFormatter.error(res, 'productIds must be an array', 400);
+        return res.status(400).json(errorResponse('BAD_REQUEST', 'productIds must be an array'));
       }
 
       const results = await productRealtimeService.batchGetRealtimeData(
@@ -98,14 +101,10 @@ class ProductController {
         userId
       );
 
-      return responseFormatter.success(
-        res,
-        results,
-        'Cart items data retrieved successfully'
-      );
+      return res.status(200).json(successResponse(results, 'Cart items data retrieved successfully'));
     } catch (error) {
       console.error('[ProductController] Error getting cart items:', error);
-      return responseFormatter.error(res, error.message, 500);
+      return res.status(500).json(errorResponse('INTERNAL_ERROR', error.message));
     }
   }
 
@@ -115,17 +114,11 @@ class ProductController {
   async getCostStats(req, res) {
     try {
       const { days = 7 } = req.query;
-
-      const stats = await productRealtimeService.getCostStats(parseInt(days));
-
-      return responseFormatter.success(
-        res,
-        stats,
-        'Cost statistics retrieved successfully'
-      );
+      const stats = await productRealtimeService.getCostStats(Number.parseInt(days, 10));
+      return res.status(200).json(successResponse(stats, 'Cost statistics retrieved successfully'));
     } catch (error) {
       console.error('[ProductController] Error getting cost stats:', error);
-      return responseFormatter.error(res, error.message, 500);
+      return res.status(500).json(errorResponse('INTERNAL_ERROR', error.message));
     }
   }
 
@@ -135,17 +128,11 @@ class ProductController {
   async getCacheStats(req, res) {
     try {
       const { hours = 24 } = req.query;
-
-      const stats = await productRealtimeService.getCacheStats(parseInt(hours));
-
-      return responseFormatter.success(
-        res,
-        stats,
-        'Cache statistics retrieved successfully'
-      );
+      const stats = await productRealtimeService.getCacheStats(Number.parseInt(hours, 10));
+      return res.status(200).json(successResponse(stats, 'Cache statistics retrieved successfully'));
     } catch (error) {
       console.error('[ProductController] Error getting cache stats:', error);
-      return responseFormatter.error(res, error.message, 500);
+      return res.status(500).json(errorResponse('INTERNAL_ERROR', error.message));
     }
   }
 
@@ -155,17 +142,11 @@ class ProductController {
   async getBatchImportStats(req, res) {
     try {
       const { days = 7 } = req.query;
-
-      const stats = await productCatalogBatchService.getImportStats(parseInt(days));
-
-      return responseFormatter.success(
-        res,
-        stats,
-        'Batch import statistics retrieved successfully'
-      );
+      const stats = await productCatalogBatchService.getImportStats(Number.parseInt(days, 10));
+      return res.status(200).json(successResponse(stats, 'Batch import statistics retrieved successfully'));
     } catch (error) {
       console.error('[ProductController] Error getting batch stats:', error);
-      return responseFormatter.error(res, error.message, 500);
+      return res.status(500).json(errorResponse('INTERNAL_ERROR', error.message));
     }
   }
 
@@ -177,11 +158,7 @@ class ProductController {
       const { storeId, affiliateNetwork, jobType = 'full_catalog' } = req.body;
 
       if (!storeId || !affiliateNetwork) {
-        return responseFormatter.error(
-          res,
-          'storeId and affiliateNetwork are required',
-          400
-        );
+        return res.status(400).json(errorResponse('BAD_REQUEST', 'storeId and affiliateNetwork are required'));
       }
 
       let result;
@@ -197,14 +174,10 @@ class ProductController {
         );
       }
 
-      return responseFormatter.success(
-        res,
-        result,
-        `Batch ${jobType} completed successfully`
-      );
+      return res.status(200).json(successResponse(result, `Batch ${jobType} completed successfully`));
     } catch (error) {
       console.error('[ProductController] Error triggering batch import:', error);
-      return responseFormatter.error(res, error.message, 500);
+      return res.status(500).json(errorResponse('INTERNAL_ERROR', error.message));
     }
   }
 }

@@ -39,7 +39,9 @@ export interface Product {
   brand_id: string;
   brand_name: string;
   price: number;
+  price_cents?: number;
   original_price?: number;
+  original_price_cents?: number;
   currency: string;
   image_url: string;
   images?: string[];
@@ -53,6 +55,9 @@ export interface Product {
   retailer_product_url: string;
   created_at: string;
   updated_at: string;
+  media_type?: string;
+  video_url?: string;
+  video_poster_url?: string;
 }
 
 export interface ProductDetails extends Product {
@@ -75,6 +80,40 @@ export interface BrandModule {
   products: Product[];
   context?: string;
   is_favorite?: boolean;
+  layout?: {
+    type?: string;
+    items_per_view?: number;
+    aspect_ratio?: string;
+  };
+  hero?: {
+    image_url?: string;
+    video_url?: string;
+    poster_url?: string;
+    source?: string;
+  };
+  styling?: {
+    background_color?: string;
+    text_color?: string;
+    gradient_overlay?: string;
+    overlay_opacity?: number;
+  };
+  content?: {
+    title?: string;
+    subtitle?: string;
+    cta_text?: string;
+    show_brand_logo?: boolean;
+    show_item_details?: boolean;
+  };
+  featured_item_id?: string | number;
+  display_config?: any;
+  module_type?: string;
+  item_count?: number;
+  experiment?: {
+    experiment_id?: number;
+    variant_id?: number;
+    variant_name?: string;
+    in_experiment?: boolean;
+  };
 }
 
 export interface HeroCampaign {
@@ -161,9 +200,11 @@ export interface StylePreference {
 
 // Chat Types
 export interface ChatMessage {
+  id?: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp?: string;
+  created_at?: string;
 }
 
 export interface ChatResponse {
@@ -202,9 +243,140 @@ export interface SavedItem {
   saved_at: string;
 }
 
+// Campaign Types
+export interface CampaignItem {
+  id: string;
+  name: string;
+  image_url: string;
+  price: number;
+  sale_price?: number;
+  brand_name: string;
+  categories?: string[];
+}
+
+export interface CampaignDetails {
+  id: string;
+  title: string;
+  subtitle?: string;
+  description: string;
+  image_url: string;
+  video_url?: string;
+  gradient?: string;
+  items: CampaignItem[];
+  created_at: string;
+}
+
 // API Error Type
 export interface APIErrorResponse {
   message: string;
   errors?: Record<string, string[]>;
   code?: string;
+}
+
+// Checkout Types
+export interface CheckoutSession {
+  id: string;
+  sessionId?: string;
+  status: string;
+  items: any[];
+  total_cents: number;
+  totalCents?: number;
+  subtotalCents?: number;
+  shippingCents?: number;
+  currency: string;
+  created_at: string;
+  shippingPreferences?: any;
+  recipient?: any;
+  shipping_address?: any;
+  shippingAddress?: any;
+  billing_address?: any;
+  billingAddress?: any;
+  payment_method?: any;
+  paymentMethod?: any;
+  paymentMethodId?: string;
+  paymentMethods?: Record<string, any>;
+  promo?: {
+    code: string;
+    [key: string]: any;
+  };
+  cartSnapshot?: {
+    stores: Array<{
+      storeId: number;
+      storeName: string;
+      items: any[];
+      [key: string]: any;
+    }>;
+    [key: string]: any;
+  };
+}
+
+export interface CheckoutReadiness {
+  ready: boolean;
+  missing_fields: string[];
+  stores?: any[];
+}
+
+// Checkout payload types
+export interface CheckoutShippingAddress {
+  name: string;
+  address1: string;
+  address2?: string;
+  city: string;
+  state: string;
+  zip: string;
+  country: string;
+  phone: string;
+}
+
+export interface CheckoutRecipient {
+  name: string;
+  email: string;
+  phone: string;
+}
+
+export interface CheckoutBillingPayload {
+  sameAsShipping: boolean;
+  billingAddress?: CheckoutShippingAddress;
+}
+
+export interface CheckoutPaymentPayload {
+  paymentMethodId: string;
+  storeId?: number;
+}
+
+export interface CheckoutPromoPayload {
+  code: string;
+}
+
+export interface CheckoutShippingSelectionsPayload {
+  selections: Record<string, { optionId: string; checkoutMode?: string }>;
+}
+
+export interface CheckoutPlaceOrdersResult {
+  success: boolean;
+  summary: {
+    successfulOrders: number;
+    failedOrders: number;
+  };
+  orders?: any[];
+}
+
+// Store Account Types
+export interface StoreAccount {
+  id: number;
+  storeId: number;
+  storeName?: string;
+  isLinked: boolean;
+  total_orders?: number;
+  [key: string]: any;
+}
+
+export interface StoreAccountsSummary {
+  stores: StoreAccount[];
+  [key: string]: any;
+}
+
+export interface StoreAccountPaymentMethodPayload {
+  paymentMethodToken: string;
+  [key: string]: any;
 }

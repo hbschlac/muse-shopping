@@ -24,6 +24,9 @@ router.post('/items/batch', CartController.addItems);
 // Check if item exists in cart
 router.get('/items/check', CartController.checkItem);
 
+// Swipe action: move to favorites and remove from cart
+router.post('/items/:id/move-to-favorites', CartController.moveItemToFavorites);
+
 // Update cart item (quantity, size, color, etc.)
 router.put('/items/:id', CartController.updateItem);
 
@@ -39,6 +42,9 @@ router.delete('/items/:id', CartController.removeItem);
 
 // Get user's cart (grouped by store)
 router.get('/', CartController.getCart);
+
+// Lightweight badge count for global cart icon
+router.get('/count', CartController.getCartCount);
 
 // Get cart summary (totals, counts)
 router.get('/summary', CartController.getCartSummary);

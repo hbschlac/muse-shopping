@@ -4,27 +4,33 @@ import { useState, useEffect } from 'react';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
-// Mock story data
+// Mock story data with Unsplash images
 const story = {
   id: '1',
   slides: [
     {
       id: '1',
-      image: '/placeholder-story-1.jpg',
-      title: 'Summer Edit',
-      description: 'Light & breezy pieces for warm days',
+      image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=800&q=80',
+      title: 'Trending Now',
+      description: 'Discover what everyone is loving this season',
+      ctaText: 'See Collection',
+      ctaLink: '/discover',
     },
     {
       id: '2',
-      image: '/placeholder-story-2.jpg',
-      title: 'Vintage Finds',
-      description: 'Curated vintage treasures',
+      image: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=800&q=80',
+      title: 'New Arrivals',
+      description: 'Fresh styles just dropped',
+      ctaText: 'Shop Now',
+      ctaLink: '/discover',
     },
     {
       id: '3',
-      image: '/placeholder-story-3.jpg',
-      title: 'Date Night',
-      description: 'Romantic looks for special evenings',
+      image: 'https://images.unsplash.com/photo-1445205170230-053b83016050?w=800&q=80',
+      title: 'Shop the Look',
+      description: 'Complete your perfect outfit',
+      ctaText: 'Shop this look',
+      ctaLink: '/discover',
     },
   ],
 };
@@ -99,8 +105,12 @@ export default function StoryPage() {
       {/* Story Content */}
       <div className="relative h-full">
         {/* Background Image */}
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
-          <div className="text-gray-600 text-lg">Story Image: {currentStory.title}</div>
+        <div className="absolute inset-0">
+          <img
+            src={currentStory.image}
+            alt={currentStory.title}
+            className="w-full h-full object-cover"
+          />
         </div>
 
         {/* Tap Areas for Navigation */}
@@ -127,8 +137,11 @@ export default function StoryPage() {
           </p>
 
           {/* CTA Button */}
-          <button className="w-full h-12 gradient-primary text-white rounded-full font-semibold transition-transform duration-150 hover:scale-[1.02] active:scale-[0.98]">
-            Shop this look
+          <button
+            onClick={() => router.push(currentStory.ctaLink)}
+            className="w-full h-12 gradient-primary text-white rounded-full font-semibold transition-transform duration-150 hover:scale-[1.02] active:scale-[0.98]"
+          >
+            {currentStory.ctaText}
           </button>
         </div>
       </div>

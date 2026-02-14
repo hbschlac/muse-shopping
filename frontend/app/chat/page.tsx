@@ -179,63 +179,7 @@ export default function ChatPage() {
   return (
     <div className="min-h-screen bg-[var(--color-ecru)] pb-24 flex flex-col">
       {/* Header */}
-      <PageHeader
-        rightContent={
-          <>
-            {/* Feedback Button */}
-            <button
-              onClick={handleFeedback}
-              className="px-4 py-2 bg-[#E8DFD4] hover:bg-[#DED0C0] text-gray-900 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium"
-              aria-label="Submit Feedback"
-            >
-              <MessageSquare className="w-4 h-4" />
-              <span>Feedback</span>
-            </button>
-
-            {/* Cart Icon */}
-            <a
-              href="/cart"
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors relative"
-              aria-label="Shopping Cart"
-            >
-              <svg
-                className="w-6 h-6 text-gray-900"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
-                />
-              </svg>
-            </a>
-
-            {/* Profile Icon */}
-            <a
-              href="/profile"
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              aria-label="Profile"
-            >
-              <svg
-                className="w-6 h-6 text-gray-900"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                />
-              </svg>
-            </a>
-          </>
-        }
-      />
+      <PageHeader />
 
       {/* Messages Container */}
       <div className="flex-1 px-4 py-6 overflow-y-auto">
@@ -243,8 +187,14 @@ export default function ChatPage() {
           {/* Muse Logo and Title (shown at top) */}
           {messages.length <= 2 && (
             <div className="flex flex-col items-center mb-8 pt-8">
-              <div className="w-20 h-20 rounded-full bg-[#C9B5A0] flex items-center justify-center mb-4">
-                <span className="text-white text-3xl font-serif">M</span>
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[var(--color-peach)] to-[var(--color-blue)] p-[2px] flex items-center justify-center mb-4">
+                <div className="w-full h-full rounded-full bg-white flex items-center justify-center p-2">
+                  <img
+                    src="/logo-m.svg"
+                    alt="Muse"
+                    className="w-full h-full object-contain"
+                  />
+                </div>
               </div>
               <h1 className="text-2xl font-semibold text-gray-900 mb-1">Muse</h1>
               <p className="text-sm text-gray-600">Curated fashion, intelligently shopped.</p>

@@ -1,0 +1,770 @@
+Brand Name,Website,Country,Category,Price Tier,API/Affiliate Available,Integration Type,Priority,Source,Logo Path,Logo Status
+Nordstrom,nordstrom.com,US,Department Store,Mid-Luxury,Yes,Affiliate,Critical,Existing,,MISSING
+Nordstrom Rack,nordstromrack.com,US,Department Store,Mid,Yes,Affiliate,Critical,Existing,,MISSING
+Bloomingdale's,bloomingdales.com,US,Department Store,Mid-Luxury,Yes,Affiliate,Critical,LTK,,MISSING
+Macy's,macys.com,US,Department Store,Mid,Yes,Affiliate,Critical,Existing,,MISSING
+Neiman Marcus,neimanmarcus.com,US,Department Store,Luxury,Yes,Affiliate,High,LTK,,MISSING
+Saks Fifth Avenue,saksfifthavenue.com,US,Department Store,Luxury,Yes,Affiliate,High,Existing,,MISSING
+Bergdorf Goodman,bergdorfgoodman.com,US,Department Store,Luxury,Yes,Affiliate,High,LTK,,MISSING
+Dillard's,dillards.com,US,Department Store,Mid,Yes,Affiliate,Medium,LTK,,MISSING
+Belk,belk.com,US,Department Store,Mid,Yes,Affiliate,Medium,LTK,,MISSING
+Von Maur,vonmaur.com,US,Department Store,Mid,Yes,Affiliate,Low,LTK,,MISSING
+Target,target.com,US,Mass Market,Budget,Yes,API,Critical,Existing,,MISSING
+Walmart,walmart.com,US,Mass Market,Budget,Yes,API,Critical,Existing,,MISSING
+Amazon Fashion,amazon.com,US,Marketplace,All,Yes,API,Critical,Existing,,MISSING
+Old Navy,oldnavy.com,US,Fast Fashion,Budget,Yes,Affiliate,Critical,Existing,,MISSING
+Gap,gap.com,US,Fast Fashion,Mid,Yes,Affiliate,Critical,Existing,,MISSING
+Banana Republic,bananarepublic.com,US,Contemporary,Mid,Yes,Affiliate,High,LTK,,MISSING
+Zara,zara.com,Spain,Fast Fashion,Mid,Yes,Affiliate,Critical,Existing,,MISSING
+H&M,hm.com,Sweden,Fast Fashion,Budget,Yes,Affiliate,Critical,Existing,,MISSING
+Uniqlo,uniqlo.com,Japan,Fast Fashion,Budget,Yes,Affiliate,High,LTK,,MISSING
+Mango,mango.com,Spain,Fast Fashion,Mid,Yes,Affiliate,High,Competitor,,MISSING
+COS,cosstores.com,Sweden,Contemporary,Mid,Yes,Affiliate,High,Competitor,,MISSING
+& Other Stories,stories.com,Sweden,Contemporary,Mid,Yes,Affiliate,High,Competitor,,MISSING
+Monki,monki.com,Sweden,Fast Fashion,Budget,Yes,Affiliate,Medium,Competitor,,MISSING
+Weekday,weekday.com,Sweden,Fast Fashion,Budget,Yes,Affiliate,Medium,Competitor,,MISSING
+ASOS,asos.com,UK,Fast Fashion,Budget-Mid,Yes,Affiliate,Critical,Existing,,MISSING
+Boohoo,boohoo.com,UK,Fast Fashion,Budget,Yes,Affiliate,High,Competitor,,MISSING
+PrettyLittleThing,prettylittlething.com,UK,Fast Fashion,Budget,Yes,Affiliate,High,Competitor,,MISSING
+Missguided,missguided.com,UK,Fast Fashion,Budget,Yes,Affiliate,High,Competitor,,MISSING
+Nasty Gal,nastygal.com,US,Fast Fashion,Mid,Yes,Affiliate,High,Competitor,,MISSING
+Forever 21,forever21.com,US,Fast Fashion,Budget,Yes,Affiliate,High,Existing,,MISSING
+Fashion Nova,fashionnova.com,US,Fast Fashion,Budget,Yes,Affiliate,High,LTK,,MISSING
+SHEIN,shein.com,China,Fast Fashion,Budget,Yes,Affiliate,Critical,Existing,,MISSING
+Romwe,romwe.com,China,Fast Fashion,Budget,Yes,Affiliate,Medium,LTK,,MISSING
+Zaful,zaful.com,China,Fast Fashion,Budget,Yes,Affiliate,Medium,LTK,,MISSING
+Cider,shopcider.com,China,Fast Fashion,Budget,No,Manual,Medium,Existing,,MISSING
+Princess Polly,princesspolly.com,Australia,Fast Fashion,Mid,Yes,Affiliate,High,Competitor,,MISSING
+Peppermayo,peppermayo.com,Australia,Fast Fashion,Mid,Yes,Affiliate,High,Competitor,,MISSING
+Showpo,showpo.com,Australia,Fast Fashion,Mid,Yes,Affiliate,High,Competitor,,MISSING
+White Fox Boutique,whitefoxboutique.com,Australia,Fast Fashion,Mid,Yes,Affiliate,High,Competitor,,MISSING
+Beginning Boutique,beginningboutique.com,Australia,Fast Fashion,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Sabo Skirt,saboskirt.com,Australia,Fast Fashion,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Tiger Mist,tigermist.com,Australia,Fast Fashion,Mid,Yes,Affiliate,Medium,ShopMy,,MISSING
+Revolve,revolve.com,US,Contemporary,Mid-Luxury,Yes,Affiliate,Critical,Existing,,MISSING
+FWRD,fwrd.com,US,Contemporary,Luxury,Yes,Affiliate,High,Competitor,,MISSING
+Shopbop,shopbop.com,US,Contemporary,Mid-Luxury,Yes,Affiliate,High,LTK,,MISSING
+Net-a-Porter,net-a-porter.com,UK,Luxury,Luxury,Yes,Affiliate,High,LTK,,MISSING
+Mytheresa,mytheresa.com,Germany,Luxury,Luxury,Yes,Affiliate,High,LTK,,MISSING
+Farfetch,farfetch.com,UK,Luxury,Luxury,Yes,Affiliate,High,LTK,,MISSING
+SSENSE,ssense.com,Canada,Luxury,Luxury,Yes,Affiliate,High,LTK,,MISSING
+Matches Fashion,matchesfashion.com,UK,Luxury,Luxury,Yes,Affiliate,High,LTK,,MISSING
+24S,24s.com,France,Luxury,Luxury,Yes,Affiliate,Medium,Competitor,,MISSING
+Luisaviaroma,luisaviaroma.com,Italy,Luxury,Luxury,Yes,Affiliate,Medium,Competitor,,MISSING
+Anthropologie,anthropologie.com,US,Contemporary,Mid-High,Yes,Affiliate,High,LTK,,MISSING
+Free People,freepeople.com,US,Contemporary,Mid-High,Yes,Affiliate,Critical,Existing,,MISSING
+Urban Outfitters,urbanoutfitters.com,US,Contemporary,Mid,Yes,Affiliate,High,Existing,,MISSING
+Madewell,madewell.com,US,Contemporary,Mid,Yes,Affiliate,High,LTK,,MISSING
+J.Crew,jcrew.com,US,Contemporary,Mid,Yes,Affiliate,High,LTK,,MISSING
+J.Crew Factory,factory.jcrew.com,US,Contemporary,Mid,Yes,Affiliate,Medium,LTK,,MISSING
+Everlane,everlane.com,US,Contemporary,Mid,Yes,Affiliate,High,Competitor,,MISSING
+Reformation,thereformation.com,US,Contemporary,Mid-High,Yes,Affiliate,Critical,Competitor,,MISSING
+Ganni,ganni.com,Denmark,Designer,High,Yes,Affiliate,Critical,Competitor,,MISSING
+Staud,staud.clothing,US,Designer,High,Yes,Affiliate,Critical,Competitor,,MISSING
+Nanushka,nanushka.com,Hungary,Designer,High,Yes,Affiliate,High,Competitor,,MISSING
+Réalisation Par,realisationpar.com,Australia,Designer,Mid-High,Yes,Affiliate,High,Competitor,,MISSING
+Rixo,rixo.co.uk,UK,Designer,Mid-High,Yes,Affiliate,High,Competitor,,MISSING
+Rotate Birger Christensen,rotatebirgerchristensen.com,Denmark,Designer,High,Yes,Affiliate,High,Competitor,,MISSING
+Jacquemus,jacquemus.com,France,Designer,Luxury,Limited,Manual,High,Competitor,,MISSING
+Ami Paris,amiparis.com,France,Designer,Luxury,Limited,Manual,Medium,Competitor,,MISSING
+Acne Studios,acnestudios.com,Sweden,Designer,Luxury,Yes,Affiliate,High,Competitor,,MISSING
+Lemaire,lemaire.fr,France,Designer,Luxury,Limited,Manual,Medium,Competitor,,MISSING
+The Row,therow.com,US,Designer,Ultra-Luxury,No,Manual,Low,Competitor,,MISSING
+Toteme,toteme-studio.com,Sweden,Designer,High,Yes,Affiliate,High,Competitor,,MISSING
+Khaite,khaite.com,US,Designer,Luxury,Limited,Manual,Medium,Competitor,,MISSING
+Theory,theory.com,US,Contemporary,Mid-High,Yes,Affiliate,High,Phia,,MISSING
+Vince,vince.com,US,Contemporary,Mid-High,Yes,Affiliate,High,Phia,,MISSING
+Rag & Bone,rag-bone.com,US,Contemporary,Mid-High,Yes,Affiliate,High,Phia,,MISSING
+Equipment,equipment.fr,France,Contemporary,Mid-High,Yes,Affiliate,High,Phia,,MISSING
+Frame,frame-store.com,US,Contemporary,High,Yes,Affiliate,High,Phia,,MISSING
+Paige,paige.com,US,Contemporary,Mid-High,Yes,Affiliate,High,Phia,,MISSING
+Veronica Beard,veronicabeard.com,US,Contemporary,High,Yes,Affiliate,High,Phia,,MISSING
+L'Agence,lagencefashion.com,US,Contemporary,High,Yes,Affiliate,High,Phia,,MISSING
+Alice + Olivia,aliceandolivia.com,US,Designer,High,Yes,Affiliate,High,Phia,,MISSING
+Tory Burch,toryburch.com,US,Designer,High,Yes,Affiliate,High,LTK,,MISSING
+Club Monaco,clubmonaco.com,Canada,Contemporary,Mid,Yes,Affiliate,High,Phia,,MISSING
+Sandro,sandro-paris.com,France,Contemporary,Mid-High,Yes,Affiliate,High,Phia,,MISSING
+Maje,maje.com,France,Contemporary,Mid-High,Yes,Affiliate,High,Phia,,MISSING
+Claudie Pierlot,claudiepierlot.com,France,Contemporary,Mid-High,Yes,Affiliate,Medium,Phia,,MISSING
+Ba&sh,ba-sh.com,France,Contemporary,Mid-High,Yes,Affiliate,High,Competitor,,MISSING
+The Kooples,thekooples.com,France,Contemporary,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+Reiss,reiss.com,UK,Contemporary,Mid-High,Yes,Affiliate,High,Phia,,MISSING
+AllSaints,allsaints.com,UK,Contemporary,Mid-High,Yes,Affiliate,High,Phia,,MISSING
+Ted Baker,tedbaker.com,UK,Contemporary,Mid-High,Yes,Affiliate,High,Phia,,MISSING
+Karen Millen,karenmillen.com,UK,Contemporary,Mid,Yes,Affiliate,Medium,LTK,,MISSING
+Whistles,whistles.com,UK,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Lululemon,lululemon.com,Canada,Activewear,High,Yes,Affiliate,Critical,LTK,,MISSING
+Athleta,athleta.com,US,Activewear,Mid-High,Yes,Affiliate,High,LTK,,MISSING
+Alo Yoga,aloyoga.com,US,Activewear,High,Yes,Affiliate,High,LTK,,MISSING
+Outdoor Voices,outdoorvoices.com,US,Activewear,Mid-High,Yes,Affiliate,High,LTK,,MISSING
+Girlfriend Collective,girlfriend.com,Canada,Activewear,Mid,Yes,Affiliate,High,Competitor,,MISSING
+Nike,nike.com,US,Activewear,Mid,Yes,Affiliate,Critical,LTK,,MISSING
+Adidas,adidas.com,Germany,Activewear,Mid,Yes,Affiliate,Critical,LTK,,MISSING
+Puma,puma.com,Germany,Activewear,Mid,Yes,Affiliate,High,LTK,,MISSING
+Reebok,reebok.com,US,Activewear,Mid,Yes,Affiliate,High,LTK,,MISSING
+Under Armour,underarmour.com,US,Activewear,Mid,Yes,Affiliate,High,LTK,,MISSING
+Gymshark,gymshark.com,UK,Activewear,Mid,Yes,Affiliate,High,LTK,,MISSING
+Fabletics,fabletics.com,US,Activewear,Budget-Mid,Yes,Affiliate,High,LTK,,MISSING
+Carbon38,carbon38.com,US,Activewear,Mid-High,Yes,Affiliate,Medium,LTK,,MISSING
+Bandier,bandier.com,US,Activewear,High,Yes,Affiliate,Medium,LTK,,MISSING
+P.E Nation,pe-nation.com,Australia,Activewear,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Set Active,setactive.co,US,Activewear,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Alo,aloyoga.com,US,Activewear,High,Yes,Affiliate,High,LTK,,MISSING
+Beyond Yoga,beyondyoga.com,US,Activewear,Mid,Yes,Affiliate,Medium,LTK,,MISSING
+Spiritual Gangster,spiritualgangster.com,US,Activewear,Mid,Yes,Affiliate,Low,LTK,,MISSING
+Varley,varley.com,UK,Activewear,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Live The Process,livetheprocess.com,US,Activewear,High,Yes,Affiliate,Low,Competitor,,MISSING
+Levi's,levis.com,US,Denim,Mid,Yes,Affiliate,Critical,LTK,,MISSING
+AG Jeans,agjeans.com,US,Denim,High,Yes,Affiliate,High,LTK,,MISSING
+Mother Denim,motherdenim.com,US,Denim,High,Yes,Affiliate,High,LTK,,MISSING
+Good American,goodamerican.com,US,Denim,Mid-High,Yes,Affiliate,High,LTK,,MISSING
+Agolde,agolde.com,US,Denim,High,Yes,Affiliate,High,LTK,,MISSING
+Citizens of Humanity,citizensofhumanity.com,US,Denim,High,Yes,Affiliate,High,LTK,,MISSING
+7 For All Mankind,7forallmankind.com,US,Denim,High,Yes,Affiliate,High,LTK,,MISSING
+Joe's Jeans,joesjeans.com,US,Denim,Mid-High,Yes,Affiliate,Medium,LTK,,MISSING
+DL1961,dl1961.com,US,Denim,Mid-High,Yes,Affiliate,Medium,LTK,,MISSING
+RE/DONE,redone.com,US,Denim,High,Yes,Affiliate,High,Competitor,,MISSING
+Boyish Jeans,boyish.com,US,Denim,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+Grlfrnd,grlfrnd.com,US,Denim,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Lulus,lulus.com,US,Contemporary,Budget-Mid,Yes,Affiliate,Critical,Existing,,MISSING
+Show Me Your MuMu,showmeyourmumu.com,US,Contemporary,Mid,Yes,Affiliate,High,ShopMy,,MISSING
+For Love and Lemons,forloveandlemons.com,US,Designer,High,Yes,Affiliate,High,ShopMy,,MISSING
+Cult Gaia,cultgaia.com,US,Designer,High,Yes,Affiliate,High,ShopMy,,MISSING
+Zimmermann,zimmermannwear.com,Australia,Designer,Luxury,Yes,Affiliate,High,ShopMy,,MISSING
+FARM Rio,farmrio.com,Brazil,Contemporary,Mid-High,Yes,Affiliate,High,ShopMy,,MISSING
+Faithfull The Brand,faithfullthebrand.com,Indonesia,Contemporary,Mid,Yes,Affiliate,High,Competitor,,MISSING
+Spell,spell.co,Australia,Contemporary,Mid-High,Yes,Affiliate,High,Competitor,,MISSING
+Mara Hoffman,marahoffman.com,US,Designer,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Lisa Marie Fernandez,lisamariefernandez.com,US,Designer,Luxury,Limited,Manual,Low,Competitor,,MISSING
+Solid & Striped,solidandstriped.com,US,Swimwear,Mid-High,Yes,Affiliate,High,LTK,,MISSING
+Frankies Bikinis,frankiesbikinis.com,US,Swimwear,Mid-High,Yes,Affiliate,Critical,Competitor,,MISSING
+Vitamin A,vitaminaswim.com,US,Swimwear,High,Yes,Affiliate,High,LTK,,MISSING
+Mikoh,mikohs wear.com,US,Swimwear,High,Yes,Affiliate,High,LTK,,MISSING
+L*Space,lspace.com,US,Swimwear,Mid,Yes,Affiliate,High,LTK,,MISSING
+Seafolly,seafolly.com,Australia,Swimwear,Mid,Yes,Affiliate,High,Competitor,,MISSING
+Triangl,triangl.com,Australia,Swimwear,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Montce,montce.com,US,Swimwear,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Jade Swim,jadeswim.com,US,Swimwear,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Bound by Bond-Eye,boundbythebeach.com,Australia,Swimwear,Mid-High,Yes,Affiliate,High,Competitor,,MISSING
+Hunza G,hunzag.com,UK,Swimwear,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Aerie,ae.com/aerie,US,Swimwear,Budget,Yes,Affiliate,High,LTK,,MISSING
+Steve Madden,stevemadden.com,US,Shoes,Mid,Yes,Affiliate,Critical,LTK,,MISSING
+Sam Edelman,samedelman.com,US,Shoes,Mid,Yes,Affiliate,High,LTK,,MISSING
+Dolce Vita,dolcevita.com,US,Shoes,Mid-High,Yes,Affiliate,High,LTK,,MISSING
+Marc Fisher,marcfisherfootwear.com,US,Shoes,Mid,Yes,Affiliate,High,LTK,,MISSING
+Stuart Weitzman,stuartweitzman.com,US,Shoes,Luxury,Yes,Affiliate,High,LTK,,MISSING
+Aquazzura,aquazzura.com,Italy,Shoes,Luxury,Yes,Affiliate,Medium,LTK,,MISSING
+Vince Camuto,vincecamuto.com,US,Shoes,Mid,Yes,Affiliate,High,LTK,,MISSING
+Nine West,ninewest.com,US,Shoes,Mid,Yes,Affiliate,High,LTK,,MISSING
+Naturalizer,naturalizer.com,US,Shoes,Mid,Yes,Affiliate,Medium,LTK,,MISSING
+Cole Haan,colehaan.com,US,Shoes,Mid-High,Yes,Affiliate,High,LTK,,MISSING
+Rothy's,rothys.com,US,Shoes,Mid,Yes,Affiliate,High,LTK,,MISSING
+Allbirds,allbirds.com,US,Shoes,Mid,Yes,Affiliate,High,LTK,,MISSING
+Veja,veja-store.com,France,Shoes,Mid,Yes,Affiliate,High,LTK,,MISSING
+Dr. Martens,drmartens.com,UK,Shoes,Mid,Yes,Affiliate,High,LTK,,MISSING
+Birkenstock,birkenstock.com,Germany,Shoes,Mid,Yes,Affiliate,High,LTK,,MISSING
+Teva,teva.com,US,Shoes,Mid,Yes,Affiliate,Medium,LTK,,MISSING
+Crocs,crocs.com,US,Shoes,Budget-Mid,Yes,Affiliate,High,LTK,,MISSING
+UGG,ugg.com,US,Shoes,Mid-High,Yes,Affiliate,High,LTK,,MISSING
+Sorel,sorel.com,Canada,Shoes,Mid-High,Yes,Affiliate,High,LTK,,MISSING
+Golden Goose,goldengoosedeluxebrand.com,Italy,Shoes,Luxury,Limited,Manual,High,Competitor,,MISSING
+Common Projects,commonprojects.com,Italy,Shoes,Luxury,Limited,Manual,Medium,Competitor,,MISSING
+APL,athleticpropulsionlabs.com,US,Shoes,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Tory Burch Shoes,toryburch.com,US,Shoes,High,Yes,Affiliate,High,LTK,,MISSING
+Kate Spade,katespade.com,US,Accessories,Mid-High,Yes,Affiliate,High,LTK,,MISSING
+Coach,coach.com,US,Accessories,Mid-High,Yes,Affiliate,High,LTK,,MISSING
+Michael Kors,michaelkors.com,US,Accessories,Mid-High,Yes,Affiliate,High,LTK,,MISSING
+Rebecca Minkoff,rebeccaminkoff.com,US,Accessories,Mid,Yes,Affiliate,High,LTK,,MISSING
+Strathberry,strathberry.com,UK,Accessories,High,Yes,Affiliate,High,LTK,,MISSING
+Polene,polene-paris.com,France,Accessories,Mid-High,Yes,Affiliate,High,LTK,,MISSING
+DeMellier,demellierlondon.com,UK,Accessories,High,Yes,Affiliate,High,LTK,,MISSING
+Cuyana,cuyana.com,US,Accessories,High,Yes,Affiliate,Critical,Competitor,,MISSING
+Senreve,senreve.com,US,Accessories,High,Yes,Affiliate,High,LTK,,MISSING
+Mansur Gavriel,mansurgavriel.com,US,Accessories,High,Yes,Affiliate,High,Competitor,,MISSING
+Staud Bags,staud.clothing,US,Accessories,High,Yes,Affiliate,High,Competitor,,MISSING
+Wandler,wandler.com,Germany,Accessories,High,Yes,Affiliate,Medium,Competitor,,MISSING
+By Far,byfar.com,Bulgaria,Accessories,High,Yes,Affiliate,High,Competitor,,MISSING
+Ratio et Motus,ratioetmotus.com,US,Accessories,High,Yes,Affiliate,Low,Competitor,,MISSING
+Mejuri,mejuri.com,Canada,Jewelry,Mid,Yes,Affiliate,Critical,Competitor,,MISSING
+AUrate,auratenewyork.com,US,Jewelry,Mid,Yes,Affiliate,High,Competitor,,MISSING
+Catbird,catbirdnyc.com,US,Jewelry,Mid-High,Yes,Affiliate,High,LTK,,MISSING
+Gorjana,gorjana.com,US,Jewelry,Mid,Yes,Affiliate,High,LTK,,MISSING
+Kendra Scott,kendrascott.com,US,Jewelry,Mid,Yes,Affiliate,High,LTK,,MISSING
+Monica Vinader,monicavinader.com,UK,Jewelry,High,Yes,Affiliate,High,LTK,,MISSING
+Missoma,missoma.com,UK,Jewelry,Mid-High,Yes,Affiliate,High,LTK,,MISSING
+Baublebar,baublebar.com,US,Jewelry,Budget-Mid,Yes,Affiliate,High,LTK,,MISSING
+Uncommon James,uncommonjames.com,US,Jewelry,Mid,Yes,Affiliate,High,ShopMy,,MISSING
+Jennifer Fisher,jenniferfisherjewelry.com,US,Jewelry,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Anine Bing,aninebing.com,US,Contemporary,High,Yes,Affiliate,High,Competitor,,MISSING
+Rails,railsclothing.com,US,Contemporary,Mid-High,Yes,Affiliate,High,Competitor,,MISSING
+L'Academie,revolve.com/lacademie,US,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Lioness,lioness.com,Australia,Fast Fashion,Mid,Yes,Affiliate,High,ShopMy,,MISSING
+Motel Rocks,motelrocks.com,UK,Fast Fashion,Budget-Mid,Yes,Affiliate,Medium,ShopMy,,MISSING
+Meshki,meshki.com.au,Australia,Contemporary,Mid,Yes,Affiliate,High,ShopMy,,MISSING
+House of CB,houseofcb.com,UK,Contemporary,Mid,Yes,Affiliate,High,Competitor,,MISSING
+Edikted,edikted.com,US,Fast Fashion,Budget-Mid,Yes,Affiliate,Medium,ShopMy,,MISSING
+SKIMS,skims.com,US,Intimates,Mid-High,Limited,Manual,Critical,Competitor,,MISSING
+Savage x Fenty,savagex.com,US,Intimates,Mid,Yes,Affiliate,High,Competitor,,MISSING
+ThirdLove,thirdlove.com,US,Intimates,Mid,Yes,Affiliate,High,Competitor,,MISSING
+True & Co,trueandco.com,US,Intimates,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Lively,wearlively.com,US,Intimates,Mid,Yes,Affiliate,High,Competitor,,MISSING
+Victoria's Secret,victoriassecret.com,US,Intimates,Mid,Yes,Affiliate,High,LTK,,MISSING
+Aerie,ae.com/aerie,US,Intimates,Budget-Mid,Yes,Affiliate,High,LTK,,MISSING
+Hanky Panky,hankypanky.com,US,Intimates,Mid-High,Yes,Affiliate,Medium,LTK,,MISSING
+Cosabella,cosabella.com,Italy,Intimates,High,Yes,Affiliate,Medium,LTK,,MISSING
+Eberjey,eberjey.com,US,Intimates,Mid-High,Yes,Affiliate,Medium,LTK,,MISSING
+Jenni Kayne,jennikayne.com,US,Lifestyle,Luxury,Yes,Affiliate,High,Competitor,,MISSING
+Quince,quince.com,US,Contemporary,Budget-Mid,Yes,Affiliate,High,Competitor,,MISSING
+Italic,italic.com,US,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+ABLE,livefashionable.com,US,Contemporary,Mid,Yes,Affiliate,High,Phia,,MISSING
+Nisolo,nisolo.com,US,Shoes,Mid-High,Yes,Affiliate,High,Phia,,MISSING
+Eileen Fisher,eileenfisher.com,US,Contemporary,High,Yes,Affiliate,High,Phia,,MISSING
+Amour Vert,amourvert.com,US,Contemporary,Mid-High,Yes,Affiliate,Medium,Phia,,MISSING
+Christy Dawn,christydawn.com,US,Contemporary,High,Yes,Affiliate,Medium,Phia,,MISSING
+Whimsy + Row,whimsyandrow.com,US,Contemporary,Mid-High,Yes,Affiliate,Low,Phia,,MISSING
+M.M.LaFleur,mmlafleur.com,US,Workwear,High,Yes,Affiliate,High,Phia,,MISSING
+Argent,argentwork.com,US,Workwear,High,Limited,Manual,Medium,Phia,,MISSING
+Babaa,babaa.es,Spain,Knitwear,High,Limited,Manual,Low,Phia,,MISSING
+Kotn,kotn.com,Canada,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+StyleNanda,stylenanda.com,Korea,Fast Fashion,Mid,Limited,Manual,High,Competitor,,MISSING
+Chuu,chuu.co.kr,Korea,Fast Fashion,Mid,Limited,Manual,High,Competitor,,MISSING
+Mixxmix,mixxmix.us,Korea,Fast Fashion,Budget-Mid,Limited,Manual,Medium,Competitor,,MISSING
+Stylenanda 3CE,stylenanda.com,Korea,Fast Fashion,Mid,Limited,Manual,Medium,Competitor,,MISSING
+Ader Error,adererror.com,Korea,Designer,High,Limited,Manual,Medium,Competitor,,MISSING
+Andersson Bell,anderssonbell.com,Korea,Designer,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Rocket X Lunch,rocketxlunch.com,Korea,Contemporary,Mid,Limited,Manual,Low,Competitor,,MISSING
+Nerdy,nerdy.co.kr,Korea,Streetwear,Mid,Limited,Manual,Low,Competitor,,MISSING
+Romantic Crown,romanticcrown.com,Korea,Streetwear,Mid,Limited,Manual,Low,Competitor,,MISSING
+Sculptor,sculptorworld.com,Korea,Streetwear,Mid,Limited,Manual,Low,Competitor,,MISSING
+W Concept,wconcept.com,Korea,Marketplace,Mid-High,Yes,Affiliate,High,Competitor,,MISSING
+Kooding,kooding.com,Korea,Marketplace,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+YesStyle,yesstyle.com,Hong Kong,Marketplace,Budget-Mid,Yes,Affiliate,High,Competitor,,MISSING
+Stylevana,stylevana.com,Hong Kong,Marketplace,Budget,Yes,Affiliate,Medium,Competitor,,MISSING
+Naked Wardrobe,nakedwardrobe.com,US,Contemporary,Mid,Yes,Affiliate,High,Competitor,,MISSING
+Oh Polly,ohpolly.com,UK,Contemporary,Mid,Yes,Affiliate,High,Competitor,,MISSING
+I.AM.GIA,iamgia.com,Australia,Contemporary,Mid-High,Yes,Affiliate,High,Competitor,,MISSING
+The Frankie Shop,thefrankieshop.com,US,Contemporary,High,Yes,Affiliate,High,Competitor,,MISSING
+Aritzia,aritzia.com,Canada,Contemporary,Mid-High,Yes,Affiliate,Critical,Competitor,,MISSING
+TNA,aritzia.com/tna,Canada,Activewear,Mid,Yes,Affiliate,High,Competitor,,MISSING
+Wilfred,aritzia.com/wilfred,Canada,Contemporary,Mid-High,Yes,Affiliate,High,Competitor,,MISSING
+Babaton,aritzia.com/babaton,Canada,Contemporary,Mid-High,Yes,Affiliate,High,Competitor,,MISSING
+Sunday Best,aritzia.com/sunday-best,Canada,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Oak + Fort,oakandfort.com,Canada,Contemporary,Mid,Yes,Affiliate,High,Competitor,,MISSING
+Aritzia Denim Forum,aritzia.com/denim-forum,Canada,Denim,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Dynamite,dynamiteclothing.com,Canada,Fast Fashion,Budget-Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Garage,garageclothing.com,Canada,Fast Fashion,Budget,Yes,Affiliate,Medium,Competitor,,MISSING
+Simons,simons.ca,Canada,Department Store,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+SMYTHE,smythecollection.com,Canada,Contemporary,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Aritizia's Auxiliary,aritzia.com/auxiliary,Canada,Contemporary,Mid,Yes,Affiliate,Low,Competitor,,MISSING
+Community,aritzia.com/community,Canada,Contemporary,Mid-High,Yes,Affiliate,Low,Competitor,,MISSING
+Scanlan Theodore,scanlantheo dore.com,Australia,Designer,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Camilla and Marc,camillaandmarc.com,Australia,Designer,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Bec + Bridge,becandbridge.com.au,Australia,Designer,High,Yes,Affiliate,High,Competitor,,MISSING
+Alice McCall,alicemccall.com,Australia,Designer,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Sir The Label,sirthelabel.com,Australia,Designer,High,Yes,Affiliate,High,Competitor,,MISSING
+Significant Other,significantother.com.au,Australia,Designer,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Shona Joy,shonajoy.com.au,Australia,Designer,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+Sass & Bide,sassandbide.com,Australia,Designer,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Zimmermann,zimmermannwear.com,Australia,Designer,Luxury,Yes,Affiliate,High,Competitor,,MISSING
+Bassike,bassike.com,Australia,Contemporary,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Aje,ajeworld.com.au,Australia,Designer,High,Yes,Affiliate,High,Competitor,,MISSING
+Dion Lee,dionlee.com,Australia,Designer,Luxury,Limited,Manual,Medium,Competitor,,MISSING
+Hansen & Gretel,hansenandgretel.com,Australia,Designer,High,Limited,Manual,Low,Competitor,,MISSING
+Matteau,matteau.com,Australia,Designer,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Esse Studios,essestudios.com,New Zealand,Contemporary,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Paris Georgia,parisgeorgia.com,Australia,Designer,High,Limited,Manual,Low,Competitor,,MISSING
+Third Form,thirdform.com.au,Australia,Contemporary,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+The Upside,theupsidesport.com,Australia,Activewear,High,Yes,Affiliate,Medium,Competitor,,MISSING
+P.E Nation,pe-nation.com,Australia,Activewear,High,Yes,Affiliate,High,Competitor,,MISSING
+Double Rainbouu,doublerainbouu.com,Australia,Contemporary,Mid-High,Limited,Manual,Low,Competitor,,MISSING
+Rowie,rowie.com.au,Australia,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Rue Stiic,ruestiic.com,Australia,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Mara & Mine,maraandmine.com.au,Australia,Contemporary,Mid,Limited,Manual,Low,Competitor,,MISSING
+Dissh,dissh.com.au,Australia,Fast Fashion,Budget-Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Stelly,stellyclothing.com,Australia,Fast Fashion,Budget-Mid,Yes,Affiliate,Low,Competitor,,MISSING
+Runaway The Label,runawaythelabel.com,Australia,Fast Fashion,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Hello Molly,hellomolly.com,Australia,Fast Fashion,Budget-Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Meshki,meshki.com.au,Australia,Contemporary,Mid,Yes,Affiliate,High,Competitor,,MISSING
+Sabina Musayev,sabinamusayev.com,US,Designer,High,Limited,Manual,Low,Competitor,,MISSING
+Cinq à Sept,cinqasept.com,US,Designer,High,Yes,Affiliate,High,Competitor,,MISSING
+A.L.C.,alcltd.com,US,Designer,High,Yes,Affiliate,High,Competitor,,MISSING
+Ulla Johnson,ullajohnson.com,US,Designer,High,Yes,Affiliate,High,Competitor,,MISSING
+Jonathan Simkhai,jonathansimkhai.com,US,Designer,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Rebecca Taylor,rebeccataylor.com,US,Designer,High,Yes,Affiliate,High,Competitor,,MISSING
+Parker NY,parkern y.com,US,Designer,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Yumi Kim,yumikim.com,US,Contemporary,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+Joie,joie.com,US,Contemporary,High,Yes,Affiliate,High,Competitor,,MISSING
+Vince,vince.com,US,Contemporary,High,Yes,Affiliate,High,Phia,,MISSING
+Splendid,splendid.com,US,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+James Perse,jamesperse.com,US,Contemporary,High,Yes,Affiliate,Medium,Competitor,,MISSING
+ATM Anthony Thomas Melillo,atmanth onyth omasmelillo.com,US,Contemporary,High,Limited,Manual,Low,Competitor,,MISSING
+LNA,lnabrand.com,US,Contemporary,Mid,Yes,Affiliate,Low,Competitor,,MISSING
+Velvet,velvet-tees.com,US,Contemporary,Mid,Yes,Affiliate,Low,Competitor,,MISSING
+Current/Elliott,currentelliott.com,US,Denim,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Hudson Jeans,hudsonjeans.com,US,Denim,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+Flying Monkey,flyingmonkeyusa.com,US,Denim,Mid,Yes,Affiliate,Low,Competitor,,MISSING
+Blank NYC,blanknyc.com,US,Denim,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+KanCan,kancanusa.com,US,Denim,Mid,Yes,Affiliate,Low,Competitor,,MISSING
+Pistola,pistolajean.com,US,Denim,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+Habitual,habitual-la.com,US,Denim,Mid-High,Yes,Affiliate,Low,Competitor,,MISSING
+L'Agence Denim,lagencefashion.com,US,Denim,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Veronica Beard Jeans,veronicabeard.com/jeans,US,Denim,High,Yes,Affiliate,Medium,Competitor,,MISSING
+AYR,ayr.com,US,Denim,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+Dôen,shopdoen.com,US,Contemporary,High,Yes,Affiliate,High,Competitor,,MISSING
+Hill House Home,hillhousehome.com,US,Contemporary,Mid-High,Yes,Affiliate,High,Competitor,,MISSING
+LoveShackFancy,loveshackfancy.com,US,Designer,High,Yes,Affiliate,High,Competitor,,MISSING
+Sleeper,sleeper.com,Ukraine,Contemporary,Mid-High,Yes,Affiliate,High,Competitor,,MISSING
+LESET,leset.com,US,Contemporary,High,Yes,Affiliate,Medium,Competitor,,MISSING
+The Great,thisisthegreat.com,US,Contemporary,High,Yes,Affiliate,High,Competitor,,MISSING
+Mother of Pearl,motherofpearl.co.uk,UK,Designer,High,Yes,Affiliate,Low,Competitor,,MISSING
+Maggie Marilyn,maggiemarilyn.com,New Zealand,Designer,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Simkhai,simkhai.com,US,Designer,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Nanette Lepore,nanettele pore.com,US,Designer,Mid-High,Yes,Affiliate,Low,Competitor,,MISSING
+Tanya Taylor,tanyataylor.com,US,Designer,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Mara Hoffman,marahoffman.com,US,Designer,High,Yes,Affiliate,Medium,Competitor,,MISSING
+La Vie Style House,laviestylehouse.com,US,Contemporary,Mid,Yes,Affiliate,Low,Competitor,,MISSING
+Farm Rio,farmrio.com,Brazil,Contemporary,Mid-High,Yes,Affiliate,High,Competitor,,MISSING
+Lele Sadoughi,lelesadoughi.com,US,Accessories,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+Clare V,clarev.com,US,Accessories,High,Yes,Affiliate,High,Competitor,,MISSING
+Loeffler Randall,loefflerrandall.com,US,Shoes/Accessories,High,Yes,Affiliate,High,Competitor,,MISSING
+Marysia,marysia.com,US,Swimwear,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Onia,onia.com,US,Swimwear,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+Made by Dawn,madebydawn.com,US,Swimwear,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Agua Bendita,aguabyaguabendita.com,Colombia,Swimwear,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+ViX Paula Hermanny,vixpaulahermanny.com,Brazil,Swimwear,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Suboo,suboo.com.au,Australia,Swimwear,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+Lenni the Label,lennit helabel.com.au,Australia,Swimwear,Mid,Yes,Affiliate,Low,Competitor,,MISSING
+Monday Swimwear,mondayswimwear.com,Australia,Swimwear,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Kiini,kiini.com,US,Swimwear,High,Limited,Manual,Low,Competitor,,MISSING
+Oseree,oseree.com,Italy,Swimwear,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Andrea Iyamah,andreaiyamah.com,Canada,Swimwear,High,Limited,Manual,Low,Competitor,,MISSING
+Mara Hoffman Swim,marahoffmanswim.com,US,Swimwear,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Beth Richards,bethrichards.com,US,Swimwear,High,Limited,Manual,Low,Competitor,,MISSING
+Ganni Swimwear,ganni.com/swim,Denmark,Swimwear,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+Solid & Striped,solidandstriped.com,US,Swimwear,Mid-High,Yes,Affiliate,High,Competitor,,MISSING
+Hunza G,hunzag.com,UK,Swimwear,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Jade Swim,jadeswim.com,US,Swimwear,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Ozero Swimwear,ozeroswim.com,Australia,Swimwear,Mid,Limited,Manual,Low,Competitor,,MISSING
+Abysse,abyssewear.com,Australia,Swimwear,Mid,Limited,Manual,Low,Competitor,,MISSING
+Tropic of C,tropicof-c.com,US,Swimwear,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+Peony,peonysw imwear.com,Australia,Swimwear,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Land of Women,landofwomen.com,Spain,Contemporary,Mid-High,Limited,Manual,Low,Competitor,,MISSING
+Paloma Wool,palomawool.com,Spain,Contemporary,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+Paloma Blue,palomablue.com,US,Contemporary,Mid-High,Limited,Manual,Low,Competitor,,MISSING
+Rouje,rouje.com,France,Contemporary,Mid,Yes,Affiliate,High,Competitor,,MISSING
+Sézane,sezane.com,France,Contemporary,Mid,Yes,Affiliate,High,Competitor,,MISSING
+& Daughter,anddaughter.com,UK,Knitwear,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Extreme Cashmere,extremecashmere.com,Netherlands,Knitwear,High,Limited,Manual,Low,Competitor,,MISSING
+Tibi,tibi.com,US,Contemporary,High,Yes,Affiliate,High,Competitor,,MISSING
+Derek Lam 10 Crosby,dereklam.com,US,Contemporary,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Proenza Schouler,proenzaschouler.com,US,Designer,Luxury,Limited,Manual,Medium,Competitor,,MISSING
+The Range,therange.la,US,Contemporary,High,Limited,Manual,Low,Competitor,,MISSING
+Frankie Shop,thefrankieshop.com,France,Contemporary,High,Yes,Affiliate,High,Competitor,,MISSING
+Gauge81,gauge81.com,UAE,Designer,High,Limited,Manual,Medium,Competitor,,MISSING
+Bevza,bevza.com,Ukraine,Designer,High,Limited,Manual,Low,Competitor,,MISSING
+Pyer Moss,pyermoss.com,US,Designer,Luxury,Limited,Manual,Low,Competitor,,MISSING
+Wales Bonner,walesbonner.net,UK,Designer,Luxury,Limited,Manual,Low,Competitor,,MISSING
+Matty Bovan,mattybovan.com,UK,Designer,Luxury,Limited,Manual,Low,Competitor,,MISSING
+Marine Serre,marineserre.com,France,Designer,Luxury,Limited,Manual,Medium,Competitor,,MISSING
+Bode,bodenewyork.com,US,Designer,Luxury,Limited,Manual,Medium,Competitor,,MISSING
+Chopova Lowena,chopovalowena.com,UK,Designer,High,Limited,Manual,Low,Competitor,,MISSING
+Poster Girl,postergirl.co.uk,UK,Designer,High,Limited,Manual,Medium,Competitor,,MISSING
+Di Petsa,dipetsa.com,UK,Designer,High,Limited,Manual,Low,Competitor,,MISSING
+LaQuan Smith,laquansmith.com,US,Designer,Luxury,Limited,Manual,Medium,Competitor,,MISSING
+Christopher John Rogers,christopherjohnrogers.com,US,Designer,Luxury,Limited,Manual,Medium,Competitor,,MISSING
+Chromat,chromat.co,US,Designer,High,Limited,Manual,Low,Competitor,,MISSING
+Markarian,markarian.nyc,US,Designer,Luxury,Limited,Manual,Low,Competitor,,MISSING
+Adam Lippes,adamlippes.com,US,Designer,Luxury,Limited,Manual,Low,Competitor,,MISSING
+Brandon Maxwell,brandonmaxwell.com,US,Designer,Luxury,Limited,Manual,Medium,Competitor,,MISSING
+Monse,monse.com,US,Designer,Luxury,Limited,Manual,Low,Competitor,,MISSING
+Sandy Liang,sandyliang.info,US,Designer,High,Yes,Affiliate,High,Competitor,,MISSING
+Susan Alexandra,susanalexandra.com,US,Accessories,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+Edie Parker,edieparker.com,US,Accessories,High,Limited,Manual,Low,Competitor,,MISSING
+Rachel Comey,rachelcomey.com,US,Designer,High,Yes,Affiliate,High,Competitor,,MISSING
+Brock Collection,brockcollection.com,US,Designer,Luxury,Limited,Manual,Low,Competitor,,MISSING
+Rejina Pyo,rejinapyo.com,UK,Designer,High,Yes,Affiliate,High,Competitor,,MISSING
+Emilia Wickstead,emiliawickstead.com,UK,Designer,Luxury,Limited,Manual,Low,Competitor,,MISSING
+Roksanda,roksanda.com,UK,Designer,Luxury,Limited,Manual,Medium,Competitor,,MISSING
+Simone Rocha,simonerocha.com,UK,Designer,Luxury,Limited,Manual,Medium,Competitor,,MISSING
+Molly Goddard,mollygoddard.com,UK,Designer,High,Limited,Manual,Medium,Competitor,,MISSING
+Richard Quinn,richardquinn.com,UK,Designer,High,Limited,Manual,Low,Competitor,,MISSING
+Victoria Beckham,victoriabeckham.com,UK,Designer,Luxury,Limited,Manual,Medium,Competitor,,MISSING
+Stella McCartney,stellamccartney.com,UK,Designer,Luxury,Limited,Manual,High,Competitor,,MISSING
+Self-Portrait,self-portrait-studio.com,UK,Designer,High,Yes,Affiliate,High,Competitor,,MISSING
+Needle & Thread,needleandthread.com,UK,Designer,Mid-High,Yes,Affiliate,High,Competitor,,MISSING
+Temperley London,temperleylondon.com,UK,Designer,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Erdem,erdem.com,UK,Designer,Luxury,Limited,Manual,Low,Competitor,,MISSING
+Mary Katrantzou,marykatrantzou.com,UK,Designer,Luxury,Limited,Manual,Low,Competitor,,MISSING
+Delpozo,delpozo.com,Spain,Designer,Luxury,Limited,Manual,Low,Competitor,,MISSING
+Loewe,loewe.com,Spain,Designer,Luxury,Limited,Manual,High,Competitor,,MISSING
+Isabel Marant,isabelmarant.com,France,Designer,High,Yes,Affiliate,High,Competitor,,MISSING
+Étoile Isabel Marant,isabelmarant.com/etoile,France,Designer,Mid-High,Yes,Affiliate,High,Competitor,,MISSING
+IRO,iro.fr,France,Designer,Mid-High,Yes,Affiliate,High,Competitor,,MISSING
+Zadig & Voltaire,zadig-et-voltaire.com,France,Designer,Mid-High,Yes,Affiliate,High,Competitor,,MISSING
+APC,apc-us.com,France,Contemporary,Mid-High,Yes,Affiliate,High,Competitor,,MISSING
+Rouje,rouje.com,France,Contemporary,Mid,Yes,Affiliate,High,Competitor,,MISSING
+Sézane,sezane.com,France,Contemporary,Mid,Yes,Affiliate,High,Competitor,,MISSING
+Rime Arodaky,rimearodaky.com,France,Designer,Luxury,Limited,Manual,Low,Competitor,,MISSING
+Chloé,chloe.com,France,Designer,Luxury,Limited,Manual,High,Competitor,,MISSING
+Saint Laurent,ysl.com,France,Designer,Luxury,Limited,Manual,High,Competitor,,MISSING
+Balmain,balmain.com,France,Designer,Luxury,Limited,Manual,Medium,Competitor,,MISSING
+Givenchy,givenchy.com,France,Designer,Luxury,Limited,Manual,Medium,Competitor,,MISSING
+Dior,dior.com,France,Designer,Ultra-Luxury,Limited,Manual,High,Competitor,,MISSING
+Hermès,hermes.com,France,Designer,Ultra-Luxury,Limited,Manual,High,Competitor,,MISSING
+Louis Vuitton,louisvuitton.com,France,Designer,Ultra-Luxury,Limited,Manual,High,Competitor,,MISSING
+Chanel,chanel.com,France,Designer,Ultra-Luxury,No,Manual,High,Competitor,,MISSING
+Céline,celine.com,France,Designer,Luxury,Limited,Manual,High,Competitor,,MISSING
+Valentino,valentino.com,Italy,Designer,Luxury,Limited,Manual,High,Competitor,,MISSING
+Gucci,gucci.com,Italy,Designer,Luxury,Limited,Manual,High,Competitor,,MISSING
+Prada,prada.com,Italy,Designer,Luxury,Limited,Manual,High,Competitor,,MISSING
+Miu Miu,miumiu.com,Italy,Designer,Luxury,Limited,Manual,High,Competitor,,MISSING
+Bottega Veneta,bottegaveneta.com,Italy,Designer,Luxury,Limited,Manual,High,Competitor,,MISSING
+Fendi,fendi.com,Italy,Designer,Luxury,Limited,Manual,High,Competitor,,MISSING
+Versace,versace.com,Italy,Designer,Luxury,Limited,Manual,High,Competitor,,MISSING
+Dolce & Gabbana,dolcegabbana.com,Italy,Designer,Luxury,Limited,Manual,Medium,Competitor,,MISSING
+Salvatore Ferragamo,ferragamo.com,Italy,Designer,Luxury,Limited,Manual,Medium,Competitor,,MISSING
+Tod's,tods.com,Italy,Designer,Luxury,Limited,Manual,Low,Competitor,,MISSING
+Max Mara,maxmara.com,Italy,Designer,High,Yes,Affiliate,High,Competitor,,MISSING
+Weekend Max Mara,weekendmaxmara.com,Italy,Designer,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+Brunello Cucinelli,brunellocucinelli.com,Italy,Designer,Ultra-Luxury,Limited,Manual,Low,Competitor,,MISSING
+Loro Piana,loropiana.com,Italy,Designer,Ultra-Luxury,Limited,Manual,Low,Competitor,,MISSING
+Etro,etro.com,Italy,Designer,Luxury,Limited,Manual,Low,Competitor,,MISSING
+Missoni,missoni.com,Italy,Designer,Luxury,Limited,Manual,Medium,Competitor,,MISSING
+Marni,marni.com,Italy,Designer,Luxury,Limited,Manual,Medium,Competitor,,MISSING
+Jil Sander,jilsander.com,Germany,Designer,Luxury,Limited,Manual,Medium,Competitor,,MISSING
+Hugo Boss,hugoboss.com,Germany,Designer,Mid-High,Yes,Affiliate,High,Competitor,,MISSING
+Closed,closed.com,Germany,Contemporary,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+Wolford,wolford.com,Austria,Hosiery,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Falke,falke.com,Germany,Hosiery,Mid-High,Yes,Affiliate,Low,Competitor,,MISSING
+Calzedonia,calzedonia.com,Italy,Hosiery,Budget-Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Intimissimi,intimissimi.com,Italy,Intimates,Budget-Mid,Yes,Affiliate,High,Competitor,,MISSING
+Tezenis,tezenis.com,Italy,Intimates,Budget,Yes,Affiliate,Medium,Competitor,,MISSING
+La Perla,laperla.com,Italy,Intimates,Luxury,Limited,Manual,Low,Competitor,,MISSING
+Agent Provocateur,agentprovocateur.com,UK,Intimates,Luxury,Yes,Affiliate,Medium,Competitor,,MISSING
+Fleur du Mal,fleurdumal.com,US,Intimates,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Journelle,journelle.com,US,Intimates,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+Only Hearts,onlyhearts.com,US,Intimates,Mid,Yes,Affiliate,Low,Competitor,,MISSING
+The Great Eros,thegreateros.com,US,Intimates,High,Limited,Manual,Low,Competitor,,MISSING
+Lonely,lonelylabel.com,New Zealand,Intimates,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+Love Stories,lovestoriesintimates.com,Netherlands,Intimates,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Spell & The Gypsy Collective,spell.co,Australia,Contemporary,Mid-High,Yes,Affiliate,High,Competitor,,MISSING
+Auguste The Label,augustethelabel.com,Australia,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Tigerlily,tigerlilyswimwear.com,Australia,Swimwear,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Indah,indahclothing.com,Indonesia,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Natalie Martin,nataliemartin.com,US,Contemporary,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+Jen's Pirate Booty,jenspir atebooty.com,US,Contemporary,Mid,Yes,Affiliate,Low,Competitor,,MISSING
+Wildfox,wildfoxcouture.com,US,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Spiritual Gangster,spiritualgangster.com,US,Activewear,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Aviator Nation,aviatornation.com,US,Contemporary,Mid-High,Yes,Affiliate,High,Competitor,,MISSING
+Mikoh,mikohswimwear.com,US,Swimwear,High,Yes,Affiliate,High,Competitor,,MISSING
+Minkpink,minkpink.com,Australia,Fast Fashion,Budget-Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Finders Keepers,finderskeepersth elabel.com,Australia,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+C/MEO Collective,cmeo collective.com,Australia,Contemporary,Mid,Yes,Affiliate,High,Competitor,,MISSING
+Keepsake,keepsake thelabel.com,Australia,Contemporary,Mid,Yes,Affiliate,High,Competitor,,MISSING
+Maurie & Eve,maurieandeve.com,Australia,Contemporary,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+Bec & Bridge,becandbridge.com.au,Australia,Designer,High,Yes,Affiliate,High,Competitor,,MISSING
+Camilla,camilla.com.au,Australia,Designer,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Camilla and Marc,camillaandmarc.com,Australia,Designer,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Friend of Audrey,friendofaudrey.com,Australia,Contemporary,Mid,Yes,Affiliate,Low,Competitor,,MISSING
+Acler,acler.com.au,Australia,Designer,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Dion Lee,dionlee.com,Australia,Designer,Luxury,Limited,Manual,Medium,Competitor,,MISSING
+Manning Cartell,manningcartell.com.au,Australia,Designer,High,Yes,Affiliate,Medium,Competitor,,MISSING
+By Johnny,byjohnny.com.au,Australia,Designer,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Significant Other,significantother.com.au,Australia,Designer,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Talulah,talulah.com.au,Australia,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+BEC + BRIDGE,becandbridge.com.au,Australia,Designer,High,Yes,Affiliate,High,Competitor,,MISSING
+Hansen & Gretel,hansenandgretel.com,Australia,Designer,High,Limited,Manual,Low,Competitor,,MISSING
+Anna Quan,annaquan.com,Australia,Designer,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Georgia Alice,georgiaalice.com,Australia,Designer,High,Limited,Manual,Low,Competitor,,MISSING
+Kacey Devlin,kaceydevlin.com,Australia,Designer,Mid-High,Limited,Manual,Low,Competitor,,MISSING
+Christopher Esber,christopheresber.com.au,Australia,Designer,High,Yes,Affiliate,High,Competitor,,MISSING
+Lee Mathews,leemathews.com.au,Australia,Designer,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Beare Park,bearepark.com,Australia,Designer,High,Limited,Manual,Low,Competitor,,MISSING
+St. Agni,st-agni.com,Australia,Accessories,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+Cult Gaia,cultgaia.com,US,Designer,High,Yes,Affiliate,High,Competitor,,MISSING
+Staud,staud.clothing,US,Designer,High,Yes,Affiliate,Critical,Competitor,,MISSING
+Georgia Hardinge,georgiahardinge.com,UK,Designer,High,Limited,Manual,Low,Competitor,,MISSING
+Mara Hoffman,marahoffman.com,US,Designer,High,Yes,Affiliate,High,Competitor,,MISSING
+Vince Camuto,vincecamuto.com,US,Contemporary,Mid,Yes,Affiliate,High,LTK,,MISSING
+Betsey Johnson,betseyjohnson.com,US,Designer,Mid,Yes,Affiliate,Medium,LTK,,MISSING
+Desigual,desigual.com,Spain,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Anthropologie Home,anthropologie.com/home,US,Lifestyle,Mid-High,Yes,Affiliate,Low,LTK,,MISSING
+West Elm,westelm.com,US,Lifestyle,Mid,Yes,Affiliate,Low,LTK,,MISSING
+CB2,cb2.com,US,Lifestyle,Mid-High,Yes,Affiliate,Low,LTK,,MISSING
+Crate & Barrel,crateandbarrel.com,US,Lifestyle,Mid,Yes,Affiliate,Low,LTK,,MISSING
+Pottery Barn,potterybarn.com,US,Lifestyle,Mid-High,Yes,Affiliate,Low,LTK,,MISSING
+Williams Sonoma,williams-sonoma.com,US,Lifestyle,Mid-High,Yes,Affiliate,Low,LTK,,MISSING
+Serena & Lily,serenaandlily.com,US,Lifestyle,High,Yes,Affiliate,Low,Competitor,,MISSING
+Parachute,parachutehome.com,US,Lifestyle,Mid-High,Yes,Affiliate,Low,Competitor,,MISSING
+Brooklinen,brooklinen.com,US,Lifestyle,Mid,Yes,Affiliate,Low,Competitor,,MISSING
+Boll & Branch,bollandbranch.com,US,Lifestyle,High,Yes,Affiliate,Low,Competitor,,MISSING
+Coyuchi,coyuchi.com,US,Lifestyle,High,Yes,Affiliate,Low,Competitor,,MISSING
+Ettitude,ettitude.com,Australia,Lifestyle,Mid,Yes,Affiliate,Low,Competitor,,MISSING
+Buffy,buffy.co,US,Lifestyle,Mid,Limited,Manual,Low,Competitor,,MISSING
+Snowe,snowehome.com,US,Lifestyle,Mid,Limited,Manual,Low,Competitor,,MISSING
+Parachute Home,parachutehome.com,US,Lifestyle,Mid-High,Yes,Affiliate,Low,Competitor,,MISSING
+Hill House Home,hillhousehome.com,US,Lifestyle,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+The Citizenry,the-citizenry.com,US,Lifestyle,High,Yes,Affiliate,Low,Competitor,,MISSING
+Goop,goop.com,US,Lifestyle,Luxury,Yes,Affiliate,Medium,Competitor,,MISSING
+Véronique Branquinho,veroniquebranquinho.be,Belgium,Designer,Luxury,Limited,Manual,Low,Competitor,,MISSING
+Dries Van Noten,driesvannoten.com,Belgium,Designer,Luxury,Limited,Manual,Medium,Competitor,,MISSING
+Ann Demeulemeester,anndemeulemeester.com,Belgium,Designer,Luxury,Limited,Manual,Low,Competitor,,MISSING
+Haider Ackermann,haiderackermann.com,Colombia/Belgium,Designer,Luxury,Limited,Manual,Low,Competitor,,MISSING
+Maison Margiela,maisonmargiela.com,France,Designer,Luxury,Limited,Manual,High,Competitor,,MISSING
+MM6 Maison Margiela,mm6maisonmargiela.com,France,Designer,High,Limited,Manual,Medium,Competitor,,MISSING
+Comme des Garçons,comme-des-garcons.com,Japan,Designer,Luxury,Limited,Manual,High,Competitor,,MISSING
+Issey Miyake,isseymiyake.com,Japan,Designer,Luxury,Limited,Manual,Medium,Competitor,,MISSING
+Yohji Yamamoto,yohjiyamamoto.co.jp,Japan,Designer,Luxury,Limited,Manual,Low,Competitor,,MISSING
+Sacai,sacai.jp,Japan,Designer,Luxury,Limited,Manual,Medium,Competitor,,MISSING
+Junya Watanabe,junya-watanabe.com,Japan,Designer,Luxury,Limited,Manual,Low,Competitor,,MISSING
+Toga,toga.jp,Japan,Designer,High,Limited,Manual,Low,Competitor,,MISSING
+Undercover,undercoverism.com,Japan,Designer,High,Limited,Manual,Medium,Competitor,,MISSING
+Visvim,visvim.tv,Japan,Designer,Luxury,Limited,Manual,Low,Competitor,,MISSING
+Kapital,kapital.jp,Japan,Designer,High,Limited,Manual,Medium,Competitor,,MISSING
+Porter-Yoshida & Co,yoshidakaban.com,Japan,Accessories,High,Limited,Manual,Low,Competitor,,MISSING
+Beams,beams.co.jp,Japan,Marketplace,Mid,Limited,Manual,Low,Competitor,,MISSING
+United Arrows,united-arrows.co.jp,Japan,Marketplace,Mid-High,Limited,Manual,Low,Competitor,,MISSING
+Journal Standard,journal-standard.jp,Japan,Contemporary,Mid,Limited,Manual,Low,Competitor,,MISSING
+Enfold,enfold.jp,Japan,Contemporary,Mid-High,Limited,Manual,Low,Competitor,,MISSING
+Auralee,auralee.jp,Japan,Contemporary,High,Limited,Manual,Low,Competitor,,MISSING
+Hyke,hykebrand.com,Japan,Contemporary,High,Limited,Manual,Medium,Competitor,,MISSING
+Lemaire,lemaire.fr,France,Designer,Luxury,Limited,Manual,Medium,Competitor,,MISSING
+Christophe Lemaire,lemaire.fr,France,Designer,Luxury,Limited,Manual,Low,Competitor,,MISSING
+COS,cosstores.com,Sweden,Contemporary,Mid,Yes,Affiliate,High,Competitor,,MISSING
+Arket,arket.com,Sweden,Contemporary,Mid,Yes,Affiliate,High,Competitor,,MISSING
+Filippa K,filippa-k.com,Sweden,Contemporary,Mid-High,Yes,Affiliate,High,Competitor,,MISSING
+Hope,hope-sthlm.com,Sweden,Contemporary,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+Rodebjer,rodebjer.com,Sweden,Contemporary,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+By Malene Birger,bymalenebirger.com,Denmark,Contemporary,Mid-High,Yes,Affiliate,High,Competitor,,MISSING
+Baum und Pferdgarten,baumundpferdgarten.com,Denmark,Designer,Mid-High,Yes,Affiliate,High,Competitor,,MISSING
+Stine Goya,stinegoya.com,Denmark,Designer,Mid-High,Yes,Affiliate,High,Competitor,,MISSING
+Lovechild 1979,lovechild1979.com,Denmark,Contemporary,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+Samsøe Samsøe,samsoe.com,Denmark,Contemporary,Mid,Yes,Affiliate,High,Competitor,,MISSING
+Norse Projects,norseprojects.com,Denmark,Contemporary,Mid-High,Yes,Affiliate,High,Competitor,,MISSING
+Won Hundred,wonhundred.com,Denmark,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Munthe,munthe.com,Denmark,Designer,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+Gestuz,gestuz.com,Denmark,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Second Female,secondfemale.com,Denmark,Contemporary,Mid,Yes,Affiliate,High,Competitor,,MISSING
+Envii,envii.com,Denmark,Contemporary,Budget-Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Bruuns Bazaar,bruunsbazaar.com,Denmark,Contemporary,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+Day Birger et Mikkelsen,day.dk,Denmark,Contemporary,Mid-High,Yes,Affiliate,Low,Competitor,,MISSING
+Designers Remix,designersremix.com,Denmark,Designer,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Rains,rains.com,Denmark,Outerwear,Mid,Yes,Affiliate,High,Competitor,,MISSING
+Stutterheim,stutterheim.com,Sweden,Outerwear,Mid-High,Yes,Affiliate,High,Competitor,,MISSING
+Holzweiler,holzweiler.no,Norway,Contemporary,Mid-High,Yes,Affiliate,High,Competitor,,MISSING
+REMAIN Birger Christensen,remainbirgerchristensen.com,Denmark,Designer,High,Yes,Affiliate,High,Competitor,,MISSING
+By Ti Mo,byti.mo,Norway,Contemporary,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+Ganni,ganni.com,Denmark,Designer,High,Yes,Affiliate,Critical,Competitor,,MISSING
+Rotate,rotate.com,Denmark,Designer,High,Yes,Affiliate,High,Competitor,,MISSING
+Han Kjøbenhavn,hankjobenhavn.com,Denmark,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+A.P.C.,apc-us.com,France,Contemporary,Mid-High,Yes,Affiliate,High,Competitor,,MISSING
+AMI,amiparis.com,France,Designer,High,Limited,Manual,High,Competitor,,MISSING
+Maison Kitsuné,maisonkitsune.com,France/Japan,Contemporary,Mid-High,Yes,Affiliate,High,Competitor,,MISSING
+agnès b.,agnesb.com,France,Contemporary,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+American Vintage,americanvintage-store.com,France,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Ines de la Fressange,inesdelafressange.fr,France,Contemporary,Mid-High,Limited,Manual,Low,Competitor,,MISSING
+Sessun,sessun.com,France,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Des Petits Hauts,despetitshauts.com,France,Contemporary,Mid,Yes,Affiliate,Low,Competitor,,MISSING
+Soeur,soeur.fr,France,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Antik Batik,antikbatik.fr,France,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Bash,ba-sh.com,France,Contemporary,Mid-High,Yes,Affiliate,High,Competitor,,MISSING
+Comptoir des Cotonniers,comptoirdescotonniers.com,France,Contemporary,Mid,Yes,Affiliate,Low,Competitor,,MISSING
+Vanessa Bruno,vanessabruno.com,France,Designer,Mid-High,Yes,Affiliate,High,Competitor,,MISSING
+Paul & Joe,paulandjoe.com,France,Contemporary,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+Gerard Darel,gerarddarel.com,France,Contemporary,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+Paul Smith,paulsmith.com,UK,Designer,Mid-High,Yes,Affiliate,High,Competitor,,MISSING
+Vivienne Westwood,viviennewestwood.com,UK,Designer,High,Limited,Manual,Medium,Competitor,,MISSING
+Alexander McQueen,alexandermcqueen.com,UK,Designer,Luxury,Limited,Manual,High,Competitor,,MISSING
+Burberry,burberry.com,UK,Designer,Luxury,Limited,Manual,High,Competitor,,MISSING
+Mulberry,mulberry.com,UK,Accessories,Luxury,Yes,Affiliate,High,Competitor,,MISSING
+Aspinal of London,aspinaloflondon.com,UK,Accessories,High,Yes,Affiliate,Medium,Competitor,,MISSING
+LK Bennett,lkbennett.com,UK,Contemporary,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+Boden,boden.com,UK,Contemporary,Mid,Yes,Affiliate,High,Competitor,,MISSING
+Seasalt Cornwall,seasaltcornwall.com,UK,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Joules,joules.com,UK,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Toast,toa stdesign.com,UK,Contemporary,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+Margaret Howell,margarethowell.co.uk,UK,Designer,High,Limited,Manual,Low,Competitor,,MISSING
+Orla Kiely,orlakiely.com,Ireland,Designer,Mid,Limited,Manual,Low,Competitor,,MISSING
+Olivia Rubin,oliviarubin.com,UK,Designer,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+RIXO,rixo.co.uk,UK,Designer,Mid-High,Yes,Affiliate,High,Competitor,,MISSING
+Kitri,kitristudio.com,UK,Contemporary,Mid,Yes,Affiliate,High,Competitor,,MISSING
+Omnes,omnes-store.com,UK,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Nobody's Child,nobodyschild.com,UK,Contemporary,Mid,Yes,Affiliate,High,Competitor,,MISSING
+Kitx,kitx.com,Australia,Designer,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Albus Lumen,albuslumen.com,Australia,Contemporary,High,Limited,Manual,Low,Competitor,,MISSING
+Venroy,venroy.com.au,Australia,Contemporary,Mid-High,Limited,Manual,Low,Competitor,,MISSING
+Anna Quan,annaquan.com,Australia,Designer,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Maggie Marilyn,maggiemarilyn.com,New Zealand,Designer,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Karen Walker,karenwalker.com,New Zealand,Designer,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Kowtow,kowtowclothing.com,New Zealand,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Lonely,lonelylabel.com,New Zealand,Intimates,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+Jac + Jack,jacandjack.com,Australia,Contemporary,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+Bassike,bassike.com,Australia,Contemporary,High,Yes,Affiliate,High,Competitor,,MISSING
+Asceno,asceno.com,UK/Bali,Contemporary,High,Yes,Affiliate,Medium,Competitor,,MISSING
+LemLem,lemlem.com,Ethiopia/US,Contemporary,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Mara Hoffman,marahoffman.com,US,Designer,High,Yes,Affiliate,High,Competitor,,MISSING
+Whit,whitneypozgay.com,US,Designer,High,Limited,Manual,Low,Competitor,,MISSING
+Mara Hoffman,marahoffman.com,US,Designer,High,Yes,Affiliate,High,Competitor,,MISSING
+Roksanda,roksanda.com,UK,Designer,Luxury,Limited,Manual,Medium,Competitor,,MISSING
+Ulla Johnson,ullajohnson.com,US,Designer,High,Yes,Affiliate,High,Competitor,,MISSING
+Tove,tove-studio.com,Sweden,Designer,High,Limited,Manual,Medium,Competitor,,MISSING
+Bite Studios,bitestudios.com,Sweden,Designer,High,Limited,Manual,Low,Competitor,,MISSING
+Frankie Shop,thefrankieshop.com,France,Contemporary,High,Yes,Affiliate,High,Competitor,,MISSING
+Gauge81,gauge81.com,UAE,Designer,High,Limited,Manual,Medium,Competitor,,MISSING
+Nanushka,nanushka.com,Hungary,Designer,High,Yes,Affiliate,High,Competitor,,MISSING
+Bevza,bevza.com,Ukraine,Designer,High,Limited,Manual,Medium,Competitor,,MISSING
+The Attico,theattico.com,Italy,Designer,Luxury,Limited,Manual,High,Competitor,,MISSING
+MSGM,msgm.it,Italy,Designer,High,Yes,Affiliate,Medium,Competitor,,MISSING
+GCDS,gcds.it,Italy,Designer,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+MSGM,msgm.it,Italy,Designer,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Plan C,planc-milano.com,Italy,Designer,High,Limited,Manual,Low,Competitor,,MISSING
+Forte Forte,forteforteonline.com,Italy,Designer,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Luisa Beccaria,luisabeccaria.com,Italy,Designer,Luxury,Limited,Manual,Low,Competitor,,MISSING
+Alberta Ferretti,albertaferretti.com,Italy,Designer,Luxury,Limited,Manual,Medium,Competitor,,MISSING
+Philosophy di Lorenzo Serafini,philosophy.it,Italy,Designer,High,Yes,Affiliate,Medium,Competitor,,MISSING
+N°21,n21.it,Italy,Designer,High,Limited,Manual,Medium,Competitor,,MISSING
+MSGM,msgm.it,Italy,Designer,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Ports 1961,ports1961.com,Italy/Canada,Designer,High,Limited,Manual,Low,Competitor,,MISSING
+Pinko,pinko.com,Italy,Contemporary,Mid,Yes,Affiliate,High,Competitor,,MISSING
+Liu Jo,liujo.com,Italy,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Patrizia Pepe,patriziapepe.com,Italy,Contemporary,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+Twin-Set,twinset.com,Italy,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Elisabetta Franchi,elisabettafranchi.com,Italy,Designer,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+Rinascimento,rinascimento.com,Italy,Contemporary,Mid,Yes,Affiliate,Low,Competitor,,MISSING
+Motivi,motivifashion.com,Italy,Fast Fashion,Budget-Mid,Yes,Affiliate,Low,Competitor,,MISSING
+OVS,ovs.it,Italy,Fast Fashion,Budget,Yes,Affiliate,Low,Competitor,,MISSING
+Tezenis,tezenis.com,Italy,Intimates,Budget,Yes,Affiliate,Medium,Competitor,,MISSING
+Calzedonia,calzedonia.com,Italy,Hosiery,Budget-Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Intimissimi,intimissimi.com,Italy,Intimates,Budget-Mid,Yes,Affiliate,High,Competitor,,MISSING
+Yamamay,yamamay.com,Italy,Intimates,Budget-Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Golden Lady,goldenlady.com,Italy,Hosiery,Budget,Yes,Affiliate,Low,Competitor,,MISSING
+Wolford,wolford.com,Austria,Hosiery,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Marc Cain,marc-cain.com,Germany,Contemporary,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+Drykorn,drykorn.com,Germany,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Closed,closed.com,Germany,Contemporary,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+Strenesse,strenesse.com,Germany,Designer,High,Limited,Manual,Low,Competitor,,MISSING
+Windsor,windsor.com,US,Contemporary,Mid,Yes,Affiliate,Medium,LTK,,MISSING
+Charlotte Russe,charlotterusse.com,US,Fast Fashion,Budget,Yes,Affiliate,Low,LTK,,MISSING
+Bebe,bebe.com,US,Contemporary,Mid,Yes,Affiliate,Medium,LTK,,MISSING
+bebe Sport,bebe.com/sport,US,Activewear,Mid,Yes,Affiliate,Low,LTK,,MISSING
+Express,express.com,US,Contemporary,Mid,Yes,Affiliate,High,LTK,,MISSING
+The Limited,thelimited.com,US,Contemporary,Mid,Yes,Affiliate,Low,LTK,,MISSING
+New York & Company,nyandcompany.com,US,Contemporary,Mid,Yes,Affiliate,Medium,LTK,,MISSING
+White House Black Market,whitehouseblackmarket.com,US,Contemporary,Mid,Yes,Affiliate,Medium,LTK,,MISSING
+Chico's,chicos.com,US,Contemporary,Mid,Yes,Affiliate,Medium,LTK,,MISSING
+Ann Taylor,anntaylor.com,US,Contemporary,Mid,Yes,Affiliate,High,LTK,,MISSING
+LOFT,loft.com,US,Contemporary,Mid,Yes,Affiliate,High,LTK,,MISSING
+Talbots,talbots.com,US,Contemporary,Mid,Yes,Affiliate,Medium,LTK,,MISSING
+Soft Surroundings,softsurroundings.com,US,Contemporary,Mid-High,Yes,Affiliate,Low,LTK,,MISSING
+J.Jill,jjill.com,US,Contemporary,Mid,Yes,Affiliate,Medium,LTK,,MISSING
+Coldwater Creek,coldwatercreek.com,US,Contemporary,Mid,Yes,Affiliate,Low,LTK,,MISSING
+Garnet Hill,garnethill.com,US,Lifestyle,Mid-High,Yes,Affiliate,Low,LTK,,MISSING
+Orvis,orvis.com,US,Lifestyle,Mid,Yes,Affiliate,Low,LTK,,MISSING
+L.L.Bean,llbean.com,US,Outerwear,Mid,Yes,Affiliate,Medium,LTK,,MISSING
+Lands' End,landsend.com,US,Contemporary,Mid,Yes,Affiliate,Medium,LTK,,MISSING
+Eddie Bauer,eddiebauer.com,US,Outerwear,Mid,Yes,Affiliate,Medium,LTK,,MISSING
+Patagonia,patagonia.com,US,Outerwear,Mid-High,Yes,Affiliate,High,Competitor,,MISSING
+Arc'teryx,arcteryx.com,Canada,Outerwear,High,Yes,Affiliate,High,Competitor,,MISSING
+Canada Goose,canadagoose.com,Canada,Outerwear,Luxury,Yes,Affiliate,High,Competitor,,MISSING
+Moose Knuckles,mooseknucklescanada.com,Canada,Outerwear,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Nobis,nobis.com,Canada,Outerwear,High,Yes,Affiliate,Low,Competitor,,MISSING
+Mackage,mackage.com,Canada,Outerwear,High,Yes,Affiliate,High,Competitor,,MISSING
+Rudsak,rudsak.com,Canada,Outerwear,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+Soia & Kyo,soiakyo.com,Canada,Outerwear,Mid-High,Yes,Affiliate,High,Competitor,,MISSING
+Aritzia,aritzia.com,Canada,Contemporary,Mid-High,Yes,Affiliate,Critical,Competitor,,MISSING
+TNA,aritzia.com/tna,Canada,Activewear,Mid,Yes,Affiliate,High,Competitor,,MISSING
+Wilfred,aritzia.com/wilfred,Canada,Contemporary,Mid-High,Yes,Affiliate,High,Competitor,,MISSING
+Babaton,aritzia.com/babaton,Canada,Contemporary,Mid-High,Yes,Affiliate,High,Competitor,,MISSING
+Sunday Best,aritzia.com/sunday-best,Canada,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Oak + Fort,oakandfort.com,Canada,Contemporary,Mid,Yes,Affiliate,High,Competitor,,MISSING
+Smythe,smythecollection.com,Canada,Contemporary,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Mejuri,mejuri.com,Canada,Jewelry,Mid,Yes,Affiliate,Critical,Competitor,,MISSING
+Knix,knix.com,Canada,Intimates,Mid,Yes,Affiliate,High,Competitor,,MISSING
+Frank And Oak,frankandoak.com,Canada,Contemporary,Mid,Yes,Affiliate,High,Competitor,,MISSING
+KOTN,kotn.com,Canada,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Tentree,tentree.com,Canada,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+ABLE,livefashionable.com,US,Contemporary,Mid,Yes,Affiliate,High,Competitor,,MISSING
+Nisolo,nisolo.com,US,Shoes,Mid-High,Yes,Affiliate,High,Competitor,,MISSING
+Everlane,everlane.com,US,Contemporary,Mid,Yes,Affiliate,High,Competitor,,MISSING
+Reformation,thereformation.com,US,Contemporary,Mid-High,Yes,Affiliate,Critical,Competitor,,MISSING
+Christy Dawn,christydawn.com,US,Contemporary,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Whimsy + Row,whimsyandrow.com,US,Contemporary,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+LACAUSA,lacausaclothing.com,US,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Thinking MU,thinkingmu.com,Spain,Contemporary,Mid,Yes,Affiliate,Low,Competitor,,MISSING
+Organic Basics,organicbasics.com,Denmark,Basics,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Wearwell,wearwell.com,US,Marketplace,Mid-High,Limited,Manual,Low,Competitor,,MISSING
+Pact,wearpact.com,US,Basics,Budget-Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Alternative Apparel,alternativeapparel.com,US,Basics,Budget-Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Threads 4 Thought,threads4thought.com,US,Contemporary,Mid,Yes,Affiliate,Low,Competitor,,MISSING
+People Tree,peopletree.co.uk,UK,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Thought,wearethought.com,UK,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Beaumont Organic,beaumontorganic.com,UK,Contemporary,Mid-High,Yes,Affiliate,Low,Competitor,,MISSING
+Birdsong,birdsong.london,UK,Contemporary,Mid,Limited,Manual,Low,Competitor,,MISSING
+Ninety Percent,ninetypercent.com,UK,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Rapanui,rapanuiclothing.com,UK,Basics,Mid,Yes,Affiliate,Low,Competitor,,MISSING
+Outland Denim,outlanddenim.com,Australia,Denim,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+Nobody Denim,nobodydenim.com,Australia,Denim,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+Afends,afends.com,Australia,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Spell & The Gypsy Collective,spell.co,Australia,Contemporary,Mid-High,Yes,Affiliate,High,Competitor,,MISSING
+Rowie The Label,rowie.com.au,Australia,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Nude Lucy,nudeluc y.com.au,Australia,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+The Fifth Label,thefifthlabel.com,Australia,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Finders Keepers,finderskeepersthelabel.com,Australia,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+C/MEO Collective,cmeocollective.com,Australia,Contemporary,Mid,Yes,Affiliate,High,Competitor,,MISSING
+Keepsake,keepsake thelabel.com,Australia,Contemporary,Mid,Yes,Affiliate,High,Competitor,,MISSING
+Maurie & Eve,maurieandeve.com,Australia,Contemporary,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+Camilla and Marc,camillaandmarc.com,Australia,Designer,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Bec + Bridge,becandbridge.com.au,Australia,Designer,High,Yes,Affiliate,High,Competitor,,MISSING
+Sir The Label,sirthelabel.com,Australia,Designer,High,Yes,Affiliate,High,Competitor,,MISSING
+Significant Other,significantother.com.au,Australia,Designer,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Alice McCall,alicemccall.com,Australia,Designer,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Zimmermann,zimmermannwear.com,Australia,Designer,Luxury,Yes,Affiliate,High,Competitor,,MISSING
+Dion Lee,dionlee.com,Australia,Designer,Luxury,Limited,Manual,Medium,Competitor,,MISSING
+Aje,ajeworld.com.au,Australia,Designer,High,Yes,Affiliate,High,Competitor,,MISSING
+Christopher Esber,christopheresber.com.au,Australia,Designer,High,Yes,Affiliate,High,Competitor,,MISSING
+Acler,acler.com.au,Australia,Designer,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Manning Cartell,manningcartell.com.au,Australia,Designer,High,Yes,Affiliate,Medium,Competitor,,MISSING
+By Johnny,byjohnny.com.au,Australia,Designer,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Lee Mathews,leemathews.com.au,Australia,Designer,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Anna Quan,annaquan.com,Australia,Designer,High,Yes,Affiliate,Medium,Competitor,,MISSING
+Hansen & Gretel,hansenandgretel.com,Australia,Designer,High,Limited,Manual,Low,Competitor,,MISSING
+Georgia Alice,georgiaalice.com,Australia,Designer,High,Limited,Manual,Low,Competitor,,MISSING
+Kacey Devlin,kaceydevlin.com,Australia,Designer,Mid-High,Limited,Manual,Low,Competitor,,MISSING
+Beare Park,bearepark.com,Australia,Designer,High,Limited,Manual,Low,Competitor,,MISSING
+Paris Georgia,parisgeorgia.com,Australia,Designer,High,Limited,Manual,Low,Competitor,,MISSING
+Third Form,thirdform.com.au,Australia,Contemporary,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+Mara & Mine,maraandmine.com.au,Australia,Contemporary,Mid,Limited,Manual,Low,Competitor,,MISSING
+Rowie,rowie.com.au,Australia,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Rue Stiic,ruestiic.com,Australia,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Dissh,dissh.com.au,Australia,Fast Fashion,Budget-Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Stelly,stellyclothing.com,Australia,Fast Fashion,Budget-Mid,Yes,Affiliate,Low,Competitor,,MISSING
+Runaway The Label,runawaythelabel.com,Australia,Fast Fashion,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Hello Molly,hellomolly.com,Australia,Fast Fashion,Budget-Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Beginning Boutique,beginningboutique.com,Australia,Fast Fashion,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Sabo Skirt,saboskirt.com,Australia,Fast Fashion,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Tiger Mist,tigermist.com,Australia,Fast Fashion,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+White Fox Boutique,whitefoxboutique.com,Australia,Fast Fashion,Mid,Yes,Affiliate,High,Competitor,,MISSING
+Princess Polly,princesspolly.com,Australia,Fast Fashion,Mid,Yes,Affiliate,High,Competitor,,MISSING
+Peppermayo,peppermayo.com,Australia,Fast Fashion,Mid,Yes,Affiliate,High,Competitor,,MISSING
+Showpo,showpo.com,Australia,Fast Fashion,Mid,Yes,Affiliate,High,Competitor,,MISSING
+Fashion Nova,fashionnova.com,US,Fast Fashion,Budget,Yes,Affiliate,High,Competitor,,MISSING
+Pretty Little Thing,prettylittlething.com,UK,Fast Fashion,Budget,Yes,Affiliate,High,Competitor,,MISSING
+Boohoo,boohoo.com,UK,Fast Fashion,Budget,Yes,Affiliate,High,Competitor,,MISSING
+Missguided,missguided.com,UK,Fast Fashion,Budget,Yes,Affiliate,High,Competitor,,MISSING
+Nasty Gal,nastygal.com,US,Fast Fashion,Mid,Yes,Affiliate,High,Competitor,,MISSING
+Dolls Kill,dollskill.com,US,Fast Fashion,Mid,Yes,Affiliate,High,Competitor,,MISSING
+UNIF,unifclothing.com,US,Contemporary,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+Lazy Oaf,lazyoaf.com,UK,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+The Ragged Priest,theraggedpriest.com,UK,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Jaded London,jadedlondon.com,UK,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+O-Mighty,o-mighty.com,US,Fast Fashion,Mid,Limited,Manual,Low,Competitor,,MISSING
+Widow,widowbrand.com,US,Contemporary,Mid,Limited,Manual,Low,Competitor,,MISSING
+Killstar,killstar.com,UK,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Disturbia,disturbia.co.uk,UK,Contemporary,Mid,Yes,Affiliate,Low,Competitor,,MISSING
+Iron Fist,ironfistclothing.com,UK,Contemporary,Mid,Yes,Affiliate,Low,Competitor,,MISSING
+Blackcraft Cult,blackcraftcult.com,US,Contemporary,Mid,Yes,Affiliate,Low,Competitor,,MISSING
+UNIF,unifclothing.com,US,Contemporary,Mid-High,Yes,Affiliate,Medium,Competitor,,MISSING
+Lazy Oaf,lazyoaf.com,UK,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+Valfré,valfre.com,US,Contemporary,Mid,Yes,Affiliate,Medium,Competitor,,MISSING
+The Cobra Snake,thecobrasnake.com,US,Contemporary,Mid,Limited,Manual,Low,Competitor,,MISSING
+Local Heroes,local-heroes.com,Poland,Contemporary,Mid,Limited,Manual,Low,Competitor,,MISSING

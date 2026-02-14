@@ -1,0 +1,41 @@
+{
+  "name": "Muse - Personalized Fashion Shopping",
+  "short_name": "Muse",
+  "description": "Shop all your favorite stores in one place. Personalized. Fast.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAFAF8",
+  "theme_color": "#F4A785",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["shopping", "lifestyle"],
+  "shortcuts": [
+    {
+      "name": "Newsfeed",
+      "short_name": "Feed",
+      "description": "Your personalized shopping feed",
+      "url": "/muse",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Search",
+      "short_name": "Search",
+      "description": "Search for products",
+      "url": "/search",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

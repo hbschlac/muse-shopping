@@ -42,10 +42,10 @@ export default function ProductCard({ image, brand, name, price, id }: ProductCa
         </button>
       </div>
       <div className="px-1">
-        <p className="text-[13px] font-semibold text-gray-900 truncate">
+        <p className="text-sm font-semibold text-gray-900 truncate">
           {brand}
         </p>
-        <p className="text-[13px] text-gray-500">
+        <p className="text-sm text-gray-500">
           ${price.toFixed(2)}
         </p>
       </div>

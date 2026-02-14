@@ -21,7 +21,8 @@ class ItemController {
         search,
         sort_by = 'newest',
         limit = '50',
-        offset = '0'
+        offset = '0',
+        storeId
       } = req.query;
 
       // Parse filters
@@ -35,7 +36,8 @@ class ItemController {
         onSale: on_sale === 'true' ? true : null,
         inStock: in_stock === 'true',
         search: search || null,
-        sortBy: sort_by
+        sortBy: sort_by,
+        storeId: storeId ? parseInt(storeId) : null
       };
 
       const pagination = {

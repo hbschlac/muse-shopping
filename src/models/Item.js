@@ -1,8 +1,10 @@
 const pool = require('../db/pool');
+const ItemCacheService = require('../services/itemCacheService');
 
 class Item {
   /**
    * Find all items with optional filters
+   * Now with intelligent caching for improved performance
    */
   static async findAll({
     brands = null,
@@ -16,10 +18,27 @@ class Item {
     search = null,
     sortBy = 'newest',
     limit = 50,
-    offset = 0
+    offset = 0,
+    storeId = null
   } = {}) {
+    // Generate cache key from query parameters
+    const cacheKey = ItemCacheService.generateKey('findAll', {
+      brands, categories, subcategories, attributes,
+      minPrice, maxPrice, onSale, inStock, search,
+      sortBy, limit, offset, storeId
+    });
+
+    // Check cache first
+    const cached = ItemCacheService.get(cacheKey);
+    if (cached) {
+      console.log(`[ItemCache] Cache HIT for findAll query`);
+      return cached;
+    }
+
+    console.log(`[ItemCache] Cache MISS for findAll query`);
+
     let query = `
-      SELECT DISTINCT ON (i.id)
+      SELECT
         i.id,
         i.brand_id,
         b.name as brand_name,
@@ -31,18 +50,25 @@ class Item {
         i.gender,
         i.primary_image_url,
         i.additional_images,
-        MIN(il.price) as min_price,
-        MIN(il.sale_price) as sale_price,
+        COALESCE(MIN(il.price), i.price_cents / 100.0) as min_price,
+        COALESCE(MIN(il.sale_price), i.original_price_cents / 100.0) as sale_price,
         COUNT(DISTINCT il.id) as listing_count,
         i.created_at
       FROM items i
-      JOIN brands b ON i.brand_id = b.id
+      LEFT JOIN brands b ON i.brand_id = b.id
       LEFT JOIN item_listings il ON i.id = il.item_id
       WHERE i.is_active = TRUE
     `;
 
     const params = [];
     let paramIndex = 1;
+
+    // Store filter
+    if (storeId) {
+      query += ` AND i.store_id = $${paramIndex}`;
+      params.push(storeId);
+      paramIndex++;
+    }
 
     // Brand filter
     if (brands && brands.length > 0) {
@@ -65,19 +91,28 @@ class Item {
       paramIndex++;
     }
 
-    // In stock filter
+    // In stock filter (check item availability)
     if (inStock) {
-      query += ` AND EXISTS (
-        SELECT 1 FROM item_listings
-        WHERE item_id = i.id AND in_stock = TRUE
+      query += ` AND (
+        i.is_available = TRUE
+        OR EXISTS (
+          SELECT 1 FROM item_listings
+          WHERE item_id = i.id AND in_stock = TRUE
+        )
       )`;
     }
 
-    // Search filter (full-text search on name and description)
+    // Search filter (full-text search on name, description, brand, and store)
     if (search) {
       query += ` AND (
         i.canonical_name ILIKE $${paramIndex}
         OR i.description ILIKE $${paramIndex}
+        OR b.name ILIKE $${paramIndex}
+        OR EXISTS (
+          SELECT 1 FROM stores s
+          WHERE s.id = i.store_id
+          AND s.name ILIKE $${paramIndex}
+        )
       )`;
       params.push(`%${search}%`);
       paramIndex++;
@@ -126,20 +161,20 @@ class Item {
     // Sorting
     switch (sortBy) {
       case 'price_low':
-        query += ` ORDER BY MIN(il.price) ASC NULLS LAST`;
+        query += ` ORDER BY MIN(il.price) ASC NULLS LAST, i.created_at DESC`;
         break;
       case 'price_high':
-        query += ` ORDER BY MIN(il.price) DESC NULLS LAST`;
+        query += ` ORDER BY MIN(il.price) DESC NULLS LAST, i.created_at DESC`;
         break;
       case 'newest':
-        query += ` ORDER BY i.created_at DESC`;
+        query += ` ORDER BY i.created_at DESC, i.id DESC`;
         break;
       case 'popular':
         // TODO: Add popularity score based on interactions
-        query += ` ORDER BY i.created_at DESC`;
+        query += ` ORDER BY i.created_at DESC, i.id DESC`;
         break;
       default:
-        query += ` ORDER BY i.created_at DESC`;
+        query += ` ORDER BY i.created_at DESC, i.id DESC`;
     }
 
     // Pagination
@@ -147,6 +182,10 @@ class Item {
     params.push(limit, offset);
 
     const result = await pool.query(query, params);
+
+    // Cache the results
+    ItemCacheService.set(cacheKey, result.rows);
+
     return result.rows;
   }
 
@@ -256,8 +295,21 @@ class Item {
 
   /**
    * Find item by ID with all details
+   * Now with caching for improved performance
    */
   static async findById(itemId) {
+    // Generate cache key
+    const cacheKey = ItemCacheService.generateKey('findById', { itemId });
+
+    // Check cache first
+    const cached = ItemCacheService.get(cacheKey);
+    if (cached) {
+      console.log(`[ItemCache] Cache HIT for findById: ${itemId}`);
+      return cached;
+    }
+
+    console.log(`[ItemCache] Cache MISS for findById: ${itemId}`);
+
     const query = `
       SELECT
         i.id,
@@ -281,7 +333,12 @@ class Item {
     `;
 
     const result = await pool.query(query, [itemId]);
-    return result.rows[0] || null;
+    const item = result.rows[0] || null;
+
+    // Cache the result (even if null to prevent repeated lookups)
+    ItemCacheService.set(cacheKey, item);
+
+    return item;
   }
 
   /**
@@ -302,9 +359,11 @@ class Item {
         il.in_stock,
         il.sizes_available,
         il.colors_available,
-        il.last_scraped_at
+        il.last_scraped_at,
+        i.original_price_cents / 100.0 as original_price
       FROM item_listings il
       JOIN brands b ON il.retailer_id = b.id
+      JOIN items i ON il.item_id = i.id
       WHERE il.item_id = $1
       ORDER BY
         il.in_stock DESC,
@@ -338,14 +397,87 @@ class Item {
   }
 
   /**
-   * Get similar items based on attributes
+   * Get similar items based on attributes, with fallback to category/brand matching
    */
   static async findSimilar(itemId, limit = 10) {
-    const query = `
-      SELECT * FROM find_similar_items($1, $2)
+    // First try attribute-based matching
+    const attributeQuery = `
+      SELECT
+        i.id,
+        i.brand_id,
+        b.name as brand_name,
+        b.slug as brand_slug,
+        i.canonical_name as name,
+        i.description,
+        i.category,
+        i.subcategory,
+        i.gender,
+        i.primary_image_url as image_url,
+        i.additional_images,
+        COALESCE(
+          (SELECT MIN(COALESCE(il.sale_price, il.price))
+           FROM item_listings il
+           WHERE il.item_id = i.id AND il.in_stock = TRUE), 0
+        ) * 100 as price_cents,
+        NULL::INTEGER as original_price_cents,
+        'image' as media_type,
+        NULL as video_url,
+        NULL as video_poster_url
+      FROM find_similar_items($1, $2) fs
+      JOIN items i ON i.id = fs.item_id
+      JOIN brands b ON b.id = i.brand_id
+      WHERE i.is_active = TRUE
+      ORDER BY fs.match_score DESC
     `;
 
-    const result = await pool.query(query, [itemId, limit]);
+    let result = await pool.query(attributeQuery, [itemId, limit]);
+
+    // If no results from attribute matching, fallback to category/brand matching
+    if (result.rows.length === 0) {
+      const fallbackQuery = `
+        SELECT
+          i2.id,
+          i2.brand_id,
+          b.name as brand_name,
+          b.slug as brand_slug,
+          i2.canonical_name as name,
+          i2.description,
+          i2.category,
+          i2.subcategory,
+          i2.gender,
+          i2.primary_image_url as image_url,
+          i2.additional_images,
+          COALESCE(
+            (SELECT MIN(COALESCE(il.sale_price, il.price))
+             FROM item_listings il
+             WHERE il.item_id = i2.id AND il.in_stock = TRUE), 0
+          ) * 100 as price_cents,
+          NULL::INTEGER as original_price_cents,
+          'image' as media_type,
+          NULL as video_url,
+          NULL as video_poster_url
+        FROM items i1
+        JOIN items i2 ON (
+          i2.category = i1.category OR i2.brand_id = i1.brand_id
+        )
+        JOIN brands b ON b.id = i2.brand_id
+        WHERE i1.id = $1
+          AND i2.id != $1
+          AND i2.is_active = TRUE
+          AND i2.primary_image_url IS NOT NULL
+        ORDER BY
+          CASE WHEN i2.category = i1.category AND i2.brand_id = i1.brand_id THEN 1
+               WHEN i2.category = i1.category THEN 2
+               WHEN i2.brand_id = i1.brand_id THEN 3
+               ELSE 4
+          END,
+          i2.created_at DESC
+        LIMIT $2
+      `;
+
+      result = await pool.query(fallbackQuery, [itemId, limit]);
+    }
+
     return result.rows;
   }
 

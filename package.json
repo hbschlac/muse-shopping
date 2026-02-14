@@ -8,6 +8,7 @@
     "dev": "nodemon src/server.js",
     "test": "jest --testEnvironment=node --passWithNoTests",
     "test:watch": "jest --watch",
+    "test:auto": "node scripts/test-watcher.js",
     "test:coverage": "jest --coverage --passWithNoTests",
     "test:ci": "jest --ci --coverage --maxWorkers=2",
     "test:encryption": "node scripts/test-encryption.js",
@@ -15,6 +16,7 @@
     "lint": "eslint src/**/*.js",
     "lint:fix": "eslint src/**/*.js --fix",
     "migrate": "node scripts/migrate.js",
+    "migrate:check": "node scripts/check-migrations.js",
     "seed": "node scripts/seed.js",
     "export:chat": "node src/jobs/chatExportJob.js",
     "export:chat:flagged": "node src/jobs/chatExportJob.js --only_flagged=true",
@@ -23,6 +25,11 @@
     "summarize:chat": "node src/jobs/chatSessionSummaryJob.js",
     "sync:reviews": "node src/jobs/reviewIngestionJob.js",
     "sync:reviews:loop": "node src/jobs/reviewIngestionScheduler.js",
+    "validate:env": "node scripts/validate-env.js",
+    "validate:env:strict": "ENV_VALIDATION_STRICT=true node scripts/validate-env.js",
+    "nordstrom:scrape": "node src/jobs/nordstromInventoryJob.js",
+    "nordstrom:scheduler": "node src/jobs/nordstromInventoryScheduler.js",
+    "bloomingdales:scrape": "node src/jobs/bloomingdalesInventoryJob.js",
     "prepare": "husky",
     "precommit": "npm run lint && npm run test",
     "prepush": "npm run test:ci"
@@ -46,12 +53,14 @@
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "express-rate-limit": "^8.2.1",
+    "express-validator": "^7.3.1",
     "googleapis": "^171.1.0",
     "helmet": "^8.1.0",
     "joi": "^18.0.2",
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.10.1",
     "nanoid": "^3.3.11",
+    "nodemailer": "^8.0.0",
     "pg": "^8.18.0",
     "puppeteer": "^24.36.1",
     "puppeteer-extra": "^3.3.6",
@@ -68,5 +77,14 @@
     "nodemon": "^3.1.11",
     "prettier": "^3.8.1",
     "supertest": "^7.2.2"
+  },
+  "jest": {
+    "setupFilesAfterEnv": [
+      "<rootDir>/tests/jest.setup.js"
+    ],
+    "testPathIgnorePatterns": [
+      "<rootDir>/frontend/",
+      "<rootDir>/api/test.js"
+    ]
   }
 }

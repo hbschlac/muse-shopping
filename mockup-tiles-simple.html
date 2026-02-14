@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Muse Mockup - Tile</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      width: 1242px;
+      height: 2208px;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    .tile {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 100px 80px;
+    }
+
+    .tile1 { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 45%, #0f1419 100%); }
+    .tile2 { background: linear-gradient(135deg, #0f1419 0%, #1a1a2e 55%, #16213e 100%); }
+    .tile3 { background: linear-gradient(135deg, #16213e 0%, #0f1419 45%, #1a1a2e 100%); }
+
+    .text { margin-bottom: 80px; }
+
+    .headline {
+      color: #fff;
+      font-size: 104px;
+      font-weight: 700;
+      line-height: 1.05;
+      letter-spacing: -3px;
+      margin-bottom: 20px;
+    }
+
+    .subtext {
+      color: #fff;
+      font-size: 72px;
+      font-style: italic;
+      font-weight: 300;
+      opacity: 0.95;
+    }
+
+    .phone-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .phone {
+      width: 420px;
+      height: 860px;
+      background: #1c1c1e;
+      border-radius: 55px;
+      padding: 12px;
+      transform: rotate(-6deg) perspective(1200px) rotateY(-8deg);
+      box-shadow: 0 60px 120px rgba(0,0,0,0.6), 0 25px 50px rgba(0,0,0,0.4);
+      position: relative;
+    }
+
+    .screen {
+      width: 100%;
+      height: 100%;
+      border-radius: 46px;
+      background: #f5f5f5;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .island {
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 125px;
+      height: 37px;
+      background: #000;
+      border-radius: 19px;
+      z-index: 10;
+    }
+
+    .content {
+      width: 100%;
+      height: 100%;
+      background: #FAFAF8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      color: #999;
+      text-align: center;
+      padding: 60px 30px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="tile" class="tile tile1">
+  <div class="text">
+    <div class="headline">All your<br>favorites.</div>
+    <div class="subtext">One cart.</div>
+  </div>
+  <div class="phone-container">
+    <div class="phone">
+      <div class="island"></div>
+      <div class="screen">
+        <div class="content" id="content">
+          [Cart Screenshot]
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const tileNum = params.get('tile') || '1';
+
+const tiles = {
+  '1': { class: 'tile1', headline: 'All your<br>favorites.', subtext: 'One cart.', content: '[Cart]' },
+  '2': { class: 'tile2', headline: 'We show you', subtext: 'where to buy.', content: '[PDP]' },
+  '3': { class: 'tile3', headline: 'Shop with', subtext: 'ease.', content: '[Home]' }
+};
+
+const tile = tiles[tileNum];
+document.getElementById('tile').className = 'tile ' + tile.class;
+document.querySelector('.headline').innerHTML = tile.headline;
+document.querySelector('.subtext').innerHTML = tile.subtext;
+document.getElementById('content').textContent = tile.content;
+</script>
+
+</body>
+</html>

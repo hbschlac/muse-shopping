@@ -1,6 +1,6 @@
 const express = require('express');
 const PreferencesController = require('../controllers/preferencesController');
-const { validate, updatePreferencesSchema } = require('../middleware/validation');
+const { validateJoi, updatePreferencesSchema } = require('../middleware/validation');
 const authMiddleware = require('../middleware/authMiddleware');
 
 const router = express.Router();
@@ -9,7 +9,7 @@ const router = express.Router();
 router.use(authMiddleware);
 
 router.get('/', PreferencesController.getPreferences);
-router.put('/', validate(updatePreferencesSchema), PreferencesController.updatePreferences);
-router.patch('/', validate(updatePreferencesSchema), PreferencesController.patchPreferences);
+router.put('/', validateJoi(updatePreferencesSchema), PreferencesController.updatePreferences);
+router.patch('/', validateJoi(updatePreferencesSchema), PreferencesController.patchPreferences);
 
 module.exports = router;

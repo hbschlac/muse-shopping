@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+export const dynamic = 'force-dynamic';
+
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { completeRetailerAuth } from '@/lib/api/retailers';
 
-export default function RetailerCallbackPage() {
+function RetailerCallbackPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
@@ -134,5 +136,14 @@ export default function RetailerCallbackPage() {
         )}
       </div>
     </div>
+  );
+}
+
+
+export default function RetailerCallbackPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[var(--color-ecru)]" />}>
+      <RetailerCallbackPageContent />
+    </Suspense>
   );
 }

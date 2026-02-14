@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+export const dynamic = 'force-dynamic';
+
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { completeGoogleAuth } from '@/lib/api/auth';
 
-export default function GoogleCallbackPage() {
+function GoogleCallbackPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
@@ -41,13 +43,17 @@ export default function GoogleCallbackPage() {
         // If user has no style preferences set, they should go through onboarding
         const isNewUser = !authResponse.user?.onboarding_completed;
 
+        console.log('Google OAuth callback - authResponse:', {
+          user: authResponse.user,
+          onboarding_completed: authResponse.user?.onboarding_completed,
+          isNewUser,
+        });
+
         // Redirect based on whether user needs onboarding
         setTimeout(() => {
-          if (isNewUser) {
-            router.push('/onboarding/welcome');
-          } else {
-            router.push('/home');
-          }
+          const redirectPath = isNewUser ? '/onboarding/intro' : '/home';
+          console.log('Redirecting to:', redirectPath);
+          router.push(redirectPath);
         }, 2000);
       } catch (err) {
         setStatus('error');
@@ -125,7 +131,7 @@ export default function GoogleCallbackPage() {
             <p className="text-red-600 mb-4">{errorMessage}</p>
             <button
               onClick={() => router.push('/welcome')}
-              className="px-6 py-3 bg-[#333333] text-white rounded-[12px] text-[16px] font-medium hover:bg-[#6B6B6B] transition-all duration-[150ms] ease-out"
+              className="px-6 py-3 bg-[var(--color-text-primary)] text-white rounded-[12px] text-[16px] font-medium hover:bg-[var(--color-text-tertiary)] transition-all duration-[150ms] ease-out"
             >
               Return to Welcome
             </button>
@@ -133,5 +139,14 @@ export default function GoogleCallbackPage() {
         )}
       </div>
     </div>
+  );
+}
+
+
+export default function GoogleCallbackPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[var(--color-ecru)]" />}>
+      <GoogleCallbackPageContent />
+    </Suspense>
   );
 }

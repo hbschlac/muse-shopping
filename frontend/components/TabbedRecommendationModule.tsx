@@ -141,7 +141,7 @@ export default function TabbedRecommendationModule({
     setActiveTab(tabKey);
   };
 
-  const handleItemClick = async (itemId: number) => {
+  const handleItemClick = async (itemId: string | number) => {
     try {
       const token = localStorage.getItem('auth_token');
       if (!token) return;
@@ -163,10 +163,10 @@ export default function TabbedRecommendationModule({
     <div className="mb-8">
       {/* Module Title */}
       <div className="mb-4">
-        <h2 className="text-[19px] font-semibold text-gray-900">
+        <h2 className="text-lg font-semibold text-gray-900">
           Discover
         </h2>
-        <p className="text-[13px] text-gray-500 mt-1">
+        <p className="text-sm text-gray-500 mt-1">
           Personalized picks from across all brands
         </p>
       </div>
@@ -177,7 +177,7 @@ export default function TabbedRecommendationModule({
           <button
             key={tab.tab_key}
             onClick={() => handleTabClick(tab.tab_key)}
-            className={`px-4 py-2.5 text-[14px] font-medium whitespace-nowrap transition-all duration-150 border-b-2 ${
+            className={`px-4 py-2.5 text-sm font-medium whitespace-nowrap transition-all duration-150 border-b-2 ${
               activeTab === tab.tab_key
                 ? 'text-gray-900 border-gray-900'
                 : 'text-gray-500 border-transparent hover:text-gray-700'
@@ -195,7 +195,7 @@ export default function TabbedRecommendationModule({
         </div>
       ) : error ? (
         <div className="text-center py-12">
-          <p className="text-red-500 text-[14px]">{error}</p>
+          <p className="text-red-500 text-sm">{error}</p>
         </div>
       ) : (
         <div className="flex gap-3 overflow-x-auto hide-scrollbar pb-2">
@@ -224,7 +224,7 @@ export default function TabbedRecommendationModule({
                     />
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                       <div className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center shadow-subtle">
-                        <span className="ml-0.5 text-[14px] text-gray-700">▶</span>
+                        <span className="ml-0.5 text-sm text-gray-700">▶</span>
                       </div>
                     </div>
                   </>
@@ -240,7 +240,7 @@ export default function TabbedRecommendationModule({
 
                 {/* Sale Badge */}
                 {product.original_price && product.original_price > product.price && (
-                  <div className="absolute top-2 right-2 px-2 py-1 bg-red-500 text-white text-[10px] font-semibold rounded">
+                  <div className="absolute top-2 right-2 px-2 py-1 bg-red-500 text-white text-xs font-semibold rounded">
                     SALE
                   </div>
                 )}
@@ -248,24 +248,25 @@ export default function TabbedRecommendationModule({
 
               {/* Brand */}
               {product.brand_name && (
-                <p className="text-[11px] font-medium text-gray-500 uppercase tracking-wide mb-0.5">
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">
                   {product.brand_name}
                 </p>
               )}
 
               {/* Product Name */}
-              <p className="text-[13px] font-medium text-gray-900 truncate mb-1">
+              <p className="text-sm font-medium text-gray-900 truncate mb-1">
                 {product.name}
               </p>
 
               {/* Price */}
               <div className="flex items-baseline gap-1.5">
-                <p className="text-[13px] font-semibold text-gray-900">
-                  ${(product.price_cents / 100).toFixed(2)}
+                <p className="text-sm font-semibold text-gray-900">
+                  ${((product.price_cents ?? Math.round((product.price || 0) * 100)) / 100).toFixed(2)}
                 </p>
                 {product.original_price_cents &&
+                  product.price_cents &&
                   product.original_price_cents > product.price_cents && (
-                    <p className="text-[11px] line-through text-gray-400">
+                    <p className="text-xs line-through text-gray-400">
                       ${(product.original_price_cents / 100).toFixed(2)}
                     </p>
                   )}
@@ -276,7 +277,7 @@ export default function TabbedRecommendationModule({
           {/* Empty State */}
           {items.length === 0 && !loading && !error && (
             <div className="w-full text-center py-12">
-              <p className="text-gray-500 text-[14px]">
+              <p className="text-gray-500 text-sm">
                 No items found for this category
               </p>
             </div>

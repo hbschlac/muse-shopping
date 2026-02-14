@@ -195,31 +195,155 @@ class ManualOrderService {
    * Create manual order task
    * Called by checkoutService when manual placement is needed
    * @param {Object} order - Order object
+   * @param {string} failureReason - Why automated placement failed
    * @returns {Promise<Object>} Task details
    */
-  static async createManualOrderTask(order) {
+  static async createManualOrderTask(order, failureReason = 'Automated placement not available') {
+    // Create task in manual order queue
+    const taskResult = await pool.query(
+      `INSERT INTO manual_order_tasks (
+        order_id,
+        user_id,
+        store_id,
+        task_status,
+        priority,
+        failure_reason,
+        automated_attempts,
+        last_automated_attempt_at
+      )
+      VALUES ($1, $2, $3, 'pending', 'normal', $4, 0, NOW())
+      RETURNING *`,
+      [order.id, order.user_id, order.store_id, failureReason]
+    );
+
+    const task = taskResult.rows[0];
+
     // Mark order as pending manual placement
     await pool.query(
       `UPDATE orders
        SET metadata = metadata || jsonb_build_object(
+         'manual_task_id', $1,
          'manual_task_created_at', NOW(),
          'requires_manual_placement', true
        )
-       WHERE id = $1`,
-      [order.id]
+       WHERE id = $2`,
+      [task.id, order.id]
     );
 
-    // TODO: Send notification to ops team (email, Slack, etc.)
-    logger.info(`Manual order task created for order ${order.muse_order_number}`);
+    logger.info(`Manual order task ${task.id} created for order ${order.muse_order_number}`);
 
-    // TODO: Create task in task management system (Asana, Linear, etc.)
+    // TODO: Send notification to ops team (email, Slack, etc.)
+    // TODO: Trigger Slack webhook or email notification
 
     return {
+      taskId: task.id,
       orderId: order.id,
       museOrderNumber: order.muse_order_number,
       taskCreated: true,
       message: 'Order queued for manual placement',
+      failureReason,
     };
+  }
+
+  /**
+   * Get all manual order tasks (for ops dashboard)
+   * @param {Object} filters - Query filters
+   * @returns {Promise<Array>} Manual order tasks
+   */
+  static async getManualTasks(filters = {}) {
+    const { status = 'pending', assignedTo = null, limit = 50, offset = 0 } = filters;
+
+    let query = `
+      SELECT
+        mot.*,
+        o.muse_order_number,
+        o.total_cents,
+        s.name as store_name,
+        s.display_name as store_display_name,
+        u.email as user_email,
+        u.full_name as user_name
+      FROM manual_order_tasks mot
+      JOIN orders o ON mot.order_id = o.id
+      JOIN stores s ON mot.store_id = s.id
+      JOIN users u ON mot.user_id = u.id
+      WHERE 1=1
+    `;
+
+    const params = [];
+    let paramCount = 1;
+
+    if (status) {
+      query += ` AND mot.task_status = $${paramCount}`;
+      params.push(status);
+      paramCount++;
+    }
+
+    if (assignedTo) {
+      query += ` AND mot.assigned_to = $${paramCount}`;
+      params.push(assignedTo);
+      paramCount++;
+    }
+
+    query += ` ORDER BY mot.priority DESC, mot.created_at ASC`;
+    query += ` LIMIT $${paramCount} OFFSET $${paramCount + 1}`;
+    params.push(limit, offset);
+
+    const result = await pool.query(query, params);
+    return result.rows;
+  }
+
+  /**
+   * Claim a manual task
+   * @param {number} taskId - Task ID
+   * @param {number} userId - Ops team member user ID
+   * @returns {Promise<Object>} Claimed task
+   */
+  static async claimTask(taskId, userId) {
+    const result = await pool.query(
+      `UPDATE manual_order_tasks
+       SET task_status = 'claimed',
+           assigned_to = $1,
+           claimed_at = NOW(),
+           updated_at = NOW()
+       WHERE id = $2 AND task_status = 'pending'
+       RETURNING *`,
+      [userId, taskId]
+    );
+
+    if (result.rows.length === 0) {
+      throw new NotFoundError('Task not found or already claimed');
+    }
+
+    logger.info(`Task ${taskId} claimed by user ${userId}`);
+    return result.rows[0];
+  }
+
+  /**
+   * Complete a manual task
+   * @param {number} taskId - Task ID
+   * @param {Object} completionData - Completion details
+   * @returns {Promise<Object>} Completed task
+   */
+  static async completeTask(taskId, completionData = {}) {
+    const { notes = null } = completionData;
+
+    const result = await pool.query(
+      `UPDATE manual_order_tasks
+       SET task_status = 'completed',
+           completed_at = NOW(),
+           notes = COALESCE($1, notes),
+           updated_at = NOW()
+       WHERE id = $2
+       RETURNING *`,
+      [notes, taskId]
+    );
+
+    if (result.rows.length === 0) {
+      throw new NotFoundError('Task not found');
+    }
+
+    logger.info(`Task ${taskId} completed`);
+    return result.rows[0];
   }
 
   /**

@@ -15,7 +15,8 @@ app.use(cors({
     'http://localhost:3001',
     'http://localhost:8080',
     'https://muse.shopping',
-    'https://www.muse.shopping'
+    'https://www.muse.shopping',
+    'https://app.muse.shopping'
   ],
   credentials: true,
 }));

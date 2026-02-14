@@ -20,6 +20,12 @@ const CartService = require('./cartService');
 const StoreConnectionService = require('./storeConnectionService');
 const RetailerAPIFactory = require('./retailerAPIFactory');
 const ManualOrderService = require('./manualOrderService');
+const HeadlessAutomationService = require('./headlessAutomationService');
+const StripeService = require('./stripeService');
+const StoreAccountService = require('./storeAccountService');
+const RequirementAdapterService = require('./requirementAdapterService');
+const TaxCalculationService = require('./taxCalculationService');
+const ShippingCalculationService = require('./shippingCalculationService');
 const { nanoid } = require('nanoid');
 
 class CheckoutService {
@@ -38,22 +44,52 @@ class CheckoutService {
         throw new ValidationError('Cart is empty');
       }
 
+      RequirementAdapterService.enforceCheckoutCart(cart);
+
       // Generate session ID
       const sessionId = `cs_${nanoid(24)}`;
 
       // Calculate expiration (30 minutes)
       const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
 
+      // Load store configs for placement decisions
+      const storeConfigs = await this.getStoreConfigs(cart.stores.map(s => s.storeId));
+
       // Prepare stores to process
-      const storesToProcess = cart.stores.map(store => ({
-        storeId: store.storeId,
-        storeName: store.storeName,
-        storeSlug: store.storeSlug,
-        itemCount: store.itemCount,
-        subtotalCents: store.subtotalCents,
-        status: 'pending', // pending, processing, completed, failed
-        placementMethod: this.determinePlacementMethod(store.storeId),
-      }));
+      const storesToProcess = cart.stores.map(store => {
+        const config = storeConfigs.get(store.storeId) || {};
+        const placementMethod = this.determinePlacementMethod(config);
+        return {
+          storeId: store.storeId,
+          storeName: store.storeName,
+          storeSlug: store.storeSlug,
+          itemCount: store.itemCount,
+          subtotalCents: store.subtotalCents,
+          status: 'pending', // pending, processing, completed, failed
+          integrationType: config.integrationType || null,
+          supportsCheckout: config.supportsCheckout || false,
+          placementMethod,
+        };
+      });
+
+      // Require all stores to support in-app checkout for this flow
+      const blocked = storesToProcess.filter(store => !['api', 'headless'].includes(store.placementMethod));
+      if (blocked.length > 0) {
+        const names = blocked.map(s => s.storeName || s.storeSlug || s.storeId).join(', ');
+        throw new ValidationError(`These stores are not configured for in-app checkout: ${names}`);
+      }
+
+      // Attach any existing retailer payment methods to the session
+      const existingPaymentMethods = await StoreAccountService.getPaymentMethodsForStores(
+        userId,
+        cart.stores.map(s => s.storeId)
+      );
+      const checkoutMetadata = await this.buildCheckoutScaffoldMetadata(
+        userId,
+        cart,
+        storesToProcess,
+        existingPaymentMethods
+      );
 
       // Create checkout session
       const result = await pool.query(
@@ -64,9 +100,11 @@ class CheckoutService {
           subtotal_cents,
           total_cents,
           stores_to_process,
+          retailer_payment_methods,
+          checkout_metadata,
           expires_at
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING *`,
         [
           userId,
@@ -75,6 +113,8 @@ class CheckoutService {
           cart.summary.subtotalCents,
           cart.summary.grandTotalCents,
           JSON.stringify(storesToProcess),
+          JSON.stringify(existingPaymentMethods || {}),
+          JSON.stringify(checkoutMetadata || {}),
           expiresAt,
         ]
       );
@@ -118,21 +158,159 @@ class CheckoutService {
   }
 
   /**
+   * Save recipient/contact information for checkout
+   * @param {string} sessionId
+   * @param {number} userId
+   * @param {Object} recipient
+   * @returns {Promise<Object>}
+   */
+  static async setRecipientInfo(sessionId, userId, recipient) {
+    const normalizedRecipient = this.normalizeRecipientInfo(recipient);
+    if (!normalizedRecipient.email) {
+      throw new ValidationError('Recipient email is required');
+    }
+    if (!normalizedRecipient.phone) {
+      throw new ValidationError('Recipient phone is required');
+    }
+
+    return this.patchCheckoutMetadata(sessionId, userId, {
+      recipient: normalizedRecipient,
+    });
+  }
+
+  /**
+   * Set billing preferences / address
+   * @param {string} sessionId
+   * @param {number} userId
+   * @param {Object} payload
+   * @returns {Promise<Object>}
+   */
+  static async setBillingPreferences(sessionId, userId, payload = {}) {
+    const sameAsShipping = payload.sameAsShipping !== false;
+    const billingAddress = payload.billingAddress || null;
+
+    if (!sameAsShipping && !billingAddress) {
+      throw new ValidationError('billingAddress is required when sameAsShipping is false');
+    }
+    if (!sameAsShipping) {
+      this.validateAddress(billingAddress);
+    }
+
+    const result = await pool.query(
+      `UPDATE checkout_sessions
+       SET billing_address = $1,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE session_id = $2 AND user_id = $3
+       RETURNING *`,
+      [sameAsShipping ? null : JSON.stringify(billingAddress), sessionId, userId]
+    );
+
+    if (result.rows.length === 0) {
+      throw new NotFoundError('Checkout session not found');
+    }
+
+    return this.patchCheckoutMetadata(sessionId, userId, {
+      billing: {
+        sameAsShipping: !!sameAsShipping,
+      },
+    });
+  }
+
+  /**
+   * Apply promo code to checkout session (scaffold-level validation)
+   * @param {string} sessionId
+   * @param {number} userId
+   * @param {Object} payload
+   * @returns {Promise<Object>}
+   */
+  static async applyPromoCode(sessionId, userId, payload = {}) {
+    const code = String(payload.code || '').trim();
+    if (!code) {
+      throw new ValidationError('Promo code is required');
+    }
+
+    const session = await this.getCheckoutSession(sessionId, userId);
+    const eligibleStoreIds = (session.cartSnapshot?.stores || []).map(store => store.storeId);
+
+    return this.patchCheckoutMetadata(sessionId, userId, {
+      promo: {
+        code,
+        eligibleStoreIds,
+        appliedAt: new Date().toISOString(),
+      },
+    });
+  }
+
+  /**
+   * Set per-store shipping selections for checkout
+   * @param {string} sessionId
+   * @param {number} userId
+   * @param {Object} payload
+   * @returns {Promise<Object>}
+   */
+  static async setShippingSelections(sessionId, userId, payload = {}) {
+    const selections = payload.selections || {};
+    if (typeof selections !== 'object' || Array.isArray(selections)) {
+      throw new ValidationError('selections must be an object keyed by storeId');
+    }
+
+    const session = await this.getCheckoutSession(sessionId, userId);
+    const storeIds = new Set((session.cartSnapshot?.stores || []).map(s => String(s.storeId)));
+
+    for (const [storeId, selection] of Object.entries(selections)) {
+      if (!storeIds.has(String(storeId))) {
+        throw new ValidationError(`Invalid storeId in shipping selections: ${storeId}`);
+      }
+      if (!selection || typeof selection !== 'object') {
+        throw new ValidationError(`Shipping selection for store ${storeId} must be an object`);
+      }
+      if (!selection.optionId) {
+        throw new ValidationError(`Shipping selection for store ${storeId} requires optionId`);
+      }
+    }
+
+    return this.patchCheckoutMetadata(sessionId, userId, {
+      shipping: {
+        selections,
+      },
+    });
+  }
+
+  /**
    * Add payment method to checkout session
    * @param {string} sessionId - Checkout session ID
    * @param {number} userId - User ID
    * @param {string} stripePaymentMethodId - Stripe payment method ID
    * @returns {Promise<Object>} Updated checkout session
    */
-  static async addPaymentMethod(sessionId, userId, stripePaymentMethodId) {
-    const result = await pool.query(
-      `UPDATE checkout_sessions
-       SET payment_method_id = $1,
-           updated_at = CURRENT_TIMESTAMP
-       WHERE session_id = $2 AND user_id = $3
-       RETURNING *`,
-      [stripePaymentMethodId, sessionId, userId]
-    );
+  static async addPaymentMethod(sessionId, userId, stripePaymentMethodId, storeId = null) {
+    if (storeId !== null && (!Number.isInteger(storeId) || storeId < 1)) {
+      throw new ValidationError('storeId must be a positive integer when provided');
+    }
+
+    let result;
+    if (storeId) {
+      result = await pool.query(
+        `UPDATE checkout_sessions
+         SET retailer_payment_methods = COALESCE(retailer_payment_methods, '{}'::jsonb) || jsonb_build_object($1::text, $2::text),
+             updated_at = CURRENT_TIMESTAMP
+         WHERE session_id = $3 AND user_id = $4
+         RETURNING *`,
+        [String(storeId), stripePaymentMethodId, sessionId, userId]
+      );
+
+      // Persist for future checkouts
+      await StoreAccountService.savePaymentMethod(userId, storeId, { token: stripePaymentMethodId });
+    } else {
+      result = await pool.query(
+        `UPDATE checkout_sessions
+         SET payment_method_id = $1,
+             updated_at = CURRENT_TIMESTAMP
+         WHERE session_id = $2 AND user_id = $3
+         RETURNING *`,
+        [stripePaymentMethodId, sessionId, userId]
+      );
+    }
 
     if (result.rows.length === 0) {
       throw new NotFoundError('Checkout session not found');
@@ -157,16 +335,19 @@ class CheckoutService {
 
       // Validate session is ready
       this.validateSessionForPlacement(session);
+      this.validateStoresForInAppCheckout(session);
 
       // Update status to processing
       await this.updateSessionStatus(sessionId, 'processing');
 
-      // Step 1: Capture payment from customer
-      const paymentResult = await this.capturePayment(session);
+      // Step 1: Capture payment from customer ONLY if Muse is merchant of record
+      if (this.requiresMusePayment(session)) {
+        const paymentResult = await this.capturePayment(session);
 
-      if (!paymentResult.success) {
-        await this.updateSessionStatus(sessionId, 'failed');
-        throw new PaymentError(paymentResult.error || 'Payment failed');
+        if (!paymentResult.success) {
+          await this.updateSessionStatus(sessionId, 'failed');
+          throw new PaymentError(paymentResult.error || 'Payment failed');
+        }
       }
 
       // Step 2: Create order records for each store
@@ -175,21 +356,34 @@ class CheckoutService {
       // Step 3: Place orders with retailers (in parallel)
       const placementResults = await this.placeOrdersWithRetailers(orders, session);
 
-      // Step 4: Update checkout session with results
-      await this.updateSessionStatus(sessionId, 'completed');
+      const successfulOrders = placementResults.filter(o => o.status === 'placed').length;
+      const failedOrders = placementResults.filter(o => o.status === 'failed').length;
 
-      // Step 5: Clear user's cart
-      await CartService.clearCart(userId);
+      // Step 4: Update checkout session and cart state based on placement outcome
+      if (failedOrders === 0) {
+        await this.updateSessionStatus(sessionId, 'completed');
+        await CartService.clearCart(userId);
+      } else {
+        await this.clearSuccessfullyPlacedItemsFromCart(userId, orders, placementResults);
+        await this.updateSessionStatus(
+          sessionId,
+          'failed',
+          `${failedOrders} of ${orders.length} orders failed during placement`
+        );
+      }
 
-      logger.info(`Checkout completed for session ${sessionId}: ${orders.length} orders placed`);
+      logger.info(
+        `Checkout finalized for session ${sessionId}: ${successfulOrders} successful, ${failedOrders} failed`
+      );
 
       return {
         checkoutSessionId: sessionId,
         orders: placementResults,
         summary: {
           totalOrders: orders.length,
-          successfulOrders: placementResults.filter(o => o.status === 'placed').length,
-          failedOrders: placementResults.filter(o => o.status === 'failed').length,
+          successfulOrders,
+          failedOrders,
+          status: failedOrders === 0 ? 'completed' : 'partial_failure',
         },
       };
     } catch (error) {
@@ -207,88 +401,132 @@ class CheckoutService {
   static async createOrdersFromSession(session) {
     const orders = [];
     const cartSnapshot = session.cartSnapshot;
+    const storePlacementMethods = new Map(
+      (session.storesToProcess || []).map(store => [store.storeId, store.placementMethod])
+    );
 
-    for (const store of cartSnapshot.stores) {
-      // Generate Muse order number
-      const museOrderNumber = `MO-${nanoid(10).toUpperCase()}`;
+    const client = await pool.connect();
 
-      // Create order record
-      const orderResult = await pool.query(
-        `INSERT INTO orders (
-          user_id,
-          checkout_session_id,
-          store_id,
-          muse_order_number,
-          subtotal_cents,
-          shipping_cents,
-          tax_cents,
-          total_cents,
-          shipping_address,
-          status,
-          placement_method
-        )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-        RETURNING *`,
-        [
-          session.userId,
-          session.id,
-          store.storeId,
-          museOrderNumber,
-          store.subtotalCents,
-          0, // TODO: Calculate per-store shipping
-          0, // TODO: Calculate per-store tax
-          store.subtotalCents,
-          session.shippingAddress,
-          'pending',
-          this.determinePlacementMethod(store.storeId),
-        ]
-      );
+    try {
+      await client.query('BEGIN');
 
-      const order = orderResult.rows[0];
+      for (const store of cartSnapshot.stores) {
+        // Generate Muse order number
+        const museOrderNumber = `MO-${nanoid(10).toUpperCase()}`;
 
-      // Create order items
-      for (const item of store.items) {
-        await pool.query(
-          `INSERT INTO order_items (
-            order_id,
-            product_name,
-            product_sku,
-            product_url,
-            product_image_url,
-            product_description,
-            size,
-            color,
-            quantity,
-            unit_price_cents,
-            total_price_cents,
-            original_price_cents
+        // Calculate shipping for this store
+        const shippingResult = await ShippingCalculationService.calculateShipping({
+          subtotalCents: store.subtotalCents,
+          itemCount: store.itemCount,
+          shippingAddress: session.shippingAddress,
+          shippingMethod: session.checkoutMetadata?.shipping?.selections?.[store.storeId]?.optionId || 'standard',
+          storeId: store.storeId,
+        });
+
+        // Calculate tax for this store
+        const taxResult = await TaxCalculationService.calculateTax({
+          subtotalCents: store.subtotalCents,
+          shippingAddress: session.shippingAddress,
+          items: store.items,
+        });
+
+        const shippingCents = shippingResult.shippingCents || 0;
+        const taxCents = taxResult.taxCents || 0;
+        const totalCents = store.subtotalCents + shippingCents + taxCents;
+
+        // Create order record
+        const orderResult = await client.query(
+          `INSERT INTO orders (
+            user_id,
+            checkout_session_id,
+            store_id,
+            muse_order_number,
+            subtotal_cents,
+            shipping_cents,
+            tax_cents,
+            total_cents,
+            shipping_address,
+            status,
+            placement_method,
+            metadata
           )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+          RETURNING *`,
           [
-            order.id,
-            item.productName,
-            item.productSku,
-            item.productUrl,
-            item.productImageUrl,
-            item.productDescription,
-            item.size,
-            item.color,
-            item.quantity,
-            item.priceCents,
-            item.totalPriceCents,
-            item.originalPriceCents,
+            session.userId,
+            session.id,
+            store.storeId,
+            museOrderNumber,
+            store.subtotalCents,
+            shippingCents,
+            taxCents,
+            totalCents,
+            session.shippingAddress,
+            'pending',
+            storePlacementMethods.get(store.storeId) || 'manual',
+            JSON.stringify({
+              shippingMethod: shippingResult.method,
+              shippingCarrier: shippingResult.carrier,
+              estimatedDelivery: shippingResult.estimatedDelivery,
+              taxJurisdiction: taxResult.taxJurisdiction,
+              taxRate: taxResult.taxRate,
+            }),
           ]
         );
+
+        const order = orderResult.rows[0];
+        order.items = [];
+
+        // Create order items
+        for (const item of store.items) {
+          const itemResult = await client.query(
+            `INSERT INTO order_items (
+              order_id,
+              product_name,
+              product_sku,
+              product_url,
+              product_image_url,
+              product_description,
+              size,
+              color,
+              quantity,
+              unit_price_cents,
+              total_price_cents,
+              original_price_cents
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+            RETURNING *`,
+            [
+              order.id,
+              item.productName,
+              item.productSku,
+              item.productUrl,
+              item.productImageUrl,
+              item.productDescription,
+              item.size,
+              item.color,
+              item.quantity,
+              item.priceCents,
+              item.totalPriceCents,
+              item.originalPriceCents,
+            ]
+          );
+
+          order.items.push(itemResult.rows[0]);
+        }
+
+        orders.push(order);
       }
 
-      // Fetch complete order with items
-      const completeOrder = await this.getOrderById(order.id);
-      orders.push(completeOrder);
+      await client.query('COMMIT');
+      logger.info(`Created ${orders.length} order records for session ${session.sessionId}`);
+      return orders;
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
     }
-
-    logger.info(`Created ${orders.length} order records for session ${session.sessionId}`);
-
-    return orders;
   }
 
   /**
@@ -415,12 +653,12 @@ class CheckoutService {
       );
 
       // Get payment method from session
-      const paymentMethodId = session.paymentMethods?.[order.store_id];
+      const paymentMethodId = session.paymentMethods?.[String(order.store_id)];
 
       // Place order with retailer
       // Payment is processed by RETAILER using user's saved card
       // NOT processed by Muse
-      const orderResult = await apiClient.createOrder({
+      const orderPayload = {
         items: itemsResult.rows.map(item => ({
           sku: item.product_sku,
           quantity: item.quantity,
@@ -428,8 +666,13 @@ class CheckoutService {
           color: item.color,
         })),
         shippingAddress: session.shippingAddress,
-        paymentMethodId, // User's saved card at retailer
-      });
+      };
+
+      if (paymentMethodId) {
+        orderPayload.paymentMethodId = paymentMethodId; // User's saved card at retailer
+      }
+
+      const orderResult = await apiClient.createOrder(orderPayload);
 
       logger.info(`Order placed successfully with retailer: ${orderResult.orderNumber}`);
 
@@ -644,6 +887,62 @@ class CheckoutService {
   }
 
   /**
+   * Remove cart items that were successfully placed
+   * @param {number} userId
+   * @param {Array} orders
+   * @param {Array} placementResults
+   */
+  static async clearSuccessfullyPlacedItemsFromCart(userId, orders, placementResults) {
+    const placedOrderIds = new Set(
+      placementResults
+        .filter(result => result.status === 'placed')
+        .map(result => result.orderId)
+    );
+
+    if (placedOrderIds.size === 0) {
+      return;
+    }
+
+    const client = await pool.connect();
+
+    try {
+      await client.query('BEGIN');
+
+      for (const order of orders) {
+        if (!placedOrderIds.has(order.id)) {
+          continue;
+        }
+
+        for (const item of order.items || []) {
+          await client.query(
+            `DELETE FROM cart_items
+             WHERE user_id = $1
+               AND store_id = $2
+               AND product_sku IS NOT DISTINCT FROM $3
+               AND COALESCE(size, '') = COALESCE($4, '')
+               AND COALESCE(color, '') = COALESCE($5, '')`,
+            [
+              userId,
+              order.store_id,
+              item.product_sku,
+              item.size,
+              item.color,
+            ]
+          );
+        }
+      }
+
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      logger.error('Failed to clear successfully placed cart items:', error);
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
    * Get checkout session
    * @param {string} sessionId - Session ID
    * @param {number} userId - User ID
@@ -702,6 +1001,10 @@ class CheckoutService {
       `UPDATE checkout_sessions
        SET status = $1,
            error_message = $2,
+           completed_at = CASE
+             WHEN $1 IN ('completed', 'failed', 'cancelled') THEN CURRENT_TIMESTAMP
+             ELSE completed_at
+           END,
            updated_at = CURRENT_TIMESTAMP
        WHERE session_id = $3`,
       [status, errorMessage, sessionId]
@@ -717,7 +1020,7 @@ class CheckoutService {
       throw new ValidationError('Shipping address is required');
     }
 
-    if (!session.paymentMethodId) {
+    if (this.requiresMusePayment(session) && !session.paymentMethodId) {
       throw new ValidationError('Payment method is required');
     }
 
@@ -729,6 +1032,169 @@ class CheckoutService {
     if (new Date(session.expiresAt) < new Date()) {
       throw new ValidationError('Checkout session has expired');
     }
+
+    RequirementAdapterService.enforceCheckoutCart(session.cartSnapshot);
+  }
+
+  /**
+   * Ensure all stores can be checked out in-app and required retailer payment methods exist
+   * @param {Object} session - Checkout session
+   */
+  static validateStoresForInAppCheckout(session) {
+    const stores = session.storesToProcess || [];
+    const inAppStores = stores.filter(store =>
+      ['api', 'headless'].includes((store.placementMethod || '').toLowerCase())
+    );
+
+    const invalidStores = stores.filter(store =>
+      !['api', 'headless'].includes((store.placementMethod || '').toLowerCase())
+    );
+
+    if (invalidStores.length > 0) {
+      const names = invalidStores.map(s => s.storeName || s.storeSlug || s.storeId).join(', ');
+      throw new ValidationError(
+        `These stores are not configured for in-app checkout: ${names}`
+      );
+    }
+
+    const unsupportedHeadless = inAppStores.filter(store =>
+      (store.placementMethod || '').toLowerCase() === 'headless' &&
+      !HeadlessAutomationService.isSupported(store.storeId)
+    );
+
+    if (unsupportedHeadless.length > 0) {
+      const names = unsupportedHeadless.map(s => s.storeName || s.storeSlug || s.storeId).join(', ');
+      throw new ValidationError(
+        `Headless checkout not yet supported for: ${names}`
+      );
+    }
+
+    const paymentMethods = session.paymentMethods || {};
+    const missingPayments = inAppStores.filter(store => !paymentMethods[String(store.storeId)]);
+
+    if (missingPayments.length > 0) {
+      const names = missingPayments.map(s => s.storeName || s.storeSlug || s.storeId).join(', ');
+      throw new ValidationError(
+        `Missing retailer payment method for: ${names}`
+      );
+    }
+  }
+
+  /**
+   * Compute checkout readiness for current cart
+   * @param {number} userId
+   * @returns {Promise<Object>}
+   */
+  static async getCheckoutReadiness(userId) {
+    const cart = await CartService.getCart(userId);
+
+    if (!cart.stores || cart.stores.length === 0) {
+      return {
+        ready: false,
+        reason: 'empty_cart',
+        stores: [],
+      };
+    }
+
+    const storeConfigs = await this.getStoreConfigs(cart.stores.map(s => s.storeId));
+    const paymentMethods = await StoreAccountService.getPaymentMethodsForStores(
+      userId,
+      cart.stores.map(s => s.storeId)
+    );
+
+    const accounts = await StoreAccountService.getUserStoreAccounts(userId);
+    const accountByStoreId = new Map(accounts.map(a => [a.store_id, a]));
+    const stores = cart.stores.map(store => {
+      const config = storeConfigs.get(store.storeId) || {};
+      const placementMethod = this.determinePlacementMethod(config);
+      const issues = [];
+      const account = accountByStoreId.get(store.storeId) || null;
+
+      if (!['api', 'headless'].includes(placementMethod)) {
+        issues.push('not_in_app_enabled');
+      }
+
+      if (placementMethod === 'headless' && !HeadlessAutomationService.isSupported(store.storeId)) {
+        issues.push('headless_not_supported');
+      }
+
+      if (!paymentMethods[String(store.storeId)]) {
+        issues.push('missing_retailer_payment_method');
+      }
+
+      return {
+        storeId: store.storeId,
+        storeName: store.storeName,
+        storeSlug: store.storeSlug,
+        placementMethod,
+        supportsCheckout: !!config.supportsCheckout,
+        connection: {
+          isLinked: !!account?.is_linked,
+          connectAction: {
+            method: 'POST',
+            path: `/api/v1/store-accounts/${store.storeId}/link`,
+          },
+        },
+        shippingOptions: this.buildShippingOptionsForStore(store),
+        ready: issues.length === 0,
+        issues,
+      };
+    });
+
+    const requirementEvaluation = RequirementAdapterService.evaluateCheckoutCart(cart);
+
+    if (requirementEvaluation.blockers.includes('out_of_stock_items_present')) {
+      for (const store of stores) {
+        const cartStore = cart.stores.find(s => s.storeId === store.storeId);
+        if ((cartStore?.items || []).some(item => item.inStock === false)) {
+          store.ready = false;
+          if (!store.issues.includes('out_of_stock_items_present')) {
+            store.issues.push('out_of_stock_items_present');
+          }
+        }
+      }
+    }
+
+    for (const storeRule of requirementEvaluation.details.storeRules || []) {
+      const store = stores.find(s => s.storeId === storeRule.storeId);
+      if (store) {
+        store.ready = false;
+        if (!store.issues.includes(storeRule.code)) {
+          store.issues.push(storeRule.code);
+        }
+      }
+    }
+
+    for (const productRule of requirementEvaluation.details.productTypeRules || []) {
+      const store = stores.find(s => s.storeId === productRule.storeId);
+      if (store) {
+        store.ready = false;
+        if (!store.issues.includes(productRule.code)) {
+          store.issues.push(productRule.code);
+        }
+      }
+    }
+
+    const ready = stores.every(s => s.ready) && requirementEvaluation.passed;
+    return {
+      ready,
+      stores,
+      payment: {
+        supportsApplePay: !!process.env.STRIPE_SECRET_KEY,
+        museSavedPaymentMethods: [],
+        retailerSavedPaymentMethods: Object.keys(paymentMethods).map(storeId => ({
+          storeId: parseInt(storeId, 10),
+          token: paymentMethods[storeId],
+        })),
+      },
+      promo: {
+        eligibleStoreIds: cart.stores.map(store => store.storeId),
+      },
+      requirementIssues: requirementEvaluation.blockers,
+      requirementWarnings: requirementEvaluation.warnings,
+      requirementDetails: requirementEvaluation.details,
+      requirementPolicy: requirementEvaluation.policy,
+    };
   }
 
   /**
@@ -736,6 +1202,10 @@ class CheckoutService {
    * @param {Object} address - Address to validate
    */
   static validateAddress(address) {
+    if (!address || typeof address !== 'object') {
+      throw new ValidationError('Address is required');
+    }
+
     const required = ['name', 'address1', 'city', 'state', 'zip', 'country'];
 
     for (const field of required) {
@@ -752,13 +1222,68 @@ class CheckoutService {
 
   /**
    * Determine placement method for a store
-   * @param {number} storeId - Store ID
+   * @param {Object} config - Store config
    * @returns {string} Placement method
    */
-  static determinePlacementMethod(storeId) {
-    // TODO: Look up store configuration
-    // For now, default to manual for all stores
+  static determinePlacementMethod(config) {
+    const integrationType = (config.integrationType || '').toLowerCase();
+    const supportsCheckout = !!config.supportsCheckout;
+
+    if (!supportsCheckout) {
+      return 'manual';
+    }
+
+    if (integrationType === 'api' || integrationType === 'oauth') {
+      return 'api';
+    }
+
+    if (integrationType === 'headless') {
+      return 'headless';
+    }
+
+    if (integrationType === 'manual' || integrationType === 'redirect') {
+      return 'manual';
+    }
+
     return 'manual';
+  }
+
+  /**
+   * Fetch store configs for placement decisions
+   * @param {number[]} storeIds
+   * @returns {Promise<Map<number, Object>>}
+   */
+  static async getStoreConfigs(storeIds) {
+    if (!storeIds || storeIds.length === 0) {
+      return new Map();
+    }
+
+    const result = await pool.query(
+      `SELECT id, integration_type, supports_checkout
+       FROM stores
+       WHERE id = ANY($1::int[])`,
+      [storeIds]
+    );
+
+    const map = new Map();
+    for (const row of result.rows) {
+      map.set(row.id, {
+        integrationType: row.integration_type,
+        supportsCheckout: row.supports_checkout,
+      });
+    }
+
+    return map;
+  }
+
+  /**
+   * Determine if Muse should capture payment
+   * @param {Object} session
+   * @returns {boolean}
+   */
+  static requiresMusePayment(session) {
+    const stores = session.storesToProcess || [];
+    return stores.some(store => store.placementMethod === 'muse');
   }
 
   /**
@@ -767,6 +1292,7 @@ class CheckoutService {
    * @returns {Object} Formatted session
    */
   static formatCheckoutSession(session) {
+    const checkoutMetadata = session.checkout_metadata || {};
     return {
       id: session.id,
       sessionId: session.session_id,
@@ -775,6 +1301,7 @@ class CheckoutService {
       shippingAddress: session.shipping_address,
       billingAddress: session.billing_address,
       paymentMethodId: session.payment_method_id,
+      paymentMethods: session.retailer_payment_methods || {},
       subtotalCents: session.subtotal_cents,
       shippingCents: session.shipping_cents,
       taxCents: session.tax_cents,
@@ -782,11 +1309,168 @@ class CheckoutService {
       currency: session.currency,
       status: session.status,
       storesToProcess: session.stores_to_process,
+      checkoutMetadata,
+      recipient: checkoutMetadata.recipient || null,
+      billingPreferences: checkoutMetadata.billing || { sameAsShipping: true },
+      promo: checkoutMetadata.promo || null,
+      shippingPreferences: checkoutMetadata.shipping || { selections: {} },
+      paymentPreferences: checkoutMetadata.payment || {
+        supportsApplePay: !!process.env.STRIPE_SECRET_KEY,
+      },
       errorMessage: session.error_message,
       startedAt: session.started_at,
       completedAt: session.completed_at,
       expiresAt: session.expires_at,
       createdAt: session.created_at,
+    };
+  }
+
+  /**
+   * Build default checkout metadata scaffold for frontend
+   * @param {number} userId
+   * @param {Object} cart
+   * @param {Array} storesToProcess
+   * @param {Object} retailerPaymentMethods
+   * @returns {Promise<Object>}
+   */
+  static async buildCheckoutScaffoldMetadata(userId, cart, storesToProcess, retailerPaymentMethods) {
+    const accounts = await StoreAccountService.getUserStoreAccounts(userId);
+    const accountByStoreId = new Map(accounts.map(a => [a.store_id, a]));
+
+    const shippingDefaults = {};
+    const storeConnect = {};
+    for (const store of cart.stores || []) {
+      const options = this.buildShippingOptionsForStore(store);
+      shippingDefaults[String(store.storeId)] = {
+        optionId: options[0]?.id || 'standard',
+      };
+      const account = accountByStoreId.get(store.storeId) || null;
+      storeConnect[String(store.storeId)] = {
+        isLinked: !!account?.is_linked,
+        connectAction: {
+          method: 'POST',
+          path: `/api/v1/store-accounts/${store.storeId}/link`,
+        },
+      };
+    }
+
+    return {
+      recipient: null,
+      billing: { sameAsShipping: true },
+      promo: {
+        code: null,
+        eligibleStoreIds: (cart.stores || []).map(store => store.storeId),
+      },
+      shipping: {
+        selections: shippingDefaults,
+      },
+      payment: {
+        supportsApplePay: !!process.env.STRIPE_SECRET_KEY,
+        retailerPaymentMethods: retailerPaymentMethods || {},
+      },
+      storeConnect,
+      stores: (storesToProcess || []).map(store => ({
+        storeId: store.storeId,
+        shippingOptions: this.buildShippingOptionsForStore(
+          (cart.stores || []).find(s => s.storeId === store.storeId) || { storeId: store.storeId, items: [] }
+        ),
+      })),
+    };
+  }
+
+  /**
+   * Merge and persist checkout metadata
+   * @param {string} sessionId
+   * @param {number} userId
+   * @param {Object} patch
+   * @returns {Promise<Object>}
+   */
+  static async patchCheckoutMetadata(sessionId, userId, patch) {
+    const existing = await pool.query(
+      `SELECT checkout_metadata
+       FROM checkout_sessions
+       WHERE session_id = $1 AND user_id = $2`,
+      [sessionId, userId]
+    );
+
+    if (existing.rows.length === 0) {
+      throw new NotFoundError('Checkout session not found');
+    }
+
+    const current = existing.rows[0].checkout_metadata || {};
+    const merged = { ...current, ...(patch || {}) };
+
+    const updated = await pool.query(
+      `UPDATE checkout_sessions
+       SET checkout_metadata = $1,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE session_id = $2 AND user_id = $3
+       RETURNING *`,
+      [JSON.stringify(merged), sessionId, userId]
+    );
+
+    return this.formatCheckoutSession(updated.rows[0]);
+  }
+
+  /**
+   * Build shipping options with SLA hints per store
+   * @param {Object} store
+   * @returns {Array}
+   */
+  static buildShippingOptionsForStore(store) {
+    const sla = this.deriveStoreSlaDays(store);
+    return [
+      {
+        id: 'standard',
+        label: 'Standard',
+        sla: `${sla.min}-${sla.max} business days`,
+        estimatedDeliveryWindowDays: { min: sla.min, max: sla.max },
+      },
+      {
+        id: 'express',
+        label: 'Express',
+        sla: `${Math.max(1, sla.min - 2)}-${Math.max(2, sla.max - 2)} business days`,
+        estimatedDeliveryWindowDays: {
+          min: Math.max(1, sla.min - 2),
+          max: Math.max(2, sla.max - 2),
+        },
+      },
+    ];
+  }
+
+  /**
+   * Derive best-effort SLA from cart item metadata
+   * @param {Object} store
+   * @returns {{min:number,max:number}}
+   */
+  static deriveStoreSlaDays(store) {
+    const days = [];
+    for (const item of store.items || []) {
+      const metadata = item.metadata || {};
+      const min = parseInt(metadata.shippingSlaMinDays || metadata.shipping_sla_min_days, 10);
+      const max = parseInt(metadata.shippingSlaMaxDays || metadata.shipping_sla_max_days, 10);
+      if (Number.isInteger(min)) days.push(min);
+      if (Number.isInteger(max)) days.push(max);
+    }
+    if (days.length === 0) {
+      return { min: 5, max: 8 };
+    }
+    return {
+      min: Math.max(1, Math.min(...days)),
+      max: Math.max(2, Math.max(...days)),
+    };
+  }
+
+  /**
+   * Normalize recipient payload
+   * @param {Object} recipient
+   * @returns {Object}
+   */
+  static normalizeRecipientInfo(recipient = {}) {
+    return {
+      name: recipient.name ? String(recipient.name).trim() : null,
+      email: recipient.email ? String(recipient.email).trim().toLowerCase() : null,
+      phone: recipient.phone ? String(recipient.phone).trim() : null,
     };
   }
 }

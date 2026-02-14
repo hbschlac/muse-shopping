@@ -1,0 +1,20 @@
+[
+  {
+    "name": "ELLE Fashion",
+    "region": "Global",
+    "country": "US",
+    "language": "en",
+    "category": "fashion",
+    "rss_url": "https://www.elle.com/rss/fashion.xml",
+    "site_url": "https://www.elle.com/fashion/"
+  },
+  {
+    "name": "Harper's Bazaar Fashion",
+    "region": "Global",
+    "country": "US",
+    "language": "en",
+    "category": "fashion",
+    "rss_url": "https://www.harpersbazaar.com/fashion/fashion-rss/",
+    "site_url": "https://www.harpersbazaar.com/fashion/"
+  }
+]

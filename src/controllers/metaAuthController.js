@@ -209,11 +209,9 @@ class MetaAuthController {
 
       const { connection, accountInfo } = result;
 
-      // Return success page with auto-redirect
+      // Return success page with auto-redirect to frontend callback handler
+      const FRONTEND_URL = process.env.CORS_ORIGIN || 'http://localhost:3001';
       const providerName = provider === 'instagram' ? 'Instagram' : 'Facebook';
-      const providerColor = provider === 'instagram'
-        ? 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)'
-        : '#1877f2';
 
       res.status(200).send(`
         <!DOCTYPE html>
@@ -225,98 +223,30 @@ class MetaAuthController {
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
                 padding: 40px;
                 text-align: center;
-                background: ${providerColor};
-                color: white;
                 min-height: 100vh;
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
                 align-items: center;
+                background: #FAFAF8;
               }
-              .card {
-                background: white;
-                color: #333;
-                padding: 40px;
-                border-radius: 16px;
-                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-                max-width: 450px;
-              }
-              .success-icon { font-size: 72px; margin: 20px 0; }
-              .profile-pic {
-                width: 100px;
-                height: 100px;
-                border-radius: 50%;
-                margin: 20px auto;
-                border: 4px solid ${provider === 'instagram' ? '#e1306c' : '#1877f2'};
-              }
-              .username {
-                font-size: 24px;
-                font-weight: bold;
-                margin: 10px 0;
-                color: #333;
-              }
-              .display-name {
-                font-size: 16px;
-                color: #666;
-                margin: 5px 0;
-              }
+              .success-icon { font-size: 72px; margin: 20px 0; color: #10b981; }
               .message {
-                color: #666;
-                margin: 20px 0;
-                line-height: 1.6;
-              }
-              .stats {
-                display: flex;
-                justify-content: space-around;
-                margin: 20px 0;
-                padding: 20px;
-                background: #f5f5f5;
-                border-radius: 8px;
-              }
-              .stat {
-                text-align: center;
-              }
-              .stat-value {
                 font-size: 24px;
-                font-weight: bold;
-                color: ${provider === 'instagram' ? '#e1306c' : '#1877f2'};
-              }
-              .stat-label {
-                font-size: 12px;
-                color: #999;
-                text-transform: uppercase;
+                font-weight: 600;
+                color: #333;
+                margin: 20px 0;
               }
             </style>
             <script>
-              // Redirect to settings page
-              setTimeout(() => {
-                window.location.href = '${process.env.CORS_ORIGIN || 'http://localhost:3001'}/settings/connections';
-              }, 3000);
+              // Redirect to frontend OAuth callback handler
+              window.location.href = '${FRONTEND_URL}/oauth/callback';
             </script>
           </head>
           <body>
-            <div class="card">
-              <div class="success-icon">✓</div>
-              <div class="username">@${accountInfo.username || accountInfo.displayName}</div>
-              ${accountInfo.displayName && accountInfo.username ? `<div class="display-name">${accountInfo.displayName}</div>` : ''}
-              ${accountInfo.profilePictureUrl ? `<img src="${accountInfo.profilePictureUrl}" class="profile-pic" alt="Profile" />` : ''}
-              <p class="message">
-                Your ${providerName} account has been successfully connected to Muse!
-              </p>
-              ${provider === 'instagram' && accountInfo.followersCount ? `
-                <div class="stats">
-                  <div class="stat">
-                    <div class="stat-value">${accountInfo.followersCount.toLocaleString()}</div>
-                    <div class="stat-label">Followers</div>
-                  </div>
-                  <div class="stat">
-                    <div class="stat-value">${accountInfo.mediaCount || 0}</div>
-                    <div class="stat-label">Posts</div>
-                  </div>
-                </div>
-              ` : ''}
-              <p style="color: #999; font-size: 14px; margin-top: 30px;">Redirecting to settings...</p>
-            </div>
+            <div class="success-icon">✓</div>
+            <p class="message">${providerName} Connected!</p>
+            <p style="color: #666;">Redirecting...</p>
           </body>
         </html>
       `);

@@ -97,22 +97,26 @@ class ProductRealtimeService {
 
   /**
    * Batch fetch real-time data for multiple products (e.g., cart page)
+   * Optimized to process all products in parallel instead of sequentially
    * @param {Array<number>} productIds - Array of product IDs
    * @param {number} userId - User ID
    * @returns {Promise<Array>} Real-time data for all products
    */
   async batchGetRealtimeData(productIds, userId) {
-    const results = [];
+    console.log(`[REALTIME] Batch fetching ${productIds.length} products in parallel`);
 
-    for (const productId of productIds) {
-      try {
-        const data = await this.getRealtimeProductData(productId, userId);
-        results.push({ productId, data, success: true });
-      } catch (error) {
-        console.error(`[REALTIME] Failed to fetch product ${productId}:`, error.message);
-        results.push({ productId, error: error.message, success: false });
-      }
-    }
+    // Process all products in parallel for better performance
+    const results = await Promise.all(
+      productIds.map(async (productId) => {
+        try {
+          const data = await this.getRealtimeProductData(productId, userId);
+          return { productId, data, success: true };
+        } catch (error) {
+          console.error(`[REALTIME] Failed to fetch product ${productId}:`, error.message);
+          return { productId, error: error.message, success: false };
+        }
+      })
+    );
 
     return results;
   }
@@ -171,7 +175,12 @@ class ProductRealtimeService {
     `;
 
     const result = await pool.query(query);
-    return result.rows[0] || { cache_hits: 0, cache_misses: 0, cache_hit_rate_percent: 0 };
+    const row = result.rows[0] || { cache_hits: 0, cache_misses: 0, cache_hit_rate_percent: 0 };
+    return {
+      cache_hits: Number(row.cache_hits || 0),
+      cache_misses: Number(row.cache_misses || 0),
+      cache_hit_rate_percent: Number(row.cache_hit_rate_percent || 0),
+    };
   }
 
   // ==========================================

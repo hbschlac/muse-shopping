@@ -5,9 +5,10 @@ const User = require('../models/User');
 const pool = require('../db/pool');
 const { sendPasswordResetEmail } = require('./emailService');
 const { ValidationError, AuthenticationError, ConflictError, NotFoundError } = require('../utils/errors');
+const WaitlistService = require('./waitlistService');
 
 class AuthService {
-  static async registerUser({ email, password, full_name, username = null, age, location_city, location_state, location_country }) {
+  static async registerUser({ email, password, full_name, firstName, lastName, username = null, age, location_city, location_state, location_country, email_consent = false }) {
     // Check if user already exists
     const existingUser = await User.findByEmail(email);
     if (existingUser) {
@@ -21,16 +22,30 @@ class AuthService {
       }
     }
 
+    // Full name is optional during registration; can be set later during onboarding
+    const resolvedFullName = full_name || [firstName, lastName].filter(Boolean).join(' ').trim() || null;
+
     // Hash password
     const bcryptRounds = parseInt(process.env.BCRYPT_ROUNDS) || 12;
     const password_hash = await bcrypt.hash(password, bcryptRounds);
+
+    // Prepare privacy consent with email marketing consent
+    const privacyConsent = {
+      email_marketing: email_consent,
+      email_marketing_consent_date: email_consent ? new Date().toISOString() : null,
+      terms_accepted: true,
+      terms_accepted_date: new Date().toISOString(),
+      privacy_policy_accepted: true,
+      privacy_policy_accepted_date: new Date().toISOString(),
+    };
 
     // Create user
     const user = await User.create({
       email,
       password_hash,
       username,
-      full_name,
+      full_name: resolvedFullName,
+      privacy_consent: privacyConsent,
     });
 
     // Create user profile with optional onboarding fields
@@ -66,6 +81,23 @@ class AuthService {
     } catch (error) {
       // Log but don't fail registration if default follows fail
       console.error('Failed to auto-follow default brands:', error);
+    }
+
+    // Check if user was on waitlist and seed personalization with their preferences
+    try {
+      const waitlistSignup = await WaitlistService.findByEmail(email);
+      if (waitlistSignup) {
+        // Mark as converted
+        await WaitlistService.markAsConverted(email, user.id);
+
+        // Seed personalization if they provided preferences
+        if (waitlistSignup.interest_categories || waitlistSignup.favorite_brands) {
+          await WaitlistService.seedUserPersonalization(user.id, waitlistSignup);
+        }
+      }
+    } catch (error) {
+      // Log but don't fail registration if waitlist integration fails
+      console.error('Failed to process waitlist data:', error);
     }
 
     // Generate tokens

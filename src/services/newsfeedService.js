@@ -111,7 +111,70 @@ class NewsfeedService {
 
     // Boost modules by 100D profile match
     const boostedModules = await StyleProfileService.boostModulesForUser(userId, result.rows);
+
+    // Add Nordstrom products module if user follows brands available on Nordstrom
+    const nordstromModule = await this.getNordstromModuleForUser(userId);
+    if (nordstromModule && boostedModules.length > 0) {
+      // Insert Nordstrom module after first 2 modules
+      boostedModules.splice(2, 0, nordstromModule);
+    }
+
     return boostedModules;
+  }
+
+  /**
+   * Get Nordstrom products module for user's followed brands
+   */
+  static async getNordstromModuleForUser(userId) {
+    const query = `
+      SELECT
+        i.id,
+        i.name,
+        i.image_url,
+        i.price_cents,
+        i.original_price_cents,
+        i.product_url,
+        b.name as brand_name,
+        b.logo_url as brand_logo
+      FROM items i
+      JOIN brands b ON i.brand_id = b.id
+      JOIN user_brand_affinities uba ON uba.brand_id = b.id
+      WHERE uba.user_id = $1
+        AND i.store_id = 2
+        AND i.is_active = true
+        AND i.is_available = true
+      ORDER BY i.created_at DESC
+      LIMIT 12
+    `;
+
+    const result = await pool.query(query, [userId]);
+
+    if (result.rows.length === 0) {
+      return null;
+    }
+
+    return {
+      module_id: 'nordstrom-latest',
+      title: 'Latest from Nordstrom',
+      subtitle: 'New arrivals from brands you follow',
+      module_type: 'product_grid',
+      layout_type: 'grid',
+      brand_name: 'Nordstrom',
+      brand_logo: 'https://www.nordstrom.com/logo.png',
+      items: result.rows.map(item => ({
+        id: item.id,
+        name: item.name,
+        image_url: item.image_url,
+        price: item.price_cents / 100,
+        original_price: item.original_price_cents / 100,
+        product_url: item.product_url,
+        brand_name: item.brand_name,
+        brand_logo: item.brand_logo,
+        discount_percentage: item.original_price_cents > item.price_cents
+          ? Math.round((1 - item.price_cents / item.original_price_cents) * 100)
+          : 0
+      }))
+    };
   }
 
   /**
@@ -163,6 +226,8 @@ class NewsfeedService {
 
     // Get items (personalized if userId provided)
     let items;
+    const minItemsPerCarousel = 20; // Minimum items per carousel
+
     if (userId) {
       items = await PersonalizedRecommendationService.getPersonalizedModuleItems(userId, moduleId);
 
@@ -172,6 +237,42 @@ class NewsfeedService {
       const itemsQuery = `SELECT * FROM get_module_items($1)`;
       const itemsResult = await pool.query(itemsQuery, [moduleId]);
       items = itemsResult.rows;
+    }
+
+    // If we don't have enough items, pad with brand's other products
+    if (items.length < minItemsPerCarousel && config.brand_id) {
+      const paddingQuery = `
+        SELECT DISTINCT
+          i.id as item_id,
+          i.canonical_name,
+          i.description,
+          i.category,
+          i.primary_image_url,
+          i.media_type,
+          i.video_url,
+          i.video_poster_url,
+          i.video_duration_seconds,
+          i.min_price,
+          i.sale_price,
+          false as is_featured,
+          0 as display_order
+        FROM items i
+        JOIN item_retailers ir ON i.id = ir.item_id
+        JOIN retailers r ON ir.retailer_id = r.id
+        WHERE r.brand_id = $1
+          AND i.is_active = true
+          AND ir.is_available = true
+          AND i.id NOT IN (SELECT unnest($2::int[]))
+        ORDER BY RANDOM()
+        LIMIT $3
+      `;
+      const existingIds = items.map(item => item.item_id);
+      const paddingResult = await pool.query(paddingQuery, [
+        config.brand_id,
+        existingIds,
+        minItemsPerCarousel - items.length
+      ]);
+      items = [...items, ...paddingResult.rows];
     }
 
     return {
@@ -427,6 +528,89 @@ class NewsfeedService {
         ? (result.rows[0].completed_views / result.rows[0].total_views * 100).toFixed(2)
         : 0
     };
+  }
+
+  /**
+   * Get public brand modules for non-authenticated users
+   * Returns diverse selection of brands with products, rotated randomly
+   */
+  static async getPublicBrandModules(limit = 20, offset = 0) {
+    try {
+      // Get brands with sufficient products (at least 10 items)
+      // Prioritize our featured retailers, then randomize the rest for variety
+      const brandsQuery = `
+        WITH brand_product_counts AS (
+          SELECT
+            b.id,
+            b.name,
+            b.slug,
+            b.logo_url,
+            COUNT(i.id) as product_count,
+            CASE
+              WHEN b.name IN ('The Commense', 'Sunfere', 'Shop Cider') THEN 1
+              WHEN b.name IN ('Nordstrom', 'Target', 'ZARA', 'H&M', 'Urban Outfitters', 'Free People') THEN 2
+              ELSE 3
+            END as priority
+          FROM brands b
+          INNER JOIN items i ON b.id = i.brand_id AND i.is_active = TRUE
+          WHERE b.is_active = TRUE
+          GROUP BY b.id, b.name, b.slug, b.logo_url
+          HAVING COUNT(i.id) >= 10
+        )
+        SELECT id, name, slug, logo_url, product_count
+        FROM brand_product_counts
+        ORDER BY priority ASC, RANDOM()
+        LIMIT $1 OFFSET $2
+      `;
+
+      const brandsResult = await pool.query(brandsQuery, [limit, offset]);
+      const brands = brandsResult.rows;
+
+      // For each brand, get recent products
+      const modules = await Promise.all(brands.map(async (brand) => {
+        const itemsQuery = `
+          SELECT
+            i.id,
+            i.canonical_name as name,
+            i.primary_image_url as image_url,
+            COALESCE(MIN(il.price), i.price_cents / 100.0) as price,
+            COALESCE(MIN(il.sale_price), i.original_price_cents / 100.0) as original_price
+          FROM items i
+          LEFT JOIN item_listings il ON i.id = il.item_id
+          WHERE i.brand_id = $1 AND i.is_active = TRUE
+          GROUP BY i.id
+          ORDER BY i.created_at DESC
+          LIMIT 24
+        `;
+
+        const itemsResult = await pool.query(itemsQuery, [brand.id]);
+
+        return {
+          id: `public-${brand.id}`,
+          brand: {
+            id: brand.id,
+            name: brand.name,
+            slug: brand.slug,
+            logo_url: brand.logo_url,
+            is_active: true
+          },
+          products: itemsResult.rows.map(item => ({
+            id: item.id,
+            name: item.name,
+            image_url: item.image_url,
+            price: parseFloat(item.price),
+            original_price: item.original_price ? parseFloat(item.original_price) : null,
+            brand_name: brand.name
+          })),
+          is_favorite: false
+        };
+      }));
+
+      return modules.filter(m => m.products.length > 0);
+    } catch (error) {
+      console.error('[NewsfeedService.getPublicBrandModules] Error:', error);
+      return [];
+    }
   }
 }
 
