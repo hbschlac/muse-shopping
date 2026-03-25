@@ -101,20 +101,21 @@ describe('Apple OAuth Authentication', () => {
         })
         .expect(200);
 
-      expect(response.body).toHaveProperty('token');
-      expect(response.body).toHaveProperty('refreshToken');
-      expect(response.body).toHaveProperty('user');
-      expect(response.body.user.email).toBe(email);
+      expect(response.body.data).toHaveProperty('tokens');
+      expect(response.body.data.tokens).toHaveProperty('access_token');
+      expect(response.body.data.tokens).toHaveProperty('refresh_token');
+      expect(response.body.data).toHaveProperty('user');
+      expect(response.body.data.user.email).toBe(email);
 
       // Store user ID for cleanup
-      testUserId = response.body.user.id;
+      testUserId = response.body.data.user.id;
 
       // Verify JWT token
       const decoded = jwt.verify(
-        response.body.token,
+        response.body.data.tokens.access_token,
         process.env.JWT_SECRET || 'your-secret-key'
       );
-      expect(decoded.email).toBe(email);
+      expect(decoded.userId).toBe(testUserId);
     });
 
     it('should link Apple account to existing user with same email', async () => {
@@ -152,8 +153,8 @@ describe('Apple OAuth Authentication', () => {
         })
         .expect(200);
 
-      expect(response.body.user.id).toBe(existingUserId);
-      expect(response.body.user.email).toBe(email);
+      expect(response.body.data.user.id).toBe(existingUserId);
+      expect(response.body.data.user.email).toBe(email);
 
       // Clean up
       await pool.query('DELETE FROM users WHERE id = $1', [existingUserId]);
@@ -183,7 +184,7 @@ describe('Apple OAuth Authentication', () => {
         })
         .expect(200);
 
-      const userId = response1.body.user.id;
+      const userId = response1.body.data.user.id;
 
       // Second sign-in with same Apple ID
       const initResponse2 = await request(app).get('/api/v1/auth/apple');
@@ -205,7 +206,7 @@ describe('Apple OAuth Authentication', () => {
         })
         .expect(200);
 
-      expect(response2.body.user.id).toBe(userId);
+      expect(response2.body.data.user.id).toBe(userId);
 
       // Clean up
       await pool.query('DELETE FROM users WHERE id = $1', [userId]);

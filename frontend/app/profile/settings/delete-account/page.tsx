@@ -20,7 +20,7 @@ export default function DeleteAccountPage() {
     setError('');
 
     try {
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
       const response = await fetch(`${API_BASE_URL}/users/delete-account`, {
         method: 'DELETE',
         credentials: 'include',

@@ -168,7 +168,9 @@ export default function CartPage() {
 
   if (error || cartStores.length === 0) {
     return (
-      <div className="min-h-screen bg-[var(--color-ecru)] pb-24 flex flex-col items-center justify-center px-4">
+      <div className="min-h-screen bg-[var(--color-ecru)] pb-24">
+        <PageHeader title="Cart" />
+        <div className="flex flex-col items-center justify-center px-4 pt-16">
         <div className="text-center">
           <div className="w-24 h-24 mx-auto mb-6 bg-white rounded-full flex items-center justify-center shadow-sm">
             <ShoppingBag className="w-12 h-12 text-gray-600" />
@@ -181,6 +183,7 @@ export default function CartPage() {
           >
             Discover Items
           </a>
+        </div>
         </div>
         <BottomNav />
       </div>

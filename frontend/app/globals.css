@@ -25,7 +25,7 @@
   --color-gray-900: #171717;
 
   /* Gradients (only on primary CTA buttons) */
-  --gradient-primary: linear-gradient(135deg, #F4A785 0%, #8EC5FF 100%);
+  --gradient-primary: linear-gradient(135deg, #C8E6FF 0%, #8EC5FF 100%);
 
   /* Muse fabric background color palette */
   --muse-0: #EBE0D5;

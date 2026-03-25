@@ -43,7 +43,7 @@ export default function EmailSignInPage() {
     setError('');
 
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
 
       // Create user account
       const response = await fetch(`${API_URL}/auth/register`, {

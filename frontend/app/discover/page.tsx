@@ -5,6 +5,7 @@ import { SlidersHorizontal, X } from 'lucide-react';
 import ProductTile from '@/components/ProductTile';
 import BottomNav from '@/components/BottomNav';
 import PageHeader from '@/components/PageHeader';
+import { api } from '@/lib/api/client';
 
 // Mock data
 const categories = [
@@ -79,24 +80,31 @@ export default function DiscoverPage() {
     async function fetchProducts() {
       setLoading(true);
       try {
-        // Build search query
-        let query = '';
+        let data: any;
+
         if (searchQuery) {
-          query = searchQuery;
-        } else if (selectedStores.length > 0) {
-          query = selectedStores.join(' ');
-        } else if (selectedCategory && selectedCategory !== 'New Arrivals') {
-          query = selectedCategory;
+          // Text search via search endpoint
+          data = await api.get<any>(`/items/search?q=${encodeURIComponent(searchQuery)}&limit=50`);
+        } else {
+          // Filter-based browse via items endpoint
+          const params = new URLSearchParams({ limit: '50' });
+
+          if (selectedCategory && selectedCategory !== 'New Arrivals') {
+            if (selectedCategory === 'Sale') {
+              params.set('on_sale', 'true');
+            } else {
+              params.set('categories', selectedCategory);
+            }
+          }
+
+          if (selectedStores.length > 0) {
+            params.set('brands', selectedStores.join(','));
+          }
+
+          data = await api.get<any>(`/items?${params.toString()}`);
         }
 
-        const url = query
-          ? `http://localhost:3000/api/v1/items/search?q=${encodeURIComponent(query)}&limit=50`
-          : `http://localhost:3000/api/v1/items?limit=50`;
-
-        const response = await fetch(url);
-        const data = await response.json();
-
-        if (data.success && data.data.items) {
+        if (data?.success && data.data?.items) {
           setProducts(data.data.items);
         }
       } catch (error) {

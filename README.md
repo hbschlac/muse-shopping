@@ -1,4 +1,26 @@
-# Muse Shopping Backend API
+# Muse
+
+**Personalized fashion shopping, rebuilt from scratch.**
+
+Muse is a full-stack AI-powered shopping platform that aggregates products across 10+ retailers and serves a personalized feed based on each user's style profile, brand follows, and purchase signals — built solo by a non-engineer using Claude Code and deployed on Vercel.
+
+## What's Live
+
+- **200+ brands** seeded and discoverable; 10 retailers fully integrated (Nordstrom, H&M, Abercrombie, Urban Outfitters, Everlane, Aritzia, and more)
+- **Instagram-style stories feed** — brand stories with auto-advancing frames, progress bars, and CTA tracking
+- **Personalized product carousels** — curated modules (New Arrivals, Sales, Seasonal Edits) ranked by style profile
+- **Recommendation engine** — content-based filtering using style preferences, followed brands, price tier, and occasion tags
+- **Gmail API integration** — parses email receipts to extract post-purchase signals and refine recommendations
+- **Stripe-powered checkout** — unified checkout layer that routes to individual retailer flows
+- **A/B experimentation system** — tests feed module order, personalization logic, and UI variants
+- **Admin dashboard** — curated campaign management, brand analytics, and user feedback tools
+- **Full authentication** — JWT access + refresh tokens, Google OAuth, Meta/Instagram OAuth
+
+**Live deployment:** [Vercel](https://vercel.com) | Built with Node.js · Express · PostgreSQL · Vercel
+
+---
+
+## Backend API Documentation
 
 Personalized fashion shopping aggregator backend built with Node.js, Express, and PostgreSQL.
 

@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "test": "jest --testEnvironment=node --passWithNoTests",
+    "test": "jest --testEnvironment=node --passWithNoTests --runInBand --forceExit",
     "test:watch": "jest --watch",
     "test:auto": "node scripts/test-watcher.js",
     "test:coverage": "jest --coverage --passWithNoTests",

@@ -35,8 +35,8 @@
      GRADIENTS
      ======================================== */
 
-  /* Primary CTA Gradient (Peach → Coral) */
-  --gradient-primary: linear-gradient(135deg, #F4A785 0%, #F1785A 100%);
+  /* Primary CTA Gradient (Light Blue → Sky Blue) */
+  --gradient-primary: linear-gradient(135deg, #C8E6FF 0%, #8EC5FF 100%);
 
   /* Playful Gradient (Stories, special moments) */
   --gradient-playful: linear-gradient(135deg, #F4A785 0%, #C8B6FF 50%, #8EC5FF 100%);

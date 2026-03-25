@@ -12,6 +12,7 @@ export default function BottomNav() {
     { href: '/discover', icon: Compass, label: 'Discover' },
     { href: '/chat', icon: MessageCircle, label: 'Muse' },
     { href: '/inspire', icon: Sparkles, label: 'Inspire' },
+    { href: '/cart', icon: ShoppingCart, label: 'Cart' },
   ];
 
   return (

@@ -26,7 +26,7 @@ export default function NordstromPage() {
     async function fetchNordstromProducts() {
       try {
         // Fetch directly from items API with storeId=2 (Nordstrom)
-        const response = await fetch('http://localhost:3000/api/v1/items?storeId=2&limit=100');
+        const response = await fetch('/api/v1/items?storeId=2&limit=100');
         const data = await response.json();
 
         if (data.success && data.data.items) {

@@ -37,7 +37,7 @@ export default function OAuthCallbackPage() {
           });
         }, 150);
 
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
         const token = localStorage.getItem('authToken');
 
         if (!token) {

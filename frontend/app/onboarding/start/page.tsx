@@ -98,7 +98,7 @@ function OnboardingStartContent() {
 
     setIsSearching(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1'}/brands?search=${encodeURIComponent(query)}&limit=5`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || '/api/v1'}/brands?search=${encodeURIComponent(query)}&limit=5`);
       const data = await response.json();
 
       // Convert API response to match popularBrands format

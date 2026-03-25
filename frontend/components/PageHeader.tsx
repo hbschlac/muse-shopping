@@ -108,6 +108,13 @@ export default function PageHeader({
                     >
                       Feedback
                     </Link>
+                    <Link
+                      href="/settings"
+                      className="block px-4 py-2 text-gray-900 hover:bg-white/50 transition-colors"
+                      onClick={() => setShowMenu(false)}
+                    >
+                      Settings
+                    </Link>
                   </div>
                 )}
               </div>

@@ -26,7 +26,7 @@ export default function ScoopsPage() {
     async function fetchScoopsProducts() {
       try {
         // Fetch directly from items API with storeId=127 (Scoops)
-        const response = await fetch('http://localhost:3000/api/v1/items?storeId=127&limit=100');
+        const response = await fetch('/api/v1/items?storeId=127&limit=100');
         const data = await response.json();
 
         if (data.success && data.data.items) {

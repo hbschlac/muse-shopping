@@ -51,9 +51,9 @@ try {
   });
 }
 
-// Serve the demo frontend at the root path
+// Serve the branded landing page at the root path
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../demo.html'));
+  res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
 // 404 handler for other routes

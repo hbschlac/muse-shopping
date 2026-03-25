@@ -8,7 +8,7 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Dancing+Script:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
         * {
@@ -38,12 +38,14 @@
         }
 
         .logo {
-            font-family: 'Dancing Script', cursive;
-            font-size: 56px;
-            font-weight: 600;
-            color: #F1785A;
-            text-align: center;
+            display: flex;
+            justify-content: center;
             margin-bottom: 16px;
+        }
+
+        .logo img {
+            height: 40px;
+            width: auto;
         }
 
         .tagline {
@@ -86,8 +88,8 @@
         }
 
         .social-btn:hover {
-            border-color: #F1785A;
-            background: #FFF9F7;
+            border-color: #8EC5FF;
+            background: #F5FAFF;
         }
 
         .divider {
@@ -109,9 +111,9 @@
         }
 
         .email-btn {
-            background: transparent;
-            color: #1F1F1F;
-            border: 2px solid #1F1F1F;
+            background: linear-gradient(135deg, #C8E6FF 0%, #8EC5FF 100%);
+            color: white;
+            border: none;
             padding: 16px;
             border-radius: 50px;
             font-size: 16px;
@@ -122,8 +124,8 @@
         }
 
         .email-btn:hover {
-            background: #1F1F1F;
-            color: white;
+            opacity: 0.9;
+            transform: translateY(-1px);
         }
 
         .back-link {
@@ -138,17 +140,13 @@
         }
 
         .back-link a:hover {
-            color: #F1785A;
+            color: #1F1F1F;
         }
 
         /* Responsive */
         @media (max-width: 768px) {
             .auth-container {
                 padding: 40px 30px;
-            }
-
-            .logo {
-                font-size: 48px;
             }
 
             .welcome-text {
@@ -159,13 +157,13 @@
 </head>
 <body>
     <div class="auth-container">
-        <div class="logo">Muse</div>
+        <div class="logo"><img src="/muse-wordmark.svg" alt="Muse" /></div>
         <p class="tagline">All your favorite stores. One place. Personalized. Fast.</p>
 
         <h2 class="welcome-text">Welcome</h2>
 
         <div class="social-buttons">
-            <button class="social-btn" onclick="handleGoogleAuth()">
+            <button class="social-btn" onclick="window.location.href='/welcome'">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                     <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -175,7 +173,7 @@
                 Continue with Google
             </button>
 
-            <button class="social-btn" onclick="handleInstagramAuth()">
+            <button class="social-btn" onclick="window.location.href='/welcome'">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <defs>
                         <radialGradient id="ig-gradient" cx="50%" cy="100%" r="100%">
@@ -198,40 +196,11 @@
             <div class="divider-line"></div>
         </div>
 
-        <button class="email-btn" onclick="handleEmailAuth()">Continue with Email</button>
+        <button class="email-btn" onclick="window.location.href='/welcome/email'">Continue with Email</button>
 
         <div class="back-link">
-            <a href="landing.html">← Back to home</a>
+            <a href="/">← Back to home</a>
         </div>
     </div>
-
-    <script>
-        function handleGoogleAuth() {
-            // TODO: Implement Google OAuth
-            alert('Google authentication coming soon!');
-            // For demo purposes, redirect to newsfeed
-            setTimeout(() => {
-                window.location.href = 'newsfeed.html';
-            }, 500);
-        }
-
-        function handleInstagramAuth() {
-            // TODO: Implement Instagram/Meta OAuth
-            alert('Instagram authentication coming soon!');
-            // For demo purposes, redirect to newsfeed
-            setTimeout(() => {
-                window.location.href = 'newsfeed.html';
-            }, 500);
-        }
-
-        function handleEmailAuth() {
-            // TODO: Show email/password form
-            alert('Email authentication coming soon!');
-            // For demo purposes, redirect to newsfeed
-            setTimeout(() => {
-                window.location.href = 'newsfeed.html';
-            }, 500);
-        }
-    </script>
 </body>
 </html>
