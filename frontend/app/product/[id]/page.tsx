@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { ChevronLeft, Heart, Share2, ShoppingCart, X, Sparkles } from 'lucide-react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
-import Head from 'next/head';
 import PageHeader from '@/components/PageHeader';
 import ProductReviews from '@/components/ProductReviews';
 import BrandLogo from '@/components/BrandLogo';
@@ -407,6 +406,32 @@ export default function ProductPage() {
     }
   };
 
+  // Extract all available sizes and colors from listings (must be before early returns — Rules of Hooks)
+  const availableSizes = product
+    ? Array.from(
+        new Set(
+          product.listings.flatMap((l) => l.sizes_available || []).filter(Boolean)
+        )
+      )
+    : [];
+  const availableColors = product
+    ? Array.from(
+        new Set(
+          product.listings.flatMap((l) => l.colors_available || []).filter(Boolean)
+        )
+      )
+    : [];
+
+  // Auto-select first variant if only one option (must be before early returns — Rules of Hooks)
+  useEffect(() => {
+    if (availableSizes.length === 1 && !selectedSize) {
+      setSelectedSize(availableSizes[0]);
+    }
+    if (availableColors.length === 1 && !selectedColor) {
+      setSelectedColor(availableColors[0]);
+    }
+  }, [availableSizes.join(','), availableColors.join(','), selectedSize, selectedColor]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-white">
@@ -454,28 +479,6 @@ export default function ProductPage() {
     product.primary_image_url,
     ...(product.additional_images || []),
   ].filter(Boolean);
-
-  // Extract all available sizes and colors from listings
-  const availableSizes = Array.from(
-    new Set(
-      product.listings.flatMap((l) => l.sizes_available || []).filter(Boolean)
-    )
-  );
-  const availableColors = Array.from(
-    new Set(
-      product.listings.flatMap((l) => l.colors_available || []).filter(Boolean)
-    )
-  );
-
-  // Auto-select first variant if only one option
-  useEffect(() => {
-    if (availableSizes.length === 1 && !selectedSize) {
-      setSelectedSize(availableSizes[0]);
-    }
-    if (availableColors.length === 1 && !selectedColor) {
-      setSelectedColor(availableColors[0]);
-    }
-  }, [availableSizes, availableColors, selectedSize, selectedColor]);
 
   return (
     <div className="min-h-screen bg-white pb-24">

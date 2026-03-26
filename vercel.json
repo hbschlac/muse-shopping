@@ -20,6 +20,22 @@
       "dest": "/api/index.js"
     },
     {
+      "src": "/product/([^/]+)",
+      "dest": "/frontend/product/[id]?nxtPid=$1"
+    },
+    {
+      "src": "/stories/([^/]+)",
+      "dest": "/frontend/stories/[id]?nxtPid=$1"
+    },
+    {
+      "src": "/campaign/([^/]+)",
+      "dest": "/frontend/campaign/[id]?nxtPid=$1"
+    },
+    {
+      "src": "/admin/feedback/([^/]+)",
+      "dest": "/frontend/admin/feedback/[ticketNumber]?nxtPticketNumber=$1"
+    },
+    {
       "src": "/(.*)",
       "dest": "/frontend/$1"
     }

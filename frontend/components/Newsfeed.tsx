@@ -386,7 +386,7 @@ export default function Newsfeed() {
         <div className="px-4 pt-4">
           <div className="max-w-7xl mx-auto">
             <Link
-              href={`/campaign/${heroCampaigns[currentHero].id}`}
+              href={heroCampaigns[currentHero].cta_url || '/'}
               className={`block relative aspect-[16/9] md:aspect-[21/9] bg-gradient-to-br ${
                 heroCampaigns[currentHero].gradient ||
                 'from-[var(--color-peach-light)]/20 to-[var(--color-blue)]/20'

@@ -37,6 +37,11 @@ const createTransporter = () => {
  */
 async function sendPasswordResetEmail(email, resetToken, userName) {
   try {
+    if (process.env.NODE_ENV === 'test') {
+      logger.info(`[emailService] TEST MODE — skipping real send to: ${email}`);
+      return { messageId: 'test-skipped' };
+    }
+
     const transporter = createTransporter();
 
     if (!transporter) {
@@ -179,6 +184,11 @@ The Muse Team
  */
 async function sendWelcomeEmail(email, userName) {
   try {
+    if (process.env.NODE_ENV === 'test') {
+      logger.info(`[emailService] TEST MODE — skipping real send to: ${email}`);
+      return { messageId: 'test-skipped' };
+    }
+
     const transporter = createTransporter();
 
     if (!transporter) {

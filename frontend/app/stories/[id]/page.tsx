@@ -40,25 +40,24 @@ export default function StoryPage() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [progress, setProgress] = useState(0);
 
-  // Auto-advance story
+  // Auto-advance story — increment only; navigate in a separate effect
   useEffect(() => {
     const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          if (currentSlide < story.slides.length - 1) {
-            setCurrentSlide((s) => s + 1);
-            return 0;
-          } else {
-            router.back();
-            return prev;
-          }
-        }
-        return prev + 2; // 2% every 100ms = 5 seconds per slide
-      });
+      setProgress((prev) => (prev >= 100 ? prev : prev + 2));
     }, 100);
-
     return () => clearInterval(interval);
-  }, [currentSlide, router]);
+  }, [currentSlide]);
+
+  // Handle slide advancement when progress completes
+  useEffect(() => {
+    if (progress < 100) return;
+    if (currentSlide < story.slides.length - 1) {
+      setCurrentSlide((s) => s + 1);
+      setProgress(0);
+    } else {
+      router.back();
+    }
+  }, [progress, currentSlide, router]);
 
   const handlePrevious = () => {
     if (currentSlide > 0) {
