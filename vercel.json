@@ -36,6 +36,10 @@
       "dest": "/frontend/admin/feedback/[ticketNumber]?nxtPticketNumber=$1"
     },
     {
+      "src": "/brands/([^/]+)",
+      "dest": "/frontend/brands/[slug]?nxtPslug=$1"
+    },
+    {
       "src": "/(.*)",
       "dest": "/frontend/$1"
     }

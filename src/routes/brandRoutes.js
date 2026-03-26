@@ -7,6 +7,7 @@ const router = express.Router();
 
 // Public routes
 router.get('/', BrandController.getBrands);
+router.get('/slug/:slug', BrandController.getBrandBySlug);
 router.get('/:id', BrandController.getBrandById);
 
 // Protected routes

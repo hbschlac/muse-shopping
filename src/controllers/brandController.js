@@ -32,6 +32,19 @@ class BrandController {
     }
   }
 
+  static async getBrandBySlug(req, res, next) {
+    try {
+      const Brand = require('../models/Brand');
+      const brand = await Brand.findBySlug(req.params.slug);
+      if (!brand) {
+        return res.status(404).json({ error: { message: 'Brand not found' } });
+      }
+      res.status(200).json(successResponse({ brand }));
+    } catch (error) {
+      next(error);
+    }
+  }
+
   static async followBrand(req, res, next) {
     try {
       const { brand_id, notification_enabled } = req.body;
