@@ -1,0 +1,41 @@
+name: Log to Build Log
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  log:
+    runs-on: ubuntu-latest
+    # Skip merge commits and any commit that starts with "log:" to avoid loops
+    if: "!startsWith(github.event.head_commit.message, 'log:') && !startsWith(github.event.head_commit.message, 'Merge ')"
+    steps:
+      - name: Add entry to build log
+        env:
+          GH_TOKEN: ${{ secrets.BUILD_LOG_PAT }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+          REPO_NAME: ${{ github.event.repository.name }}
+        run: |
+          # First line of commit message only
+          MSG=$(echo "$COMMIT_MSG" | head -1)
+
+          DATE=$(TZ='America/Los_Angeles' date +'%b %d')
+          YEAR=$(TZ='America/Los_Angeles' date +'%Y')
+          ENTRY="**${DATE}** — \`${REPO_NAME}\`: ${MSG}"
+
+          # Fetch current README content + SHA
+          RESPONSE=$(gh api repos/hbschlac/build-log/contents/README.md)
+          SHA=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin)['sha'])")
+          CONTENT=$(echo "$RESPONSE" | python3 -c "import sys,json,base64; print(base64.b64decode(json.load(sys.stdin)['content']).decode())")
+
+          # Insert new entry immediately after the "## YEAR" heading line
+          NEW_CONTENT=$(echo "$CONTENT" | awk -v entry="$ENTRY" -v year="## ${YEAR}" \
+            'BEGIN{done=0} $0==year && !done{print; print entry; done=1; next}1')
+
+          # Base64 encode and push via API
+          ENCODED=$(printf '%s' "$NEW_CONTENT" | base64 | tr -d '\n')
+          gh api repos/hbschlac/build-log/contents/README.md \
+            --method PUT \
+            -f message="log: [${REPO_NAME}] ${MSG}" \
+            -f content="${ENCODED}" \
+            -f sha="${SHA}"
