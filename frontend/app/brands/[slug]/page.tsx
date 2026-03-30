@@ -160,9 +160,8 @@ export default function BrandPage() {
         <div className="flex items-center gap-4 mb-3">
           <BrandLogo
             brandName={brand.name}
-            logoUrl={brand.logo_url}
-            size="lg"
-            showName={false}
+            fallbackUrl={brand.logo_url}
+            className="w-16 h-16 object-contain"
           />
           <div>
             <h1 className="text-2xl font-bold text-gray-900">{brand.name}</h1>
