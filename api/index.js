@@ -9,6 +9,11 @@ const cors = require('cors');
 
 const app = express();
 
+// Trust Vercel's edge proxy (one hop) so req.ip is the real client and
+// express-rate-limit stops throwing ValidationError on X-Forwarded-For.
+// Set to 1 (not true) to prevent client-supplied XFF spoofing.
+app.set('trust proxy', 1);
+
 // Enable CORS
 app.use(cors({
   origin: [
