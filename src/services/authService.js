@@ -127,6 +127,23 @@ class AuthService {
       throw new AuthenticationError('Account is deactivated');
     }
 
+    // Guard: OAuth-only accounts have no password hash.
+    // Without this check, bcrypt.compare(password, null) throws the opaque
+    // "data and hash arguments required" error and returns a 500.
+    // Instead, return a 401 that tells the user which social provider to use.
+    if (!user.password_hash) {
+      const providers = [];
+      if (user.google_id) providers.push('Google');
+      if (user.apple_id) providers.push('Apple');
+      const providerHint = providers.length
+        ? `This account signs in with ${providers.join(' or ')}. Use that button to continue.`
+        : 'This account has no password set. Please use a social sign-in option.';
+      throw new AuthenticationError(
+        'No password set for account',
+        providerHint
+      );
+    }
+
     // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.password_hash);
     if (!isPasswordValid) {
@@ -243,6 +260,15 @@ class AuthService {
       [userId]
     );
     const { password_hash } = result.rows[0];
+
+    // Guard: OAuth-only accounts have no password to change.
+    // Frontend should route these to a "set password" flow instead of "change password".
+    if (!password_hash) {
+      throw new AuthenticationError(
+        'No password set for account',
+        'This account uses social sign-in and has no password. Use "Set password" to create one.'
+      );
+    }
 
     // Verify current password
     const isPasswordValid = await bcrypt.compare(currentPassword, password_hash);

@@ -20,6 +20,13 @@ const performanceMonitoring = require('./middleware/performanceMonitoring');
 const app = express();
 const API_VERSION = process.env.API_VERSION || 'v1';
 
+// Trust the first proxy hop (Vercel's edge network).
+// Without this, express-rate-limit v7+ throws a ValidationError on X-Forwarded-For,
+// and req.ip returns the proxy IP instead of the real client IP — which breaks
+// per-IP rate limiting, OAuth state binding, and any IP-based audit logging.
+// Set to 1 (not `true`) so we only trust the immediate upstream, not every hop in the chain.
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet({
   contentSecurityPolicy: {
