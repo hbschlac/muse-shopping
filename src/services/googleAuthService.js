@@ -22,10 +22,18 @@ class GoogleAuthService {
    * @returns {OAuth2Client} Configured OAuth2 client
    */
   static createUserAuthClient() {
+    // Trim env vars at the read-site. Vercel UI has historically stored secrets
+    // with trailing newlines/whitespace (happened ≥4× across Hannah's projects),
+    // which Google rejects with "invalid_client: The OAuth client was not found"
+    // because the trailing \n gets URL-encoded as %0A and no longer matches the
+    // registered client_id. Trim makes the code tolerant to that env drift.
+    const clientId = (process.env.GOOGLE_CLIENT_ID || '').trim();
+    const clientSecret = (process.env.GOOGLE_CLIENT_SECRET || '').trim();
+    const origin = (process.env.CORS_ORIGIN || 'http://localhost:3001').trim();
     return new google.auth.OAuth2(
-      process.env.GOOGLE_CLIENT_ID,
-      process.env.GOOGLE_CLIENT_SECRET,
-      `${process.env.CORS_ORIGIN || 'http://localhost:3001'}/auth/google/callback`
+      clientId,
+      clientSecret,
+      `${origin}/auth/google/callback`
     );
   }
 
