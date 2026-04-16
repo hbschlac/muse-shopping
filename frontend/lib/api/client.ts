@@ -82,11 +82,14 @@ async function apiRequest<T>(
 
     if (!response.ok) {
       const errorData = isJson ? await response.json() : await response.text();
-      throw new APIError(
-        errorData?.message || `Request failed with status ${response.status}`,
-        response.status,
-        errorData
-      );
+      // Backend envelope: { success: false, error: { code, message, userMessage, ... } }
+      // Prefer userMessage (human-friendly), then error.message, then legacy top-level message.
+      const message =
+        errorData?.error?.userMessage ||
+        errorData?.error?.message ||
+        errorData?.message ||
+        `Request failed with status ${response.status}`;
+      throw new APIError(message, response.status, errorData);
     }
 
     // Return null for 204 No Content

@@ -24,31 +24,46 @@ export interface ChangePasswordData {
 }
 
 /**
+ * Unwrap backend envelope { success, data: { user, tokens: { access_token, refresh_token } } }
+ * and persist tokens the same way completeGoogleAuth does. Returns the legacy-shaped
+ * AuthResponse ({ user, token, refreshToken }) so existing callers keep working.
+ */
+function persistAuthResponse(raw: any): AuthResponse {
+  // Backend wraps in { success, data: { user, tokens } }. Tolerate the unwrapped
+  // shape too, since /auth/register historically spreads user+tokens at top level.
+  const user = raw?.data?.user ?? raw?.user;
+  const tokens = raw?.data?.tokens ?? raw?.tokens;
+  const accessToken = tokens?.access_token ?? raw?.token;
+  const refreshTokenVal = tokens?.refresh_token ?? raw?.refreshToken;
+
+  if (accessToken) {
+    saveAuthToken(accessToken);
+    if (refreshTokenVal) {
+      localStorage.setItem('refresh_token', refreshTokenVal);
+    }
+  }
+
+  return {
+    user,
+    token: accessToken,
+    refreshToken: refreshTokenVal,
+  } as AuthResponse;
+}
+
+/**
  * Register a new user
  */
 export async function register(data: RegisterData): Promise<AuthResponse> {
-  const response = await api.post<AuthResponse>('/auth/register', data);
-  if (response.token) {
-    saveAuthToken(response.token);
-    if (response.refreshToken) {
-      localStorage.setItem('refresh_token', response.refreshToken);
-    }
-  }
-  return response;
+  const response = await api.post<any>('/auth/register', data);
+  return persistAuthResponse(response);
 }
 
 /**
  * Login user
  */
 export async function login(data: LoginData): Promise<AuthResponse> {
-  const response = await api.post<AuthResponse>('/auth/login', data);
-  if (response.token) {
-    saveAuthToken(response.token);
-    if (response.refreshToken) {
-      localStorage.setItem('refresh_token', response.refreshToken);
-    }
-  }
-  return response;
+  const response = await api.post<any>('/auth/login', data);
+  return persistAuthResponse(response);
 }
 
 /**
