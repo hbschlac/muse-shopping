@@ -2,13 +2,35 @@ const pool = require('../db/pool');
 
 class User {
   static async create({ email, password_hash, username, full_name, privacy_consent = null }) {
-    const result = await pool.query(
-      `INSERT INTO users (email, password_hash, username, full_name, privacy_consent)
-       VALUES ($1, $2, $3, $4, $5)
-       RETURNING id, email, username, full_name, is_verified, is_active, created_at, privacy_consent`,
-      [email, password_hash, username, full_name, privacy_consent ? JSON.stringify(privacy_consent) : null]
-    );
-    return result.rows[0];
+    // Preferred path: write privacy_consent (GDPR column from migration 055).
+    // Fallback: if the column is missing in this DB (migrations not yet run in
+    // prod), retry the INSERT without it so registration still works. Remove
+    // this fallback once `npm run migrate` is run against every environment.
+    try {
+      const result = await pool.query(
+        `INSERT INTO users (email, password_hash, username, full_name, privacy_consent)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING id, email, username, full_name, is_verified, is_active, created_at, privacy_consent`,
+        [email, password_hash, username, full_name, privacy_consent ? JSON.stringify(privacy_consent) : null]
+      );
+      return result.rows[0];
+    } catch (err) {
+      // Postgres 42703 = undefined_column. Only fall back for this exact case.
+      const missingPrivacyConsent =
+        err && err.code === '42703' && /privacy_consent/.test(err.message || '');
+      if (!missingPrivacyConsent) throw err;
+      console.warn(
+        '[User.create] privacy_consent column missing; inserting without it. ' +
+        'Run `npm run migrate` against this DB to apply migration 055.'
+      );
+      const result = await pool.query(
+        `INSERT INTO users (email, password_hash, username, full_name)
+         VALUES ($1, $2, $3, $4)
+         RETURNING id, email, username, full_name, is_verified, is_active, created_at`,
+        [email, password_hash, username, full_name]
+      );
+      return result.rows[0];
+    }
   }
 
   static async findById(id) {
