@@ -29,12 +29,24 @@ class GoogleAuthService {
     // registered client_id. Trim makes the code tolerant to that env drift.
     const clientId = (process.env.GOOGLE_CLIENT_ID || '').trim();
     const clientSecret = (process.env.GOOGLE_CLIENT_SECRET || '').trim();
-    const origin = (process.env.CORS_ORIGIN || 'http://localhost:3001').trim();
-    return new google.auth.OAuth2(
-      clientId,
-      clientSecret,
-      `${origin}/auth/google/callback`
-    );
+
+    // Redirect URI resolution order:
+    //   1) GOOGLE_USER_AUTH_REDIRECT_URI — explicit override (preferred)
+    //   2) https://www.muse.shopping/auth/google/callback — prod default that
+    //      actually hosts the /api/v1 backend. (CORS_ORIGIN used to drive this,
+    //      but it was set to https://app.muse.shopping — a sibling Vercel deploy
+    //      that only serves the Next.js frontend, no /api/v1 mount. Google would
+    //      redirect the user back to app.muse.shopping and the code exchange
+    //      POST would hit a Next.js 404 page instead of the backend handler.)
+    //   3) http://localhost:3001/... — dev default
+    const explicit = (process.env.GOOGLE_USER_AUTH_REDIRECT_URI || '').trim();
+    const isProd = process.env.NODE_ENV === 'production';
+    const redirectUri = explicit
+      || (isProd
+        ? 'https://www.muse.shopping/auth/google/callback'
+        : 'http://localhost:3001/auth/google/callback');
+
+    return new google.auth.OAuth2(clientId, clientSecret, redirectUri);
   }
 
   /**
