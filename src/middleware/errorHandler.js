@@ -74,6 +74,10 @@ const errorHandler = (err, req, res, _next) => {
         'Try again in a few minutes',
         'Contact support if the problem persists'
       ],
+      // Include the raw error message (not stack) so Vercel's truncated logs
+      // aren't the only diagnostic surface. Scope leaks ~Error.message only,
+      // which is typically DB column / constraint text — useful, not secret.
+      debugMessage: err.message,
     }
   };
 
