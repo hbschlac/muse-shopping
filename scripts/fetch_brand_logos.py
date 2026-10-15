@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 Brand Logo Fetcher
-Fetches logos from Clearbit Logo API for brands in TARGET_BRANDS_1000.csv
+Fetches brand icons from Google's favicon service for brands in TARGET_BRANDS_1000.csv
+(Clearbit's free Logo API, used before, no longer resolves)
 
 Best Practices:
 - Rate limiting to respect API limits
@@ -20,9 +21,9 @@ from urllib.error import HTTPError, URLError
 import time
 
 # Configuration
-INPUT_CSV = 'TARGET_BRANDS_1000.csv'
-OUTPUT_CSV = 'TARGET_BRANDS_1000_with_logos.csv'
-REPORT_CSV = 'brand_logo_report.csv'
+INPUT_CSV = os.getenv('INPUT_CSV', 'TARGET_BRANDS_1000.csv')
+OUTPUT_CSV = os.getenv('OUTPUT_CSV', 'TARGET_BRANDS_1000_with_logos.csv')
+REPORT_CSV = os.getenv('REPORT_CSV', 'brand_logo_report.csv')
 LOGOS_DIR = 'frontend/public/logos/brands'
 
 # Rate limiting & retry configuration
@@ -30,6 +31,7 @@ RATE_LIMIT_DELAY = 0.5  # seconds between requests
 MAX_RETRIES = 3
 RETRY_DELAY = 1  # initial retry delay in seconds
 MAX_FILE_SIZE = 500 * 1024  # 500KB max logo size
+MIN_LOGO_PX = 48  # smaller icons look blurry in a 72px story circle
 
 # Environment flags
 ONLY_MISSING = os.getenv('ONLY_MISSING', '0') == '1'
@@ -44,7 +46,8 @@ def sanitize_filename(brand_name):
     """Convert brand name to safe filename"""
     # Remove special characters and replace spaces with hyphens
     safe_name = brand_name.lower()
-    safe_name = ''.join(c if c.isalnum() or c in (' ', '-') else '' for c in safe_name)
+    # ASCII only, to match sanitizeBrandName in frontend/lib/brand/brandLogos.ts
+    safe_name = ''.join(c if (c.isascii() and c.isalnum()) or c in (' ', '-') else '' for c in safe_name)
     safe_name = safe_name.replace(' ', '-')
     # Remove consecutive hyphens
     while '--' in safe_name:
@@ -62,7 +65,7 @@ def logo_exists(brand_name):
 
 def fetch_logo(website, brand_name, retry_count=0):
     """
-    Fetch logo from Clearbit Logo API with retry logic
+    Fetch a brand icon from Google's favicon service with retry logic
     Returns: (success: bool, message: str)
     """
     try:
@@ -74,9 +77,11 @@ def fetch_logo(website, brand_name, retry_count=0):
         if not domain:
             return False, "Invalid domain"
 
-        # Clearbit Logo API with size parameter for optimization
-        # Request 128px size to reduce bandwidth and storage
-        logo_url = f'https://logo.clearbit.com/{domain}?size=128'
+        # Request 128px; the service answers 404 when the site has no icon
+        logo_url = (
+            'https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON'
+            f'&fallback_opts=TYPE,SIZE,URL&url=https://{domain}&size=128'
+        )
 
         # Create request with user agent
         req = Request(logo_url, headers={'User-Agent': 'Mozilla/5.0'})
@@ -93,6 +98,12 @@ def fetch_logo(website, brand_name, retry_count=0):
                 # Validate it's actually an image (basic check)
                 if not logo_data.startswith(b'\x89PNG') and not logo_data.startswith(b'\xff\xd8\xff'):
                     return False, "Invalid image format"
+
+                # Many sites only have a 16-32px favicon; skip those
+                if logo_data.startswith(b'\x89PNG'):
+                    width = int.from_bytes(logo_data[16:20], 'big')
+                    if width < MIN_LOGO_PX:
+                        return False, f"Too small ({width}px)"
 
                 # Save logo
                 logo_path = get_logo_path(brand_name)
@@ -214,7 +225,7 @@ def main():
             })
             logos_missing += 1
 
-        # Rate limiting - be respectful to Clearbit API
+        # Rate limiting - be respectful to the favicon service
         if i < total_brands and not existing:
             time.sleep(RATE_LIMIT_DELAY)
 
