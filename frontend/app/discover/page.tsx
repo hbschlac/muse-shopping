@@ -245,6 +245,9 @@ export default function DiscoverPage() {
       : 'Showing all new arrivals';
   };
 
+  // Items without a photo render as blank tiles, so leave them out of the grid.
+  const visibleProducts = products.filter((product) => product.primary_image_url || product.image_url);
+
   return (
     <div className="min-h-screen bg-[var(--color-ecru)] pb-24">
       {/* Header */}
@@ -343,28 +346,40 @@ export default function DiscoverPage() {
           <div className="flex items-center justify-center py-20">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900" />
           </div>
-        ) : products.length > 0 ? (
+        ) : visibleProducts.length > 0 ? (
           <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4">
-            {products.map((product) => (
-              <ProductTile
-                key={product.id}
-                product={{
-                  id: product.id,
-                  name: product.canonical_name || product.name,
-                  price: parseFloat(product.min_price || product.price_cents / 100),
-                  original_price: product.sale_price ? parseFloat(product.sale_price) : undefined,
-                  image_url: product.primary_image_url || product.image_url,
-                  brand_id: product.brand_id,
-                  brand_name: product.brand_name,
-                  currency: 'USD',
-                  in_stock: true,
-                  retailer_name: product.brand_name,
-                  retailer_product_url: product.product_url || '#',
-                  created_at: product.created_at,
-                  updated_at: product.updated_at,
-                }}
-              />
-            ))}
+            {visibleProducts.map((product) => {
+              // ProductTile renders price_cents. Retailers disagree on which of min_price and
+              // sale_price is the compare-at price, so show the lower one, the higher struck through.
+              const prices = [
+                product.min_price != null ? parseFloat(product.min_price) : (product.price_cents ?? 0) / 100,
+                product.sale_price != null ? parseFloat(product.sale_price) : 0,
+              ].filter((n) => n > 0);
+              const price = prices.length ? Math.min(...prices) : 0;
+              const original = prices.length === 2 && Math.max(...prices) > price ? Math.max(...prices) : undefined;
+              return (
+                <ProductTile
+                  key={product.id}
+                  product={{
+                    id: product.id,
+                    name: product.canonical_name || product.name,
+                    price,
+                    price_cents: Math.round(price * 100),
+                    original_price: original,
+                    original_price_cents: original !== undefined ? Math.round(original * 100) : undefined,
+                    image_url: product.primary_image_url || product.image_url,
+                    brand_id: product.brand_id,
+                    brand_name: product.brand_name,
+                    currency: 'USD',
+                    in_stock: true,
+                    retailer_name: product.brand_name,
+                    retailer_product_url: product.product_url || '#',
+                    created_at: product.created_at,
+                    updated_at: product.updated_at,
+                  }}
+                />
+              );
+            })}
           </div>
         ) : (
           <div className="text-center py-20">

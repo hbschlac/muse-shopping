@@ -164,7 +164,7 @@ export default function Newsfeed() {
     { title: 'Target', type: 'brand', logo: 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=200&h=200&fit=crop' },
     { title: 'Vintage', type: 'category', logo: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=200&h=200&fit=crop' },
     { title: 'Nordstrom', type: 'brand', logo: 'https://images.unsplash.com/photo-1487222477894-8943e31ef7b2?w=200&h=200&fit=crop' },
-    { title: 'Under $100', type: 'category', logo: 'https://images.unsplash.com/photo-1558769132-cb1aea3c8565?w=200&h=200&fit=crop' },
+    { title: 'Under $100', type: 'category', logo: 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=200&h=200&fit=crop' },
     { title: 'Aeropostale', type: 'brand', logo: 'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=200&h=200&fit=crop' },
     { title: 'Stylist Picks', type: 'category', logo: 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=200&h=200&fit=crop' },
     { title: 'New Drops', type: 'category', logo: 'https://images.unsplash.com/photo-1445205170230-053b83016050?w=200&h=200&fit=crop' },
@@ -203,7 +203,7 @@ export default function Newsfeed() {
       'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=400',
       'https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?w=400',
       'https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=400',
-      'https://images.unsplash.com/photo-1590393876866-0102587b0657?w=400',
+      'https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=400',
       'https://images.unsplash.com/photo-1618932260643-eee4a2f652a6?w=400',
     ];
 
