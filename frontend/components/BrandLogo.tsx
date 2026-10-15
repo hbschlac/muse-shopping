@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { getBrandLogoWithFallback } from '@/lib/brand/brandLogos';
+import { getBrandLogo } from '@/lib/brand/brandLogos';
 
 interface BrandLogoProps {
   brandName: string;
@@ -36,13 +36,15 @@ export default function BrandLogo({
   showFallbackGradient = true,
   priority = false,
 }: BrandLogoProps) {
-  const [imageError, setImageError] = useState(false);
-  const [fallbackError, setFallbackError] = useState(false);
+  const [failed, setFailed] = useState<string[]>([]);
 
-  const localLogoPath = getBrandLogoWithFallback(brandName, fallbackUrl);
+  // Try each source in order, skipping any that has already failed to load.
+  const candidates = [getBrandLogo(brandName), fallbackUrl].filter((s): s is string => !!s);
+  const src = candidates.find((c) => !failed.includes(c));
+  const markFailed = (s: string) => setFailed((f) => (f.includes(s) ? f : [...f, s]));
 
   // Show greyed-out Muse logo if no logo available or all images failed
-  if (!localLogoPath || (imageError && fallbackError)) {
+  if (!src) {
     if (showFallbackGradient) {
       return (
         <div className={containerClassName}>
@@ -58,34 +60,21 @@ export default function BrandLogo({
     return null;
   }
 
-  // Determine which image to show
-  const isLocalLogo = localLogoPath.startsWith('/logos/');
-  const shouldShowFallback = imageError && !isLocalLogo && fallbackUrl && !fallbackError;
-
   return (
     <div className={containerClassName}>
-      {!imageError || shouldShowFallback ? (
-        <img
-          src={shouldShowFallback ? fallbackUrl! : localLogoPath}
-          alt={alt || brandName || 'Brand logo'}
-          className={className}
-          onError={() => {
-            if (shouldShowFallback) {
-              setFallbackError(true);
-            } else {
-              setImageError(true);
-            }
-          }}
-          loading="lazy"
-        />
-      ) : showFallbackGradient ? (
-        <img
-          src="/logo-muse.svg"
-          alt={alt || brandName || 'Brand logo'}
-          className={`opacity-20 ${className}`}
-          aria-label={alt || brandName || 'Brand logo'}
-        />
-      ) : null}
+      <img
+        key={src}
+        // A server-rendered image can 404 before React attaches onError, which
+        // leaves a broken image on screen; catch that once the element mounts.
+        ref={(img) => {
+          if (img && img.complete && img.naturalWidth === 0) markFailed(src);
+        }}
+        src={src}
+        alt={alt || brandName || 'Brand logo'}
+        className={className}
+        onError={() => markFailed(src)}
+        loading="lazy"
+      />
     </div>
   );
 }
