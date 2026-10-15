@@ -3,7 +3,7 @@
  * Handles "Sign in with Google" functionality for user registration/login
  */
 
-const { google } = require('googleapis');
+const { oauth2: createOAuth2Api, auth: googleAuth } = require('@googleapis/oauth2');
 const pool = require('../db/pool');
 const { encrypt } = require('../utils/encryption');
 const logger = require('../utils/logger');
@@ -46,7 +46,7 @@ class GoogleAuthService {
         ? 'https://www.muse.shopping/auth/google/callback'
         : 'http://localhost:3001/auth/google/callback');
 
-    return new google.auth.OAuth2(clientId, clientSecret, redirectUri);
+    return new googleAuth.OAuth2(clientId, clientSecret, redirectUri);
   }
 
   /**
@@ -87,7 +87,7 @@ class GoogleAuthService {
       oauth2Client.setCredentials(tokens);
 
       // Get user info
-      const oauth2 = google.oauth2({ version: 'v2', auth: oauth2Client });
+      const oauth2 = createOAuth2Api({ version: 'v2', auth: oauth2Client });
       const userInfo = await oauth2.userinfo.get();
 
       return {
