@@ -3,7 +3,7 @@
  * Handles authentication and authorization for Gmail integration
  */
 
-const { google } = require('googleapis');
+const { gmail: createGmail, auth: googleAuth } = require('@googleapis/gmail');
 require('dotenv').config();
 
 /**
@@ -20,7 +20,7 @@ const GMAIL_SCOPES = [
  * @returns {OAuth2Client} Configured OAuth2 client
  */
 function createOAuth2Client() {
-  const oauth2Client = new google.auth.OAuth2(
+  const oauth2Client = new googleAuth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
     process.env.GOOGLE_REDIRECT_URI
@@ -87,7 +87,7 @@ function createGmailClient(accessToken, refreshToken) {
     refresh_token: refreshToken,
   });
 
-  const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
+  const gmail = createGmail({ version: 'v1', auth: oauth2Client });
   return gmail;
 }
 
