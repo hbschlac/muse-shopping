@@ -6,13 +6,14 @@
 const express = require('express');
 const router = express.Router();
 const urbanoutfittersIntegrationService = require('../services/urbanoutfittersIntegrationService');
+const { requireAdmin } = require('../middleware/authMiddleware');
 const logger = require('../config/logger');
 
 /**
  * POST /api/v1/urbanoutfitters-integration/sync
  * Sync Urban Outfitters products to items table
  */
-router.post('/sync', async (req, res) => {
+router.post('/sync', requireAdmin, async (req, res) => {
   try {
     const result = await urbanoutfittersIntegrationService.syncUrbanOutfittersToItems();
     res.json(result);
@@ -26,7 +27,7 @@ router.post('/sync', async (req, res) => {
  * POST /api/v1/urbanoutfitters-integration/update-prices
  * Update prices from latest Urban Outfitters scrape
  */
-router.post('/update-prices', async (req, res) => {
+router.post('/update-prices', requireAdmin, async (req, res) => {
   try {
     const result = await urbanoutfittersIntegrationService.updatePricesFromLatestScrape();
     res.json(result);

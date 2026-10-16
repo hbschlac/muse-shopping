@@ -7,6 +7,7 @@ const express = require('express');
 const router = express.Router();
 const nordstromIntegrationService = require('../services/nordstromIntegrationService');
 const authMiddleware = require('../middleware/authMiddleware');
+const { requireAdmin } = authMiddleware;
 const logger = require('../config/logger');
 
 /**
@@ -14,7 +15,7 @@ const logger = require('../config/logger');
  * Sync Nordstrom products into items table
  * Admin/internal use
  */
-router.post('/sync', async (req, res) => {
+router.post('/sync', requireAdmin, async (req, res) => {
   try {
     logger.info('[Nordstrom Integration API] Starting sync');
 
@@ -39,7 +40,7 @@ router.post('/sync', async (req, res) => {
  * POST /api/nordstrom-integration/update-prices
  * Update item prices from latest Nordstrom data
  */
-router.post('/update-prices', async (req, res) => {
+router.post('/update-prices', requireAdmin, async (req, res) => {
   try {
     logger.info('[Nordstrom Integration API] Updating prices');
 

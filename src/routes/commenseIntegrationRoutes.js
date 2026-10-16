@@ -6,13 +6,14 @@
 const express = require('express');
 const router = express.Router();
 const commenseIntegrationService = require('../services/commenseIntegrationService');
+const { requireAdmin } = require('../middleware/authMiddleware');
 const logger = require('../config/logger');
 
 /**
  * POST /api/v1/commense-integration/sync
  * Sync The Commense products to items table
  */
-router.post('/sync', async (req, res) => {
+router.post('/sync', requireAdmin, async (req, res) => {
   try {
     const result = await commenseIntegrationService.syncCommenseToItems();
     res.json(result);
@@ -26,7 +27,7 @@ router.post('/sync', async (req, res) => {
  * POST /api/v1/commense-integration/update-prices
  * Update item prices from latest The Commense scrape
  */
-router.post('/update-prices', async (req, res) => {
+router.post('/update-prices', requireAdmin, async (req, res) => {
   try {
     const result = await commenseIntegrationService.updatePricesFromCommense();
     res.json(result);

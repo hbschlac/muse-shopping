@@ -6,6 +6,7 @@
 const express = require('express');
 const router = express.Router();
 const dynamiteInventoryService = require('../services/dynamiteInventoryService');
+const { requireAdmin } = require('../middleware/authMiddleware');
 const logger = require('../config/logger');
 
 /**
@@ -150,7 +151,7 @@ router.get('/export/csv', async (req, res) => {
  * POST /api/v1/dynamite/scrape/trigger
  * Manually trigger a scrape (for testing/research)
  */
-router.post('/scrape/trigger', async (req, res) => {
+router.post('/scrape/trigger', requireAdmin, async (req, res) => {
   try {
     // Don't await - return immediately and scrape in background
     dynamiteInventoryService.scrapeInventory()

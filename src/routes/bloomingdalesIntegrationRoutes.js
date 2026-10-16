@@ -7,13 +7,14 @@ const express = require('express');
 const router = express.Router();
 const bloomingdalesIntegrationService = require('../services/bloomingdalesIntegrationService');
 const authMiddleware = require('../middleware/authMiddleware');
+const { requireAdmin } = authMiddleware;
 const logger = require('../config/logger');
 
 /**
  * POST /api/bloomingdales-integration/sync
  * Sync Bloomingdales products into items table
  */
-router.post('/sync', async (req, res) => {
+router.post('/sync', requireAdmin, async (req, res) => {
   try {
     logger.info('[Bloomingdales Integration API] Starting sync');
 

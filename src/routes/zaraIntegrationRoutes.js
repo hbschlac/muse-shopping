@@ -6,13 +6,14 @@
 const express = require('express');
 const router = express.Router();
 const zaraIntegrationService = require('../services/zaraIntegrationService');
+const { requireAdmin } = require('../middleware/authMiddleware');
 const logger = require('../config/logger');
 
 /**
  * POST /api/v1/zara-integration/sync
  * Sync Zara products to items table
  */
-router.post('/sync', async (req, res) => {
+router.post('/sync', requireAdmin, async (req, res) => {
   try {
     const result = await zaraIntegrationService.syncZaraToItems();
     res.json(result);
@@ -26,7 +27,7 @@ router.post('/sync', async (req, res) => {
  * POST /api/v1/zara-integration/update-prices
  * Update prices from latest Zara scrape
  */
-router.post('/update-prices', async (req, res) => {
+router.post('/update-prices', requireAdmin, async (req, res) => {
   try {
     const result = await zaraIntegrationService.updatePricesFromLatestScrape();
     res.json(result);
