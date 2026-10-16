@@ -6,13 +6,14 @@
 const express = require('express');
 const router = express.Router();
 const targetIntegrationService = require('../services/targetIntegrationService');
+const { requireAdmin } = require('../middleware/authMiddleware');
 const logger = require('../config/logger');
 
 /**
  * POST /api/v1/target-integration/sync
  * Sync Target products to items table
  */
-router.post('/sync', async (req, res) => {
+router.post('/sync', requireAdmin, async (req, res) => {
   try {
     const result = await targetIntegrationService.syncTargetToItems();
     res.json(result);
@@ -26,7 +27,7 @@ router.post('/sync', async (req, res) => {
  * POST /api/v1/target-integration/update-prices
  * Update prices from latest Target scrape
  */
-router.post('/update-prices', async (req, res) => {
+router.post('/update-prices', requireAdmin, async (req, res) => {
   try {
     const result = await targetIntegrationService.updatePricesFromLatestScrape();
     res.json(result);
