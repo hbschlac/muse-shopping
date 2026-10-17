@@ -6,13 +6,14 @@
 const express = require('express');
 const router = express.Router();
 const hmIntegrationService = require('../services/hmIntegrationService');
+const { requireAdmin } = require('../middleware/authMiddleware');
 const logger = require('../config/logger');
 
 /**
  * POST /api/v1/hm-integration/sync
  * Sync H&M products to items table
  */
-router.post('/sync', async (req, res) => {
+router.post('/sync', requireAdmin, async (req, res) => {
   try {
     const result = await hmIntegrationService.syncHMToItems();
     res.json(result);
@@ -26,7 +27,7 @@ router.post('/sync', async (req, res) => {
  * POST /api/v1/hm-integration/update-prices
  * Update prices from latest H&M scrape
  */
-router.post('/update-prices', async (req, res) => {
+router.post('/update-prices', requireAdmin, async (req, res) => {
   try {
     const result = await hmIntegrationService.updatePricesFromLatestScrape();
     res.json(result);

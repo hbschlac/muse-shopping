@@ -6,6 +6,7 @@
 const express = require('express');
 const router = express.Router();
 const shopciderInventoryService = require('../services/shopciderInventoryService');
+const { requireAdmin } = require('../middleware/authMiddleware');
 const logger = require('../config/logger');
 
 /**
@@ -150,7 +151,7 @@ router.get('/export/csv', async (req, res) => {
  * POST /api/v1/shopcider/scrape/trigger
  * Manually trigger a scrape
  */
-router.post('/scrape/trigger', async (req, res) => {
+router.post('/scrape/trigger', requireAdmin, async (req, res) => {
   try {
     // Run scrape in background
     shopciderInventoryService.scrapeInventory().then(result => {

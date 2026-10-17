@@ -7,6 +7,7 @@ const express = require('express');
 const router = express.Router();
 const nordstromInventoryService = require('../services/nordstromInventoryService');
 const { getSchedulerStatus } = require('../jobs/nordstromInventoryScheduler');
+const { requireAdmin } = require('../middleware/authMiddleware');
 const logger = require('../config/logger');
 
 /**
@@ -227,9 +228,9 @@ router.get('/scheduler/status', async (req, res) => {
 
 /**
  * POST /api/nordstrom/scrape/trigger
- * Manually trigger a scrape (protected endpoint - add auth as needed)
+ * Manually trigger a scrape (admin only)
  */
-router.post('/scrape/trigger', async (req, res) => {
+router.post('/scrape/trigger', requireAdmin, async (req, res) => {
   try {
     logger.info('[Nordstrom API] Manual scrape triggered');
 
