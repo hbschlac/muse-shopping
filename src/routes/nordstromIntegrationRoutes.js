@@ -7,7 +7,7 @@ const express = require('express');
 const router = express.Router();
 const nordstromIntegrationService = require('../services/nordstromIntegrationService');
 const authMiddleware = require('../middleware/authMiddleware');
-const { requireAdmin } = authMiddleware;
+const { requireAdmin } = require('../middleware/authMiddleware');
 const logger = require('../config/logger');
 
 /**
