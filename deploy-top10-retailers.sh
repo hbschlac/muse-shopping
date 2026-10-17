@@ -124,8 +124,8 @@ for retailer in macys target zara hm urbanoutfitters freepeople dynamite; do
     ON CONFLICT (name) DO UPDATE SET is_active = true, slug = EXCLUDED.slug, logo_url = EXCLUDED.logo_url;
   " > /dev/null 2>&1
 
-  # Sync via API if server is running, otherwise skip
-  curl -X POST "http://localhost:3000/api/v1/${retailer}-integration/sync" > /dev/null 2>&1 || true
+  # Sync via API if server is running, otherwise skip (admin-only: needs MUSE_ADMIN_TOKEN)
+  curl -X POST -H "Authorization: Bearer ${MUSE_ADMIN_TOKEN}" "http://localhost:3000/api/v1/${retailer}-integration/sync" > /dev/null 2>&1 || true
 done
 
 echo ""

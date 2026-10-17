@@ -11,6 +11,12 @@ if [ -z "$DATABASE_URL" ]; then
     exit 1
 fi
 
+# The sync endpoints are admin-only: pass an admin user's login token
+if [ -z "$MUSE_ADMIN_TOKEN" ]; then
+    echo "❌ ERROR: MUSE_ADMIN_TOKEN environment variable not set (an admin user's JWT)"
+    exit 1
+fi
+
 echo "1. Running database migrations..."
 echo "--------------------------------"
 
@@ -75,17 +81,17 @@ echo "---------------------------------------"
 
 # Sync all three retailers
 echo "  → Syncing The Commense..."
-RESPONSE=$(curl -s -X POST http://localhost:3000/api/v1/commense-integration/sync)
+RESPONSE=$(curl -s -X POST -H "Authorization: Bearer $MUSE_ADMIN_TOKEN" http://localhost:3000/api/v1/commense-integration/sync)
 ITEMS=$(echo $RESPONSE | grep -o '"itemsCreated":[0-9]*' | grep -o '[0-9]*')
 echo "     ✅ Synced $ITEMS items"
 
 echo "  → Syncing Sunfere..."
-RESPONSE=$(curl -s -X POST http://localhost:3000/api/v1/sunfere-integration/sync)
+RESPONSE=$(curl -s -X POST -H "Authorization: Bearer $MUSE_ADMIN_TOKEN" http://localhost:3000/api/v1/sunfere-integration/sync)
 ITEMS=$(echo $RESPONSE | grep -o '"itemsCreated":[0-9]*' | grep -o '[0-9]*')
 echo "     ✅ Synced $ITEMS items"
 
 echo "  → Syncing Shop Cider..."
-RESPONSE=$(curl -s -X POST http://localhost:3000/api/v1/shopcider-integration/sync)
+RESPONSE=$(curl -s -X POST -H "Authorization: Bearer $MUSE_ADMIN_TOKEN" http://localhost:3000/api/v1/shopcider-integration/sync)
 ITEMS=$(echo $RESPONSE | grep -o '"itemsCreated":[0-9]*' | grep -o '[0-9]*')
 echo "     ✅ Synced $ITEMS items"
 
