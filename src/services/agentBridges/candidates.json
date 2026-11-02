@@ -1,0 +1,902 @@
+[
+  {
+    "key": "allbirds",
+    "name": "Allbirds",
+    "domain": "www.allbirds.com",
+    "category": "shoes"
+  },
+  {
+    "key": "gymshark",
+    "name": "Gymshark",
+    "domain": "us.shop.gymshark.com",
+    "category": "activewear"
+  },
+  {
+    "key": "skims",
+    "name": "SKIMS",
+    "domain": "skims.com",
+    "category": "apparel"
+  },
+  {
+    "key": "glossier",
+    "name": "Glossier",
+    "domain": "www.glossier.com",
+    "category": "beauty"
+  },
+  {
+    "key": "kylie-cosmetics",
+    "name": "Kylie Cosmetics",
+    "domain": "kyliecosmetics.com",
+    "category": "beauty"
+  },
+  {
+    "key": "fashion-nova",
+    "name": "Fashion Nova",
+    "domain": "www.fashionnova.com",
+    "category": "apparel"
+  },
+  {
+    "key": "steve-madden",
+    "name": "Steve Madden",
+    "domain": "www.stevemadden.com",
+    "category": "shoes"
+  },
+  {
+    "key": "aritzia",
+    "name": "Aritzia",
+    "domain": "www.aritzia.com",
+    "category": "apparel"
+  },
+  {
+    "key": "reformation",
+    "name": "Reformation",
+    "domain": "www.thereformation.com",
+    "category": "apparel"
+  },
+  {
+    "key": "vuori",
+    "name": "Vuori",
+    "domain": "vuoriclothing.com",
+    "category": "activewear"
+  },
+  {
+    "key": "rothys",
+    "name": "Rothy's",
+    "domain": "rothys.com",
+    "category": "shoes"
+  },
+  {
+    "key": "commense",
+    "name": "Commense",
+    "domain": "thecommense.com",
+    "category": "apparel"
+  },
+  {
+    "key": "sunfere",
+    "name": "Sunfere",
+    "domain": "www.sunfere.com",
+    "category": "apparel"
+  },
+  {
+    "key": "shopcider",
+    "name": "Cider",
+    "domain": "shopcider.com",
+    "category": "apparel"
+  },
+  {
+    "key": "everlane",
+    "name": "Everlane",
+    "domain": "www.everlane.com",
+    "category": "apparel"
+  },
+  {
+    "key": "alo-yoga",
+    "name": "Alo Yoga",
+    "domain": "www.aloyoga.com",
+    "category": "activewear"
+  },
+  {
+    "key": "fabletics",
+    "name": "Fabletics",
+    "domain": "www.fabletics.com",
+    "category": "activewear"
+  },
+  {
+    "key": "princess-polly",
+    "name": "Princess Polly",
+    "domain": "www.princesspolly.com",
+    "category": "apparel"
+  },
+  {
+    "key": "white-fox",
+    "name": "White Fox",
+    "domain": "www.whitefoxboutique.com",
+    "category": "apparel"
+  },
+  {
+    "key": "edikted",
+    "name": "Edikted",
+    "domain": "www.edikted.com",
+    "category": "apparel"
+  },
+  {
+    "key": "showpo",
+    "name": "Showpo",
+    "domain": "www.showpo.com",
+    "category": "apparel"
+  },
+  {
+    "key": "hello-molly",
+    "name": "Hello Molly",
+    "domain": "www.hellomolly.com",
+    "category": "apparel"
+  },
+  {
+    "key": "petal-and-pup",
+    "name": "Petal & Pup",
+    "domain": "www.petalandpup.com",
+    "category": "apparel"
+  },
+  {
+    "key": "lulus",
+    "name": "Lulus",
+    "domain": "www.lulus.com",
+    "category": "apparel"
+  },
+  {
+    "key": "revolve",
+    "name": "Revolve",
+    "domain": "www.revolve.com",
+    "category": "multi-brand"
+  },
+  {
+    "key": "meshki",
+    "name": "Meshki",
+    "domain": "www.meshki.com.au",
+    "category": "apparel"
+  },
+  {
+    "key": "oh-polly",
+    "name": "Oh Polly",
+    "domain": "www.oh-polly.com",
+    "category": "apparel"
+  },
+  {
+    "key": "house-of-cb",
+    "name": "House of CB",
+    "domain": "www.houseofcb.com",
+    "category": "apparel"
+  },
+  {
+    "key": "realisation-par",
+    "name": "Réalisation Par",
+    "domain": "www.realisationpar.com",
+    "category": "apparel"
+  },
+  {
+    "key": "rouje",
+    "name": "Rouje",
+    "domain": "www.rouje.com",
+    "category": "apparel"
+  },
+  {
+    "key": "sezane",
+    "name": "Sézane",
+    "domain": "www.sezane.com",
+    "category": "apparel"
+  },
+  {
+    "key": "doen",
+    "name": "DÔEN",
+    "domain": "www.doen.com",
+    "category": "apparel"
+  },
+  {
+    "key": "loveshackfancy",
+    "name": "LoveShackFancy",
+    "domain": "www.loveshackfancy.com",
+    "category": "apparel"
+  },
+  {
+    "key": "farm-rio",
+    "name": "FARM Rio",
+    "domain": "www.farmrio.com",
+    "category": "apparel"
+  },
+  {
+    "key": "staud",
+    "name": "STAUD",
+    "domain": "www.staud.clothing",
+    "category": "apparel"
+  },
+  {
+    "key": "cult-gaia",
+    "name": "Cult Gaia",
+    "domain": "www.cultgaia.com",
+    "category": "apparel"
+  },
+  {
+    "key": "agolde",
+    "name": "AGOLDE",
+    "domain": "www.agolde.com",
+    "category": "denim"
+  },
+  {
+    "key": "rag-and-bone",
+    "name": "rag & bone",
+    "domain": "www.rag-bone.com",
+    "category": "apparel"
+  },
+  {
+    "key": "frame",
+    "name": "FRAME",
+    "domain": "www.frame-store.com",
+    "category": "denim"
+  },
+  {
+    "key": "khaite",
+    "name": "KHAITE",
+    "domain": "www.khaite.com",
+    "category": "apparel"
+  },
+  {
+    "key": "toteme",
+    "name": "Toteme",
+    "domain": "www.toteme-studio.com",
+    "category": "apparel"
+  },
+  {
+    "key": "anine-bing",
+    "name": "ANINE BING",
+    "domain": "www.anine-bing.com",
+    "category": "apparel"
+  },
+  {
+    "key": "ganni",
+    "name": "GANNI",
+    "domain": "www.ganni.com",
+    "category": "apparel"
+  },
+  {
+    "key": "nanushka",
+    "name": "Nanushka",
+    "domain": "www.nanushka.com",
+    "category": "apparel"
+  },
+  {
+    "key": "jacquemus",
+    "name": "Jacquemus",
+    "domain": "www.jacquemus.com",
+    "category": "apparel"
+  },
+  {
+    "key": "boden",
+    "name": "Boden",
+    "domain": "www.bodenusa.com",
+    "category": "apparel"
+  },
+  {
+    "key": "j-crew",
+    "name": "J.Crew",
+    "domain": "www.jcrew.com",
+    "category": "apparel"
+  },
+  {
+    "key": "madewell",
+    "name": "Madewell",
+    "domain": "www.madewell.com",
+    "category": "apparel"
+  },
+  {
+    "key": "gap",
+    "name": "Gap",
+    "domain": "www.gap.com",
+    "category": "apparel"
+  },
+  {
+    "key": "abercrombie",
+    "name": "Abercrombie & Fitch",
+    "domain": "www.abercrombie.com",
+    "category": "apparel"
+  },
+  {
+    "key": "hollister",
+    "name": "Hollister",
+    "domain": "www.hollisterco.com",
+    "category": "apparel"
+  },
+  {
+    "key": "aerie",
+    "name": "Aerie",
+    "domain": "www.aerie.com",
+    "category": "apparel"
+  },
+  {
+    "key": "american-eagle",
+    "name": "American Eagle",
+    "domain": "www.ae.com",
+    "category": "apparel"
+  },
+  {
+    "key": "urban-outfitters",
+    "name": "Urban Outfitters",
+    "domain": "www.urbanoutfitters.com",
+    "category": "apparel"
+  },
+  {
+    "key": "free-people",
+    "name": "Free People",
+    "domain": "www.freepeople.com",
+    "category": "apparel"
+  },
+  {
+    "key": "anthropologie",
+    "name": "Anthropologie",
+    "domain": "www.anthropologie.com",
+    "category": "apparel"
+  },
+  {
+    "key": "zara",
+    "name": "Zara",
+    "domain": "www.zara.com",
+    "category": "apparel"
+  },
+  {
+    "key": "hm",
+    "name": "H&M",
+    "domain": "www2.hm.com",
+    "category": "apparel"
+  },
+  {
+    "key": "uniqlo",
+    "name": "Uniqlo",
+    "domain": "www.uniqlo.com",
+    "category": "apparel"
+  },
+  {
+    "key": "mango",
+    "name": "Mango",
+    "domain": "www.mango.com",
+    "category": "apparel"
+  },
+  {
+    "key": "cos",
+    "name": "COS",
+    "domain": "www.cos.com",
+    "category": "apparel"
+  },
+  {
+    "key": "arket",
+    "name": "ARKET",
+    "domain": "www.arket.com",
+    "category": "apparel"
+  },
+  {
+    "key": "nordstrom",
+    "name": "Nordstrom",
+    "domain": "www.nordstrom.com",
+    "category": "department"
+  },
+  {
+    "key": "bloomingdales",
+    "name": "Bloomingdale's",
+    "domain": "www.bloomingdales.com",
+    "category": "department"
+  },
+  {
+    "key": "macys",
+    "name": "Macy's",
+    "domain": "www.macys.com",
+    "category": "department"
+  },
+  {
+    "key": "saks",
+    "name": "Saks Fifth Avenue",
+    "domain": "www.saksfifthavenue.com",
+    "category": "department"
+  },
+  {
+    "key": "target",
+    "name": "Target",
+    "domain": "www.target.com",
+    "category": "general"
+  },
+  {
+    "key": "walmart",
+    "name": "Walmart",
+    "domain": "www.walmart.com",
+    "category": "general"
+  },
+  {
+    "key": "sephora",
+    "name": "Sephora",
+    "domain": "www.sephora.com",
+    "category": "beauty"
+  },
+  {
+    "key": "ulta",
+    "name": "Ulta Beauty",
+    "domain": "www.ulta.com",
+    "category": "beauty"
+  },
+  {
+    "key": "ssense",
+    "name": "SSENSE",
+    "domain": "www.ssense.com",
+    "category": "multi-brand"
+  },
+  {
+    "key": "net-a-porter",
+    "name": "NET-A-PORTER",
+    "domain": "www.net-a-porter.com",
+    "category": "multi-brand"
+  },
+  {
+    "key": "farfetch",
+    "name": "Farfetch",
+    "domain": "www.farfetch.com",
+    "category": "multi-brand"
+  },
+  {
+    "key": "shopbop",
+    "name": "Shopbop",
+    "domain": "www.shopbop.com",
+    "category": "multi-brand"
+  },
+  {
+    "key": "nasty-gal",
+    "name": "Nasty Gal",
+    "domain": "www.nastygal.com",
+    "category": "apparel"
+  },
+  {
+    "key": "prettylittlething",
+    "name": "PrettyLittleThing",
+    "domain": "www.prettylittlething.us",
+    "category": "apparel"
+  },
+  {
+    "key": "boohoo",
+    "name": "boohoo",
+    "domain": "www.boohoo.com",
+    "category": "apparel"
+  },
+  {
+    "key": "asos",
+    "name": "ASOS",
+    "domain": "www.asos.com",
+    "category": "multi-brand"
+  },
+  {
+    "key": "shein",
+    "name": "SHEIN",
+    "domain": "www.shein.com",
+    "category": "apparel"
+  },
+  {
+    "key": "spanx",
+    "name": "Spanx",
+    "domain": "www.spanx.com",
+    "category": "apparel"
+  },
+  {
+    "key": "parade",
+    "name": "Parade",
+    "domain": "www.parade.com",
+    "category": "intimates"
+  },
+  {
+    "key": "negative-underwear",
+    "name": "Negative Underwear",
+    "domain": "www.negativeunderwear.com",
+    "category": "intimates"
+  },
+  {
+    "key": "cuyana",
+    "name": "Cuyana",
+    "domain": "www.cuyana.com",
+    "category": "bags"
+  },
+  {
+    "key": "mejuri",
+    "name": "Mejuri",
+    "domain": "www.mejuri.com",
+    "category": "jewelry"
+  },
+  {
+    "key": "kendra-scott",
+    "name": "Kendra Scott",
+    "domain": "www.kendrascott.com",
+    "category": "jewelry"
+  },
+  {
+    "key": "baublebar",
+    "name": "BaubleBar",
+    "domain": "www.baublebar.com",
+    "category": "jewelry"
+  },
+  {
+    "key": "stella-and-dot",
+    "name": "Stella & Dot",
+    "domain": "www.stelladot.com",
+    "category": "jewelry"
+  },
+  {
+    "key": "gorjana",
+    "name": "gorjana",
+    "domain": "www.gorjana.com",
+    "category": "jewelry"
+  },
+  {
+    "key": "brilliant-earth",
+    "name": "Brilliant Earth",
+    "domain": "www.brilliantearth.com",
+    "category": "jewelry"
+  },
+  {
+    "key": "sam-edelman",
+    "name": "Sam Edelman",
+    "domain": "www.samedelman.com",
+    "category": "shoes"
+  },
+  {
+    "key": "dolce-vita",
+    "name": "Dolce Vita",
+    "domain": "www.dolcevita.com",
+    "category": "shoes"
+  },
+  {
+    "key": "schutz",
+    "name": "Schutz",
+    "domain": "www.schutz-shoes.com",
+    "category": "shoes"
+  },
+  {
+    "key": "larroude",
+    "name": "Larroudé",
+    "domain": "www.larroude.com",
+    "category": "shoes"
+  },
+  {
+    "key": "vivaia",
+    "name": "VIVAIA",
+    "domain": "www.vivaia.com",
+    "category": "shoes"
+  },
+  {
+    "key": "birdies",
+    "name": "Birdies",
+    "domain": "www.birdies.com",
+    "category": "shoes"
+  },
+  {
+    "key": "tkees",
+    "name": "TKEES",
+    "domain": "www.tkees.com",
+    "category": "shoes"
+  },
+  {
+    "key": "sorel",
+    "name": "Sorel",
+    "domain": "www.sorel.com",
+    "category": "shoes"
+  },
+  {
+    "key": "ugg",
+    "name": "UGG",
+    "domain": "www.ugg.com",
+    "category": "shoes"
+  },
+  {
+    "key": "hoka",
+    "name": "HOKA",
+    "domain": "www.hoka.com",
+    "category": "shoes"
+  },
+  {
+    "key": "on",
+    "name": "On",
+    "domain": "www.on.com",
+    "category": "shoes"
+  },
+  {
+    "key": "new-balance",
+    "name": "New Balance",
+    "domain": "www.newbalance.com",
+    "category": "shoes"
+  },
+  {
+    "key": "nike",
+    "name": "Nike",
+    "domain": "www.nike.com",
+    "category": "shoes"
+  },
+  {
+    "key": "adidas",
+    "name": "adidas",
+    "domain": "www.adidas.com",
+    "category": "shoes"
+  },
+  {
+    "key": "lululemon",
+    "name": "lululemon",
+    "domain": "www.lululemon.com",
+    "category": "activewear"
+  },
+  {
+    "key": "outdoor-voices",
+    "name": "Outdoor Voices",
+    "domain": "www.outdoorvoices.com",
+    "category": "activewear"
+  },
+  {
+    "key": "girlfriend-collective",
+    "name": "Girlfriend Collective",
+    "domain": "www.girlfriend.com",
+    "category": "activewear"
+  },
+  {
+    "key": "set-active",
+    "name": "SET Active",
+    "domain": "www.setactive.com",
+    "category": "activewear"
+  },
+  {
+    "key": "beyond-yoga",
+    "name": "Beyond Yoga",
+    "domain": "www.beyondyoga.com",
+    "category": "activewear"
+  },
+  {
+    "key": "splits59",
+    "name": "Splits59",
+    "domain": "www.splits59.com",
+    "category": "activewear"
+  },
+  {
+    "key": "summersalt",
+    "name": "Summersalt",
+    "domain": "www.summersalt.com",
+    "category": "swim"
+  },
+  {
+    "key": "andie",
+    "name": "Andie",
+    "domain": "www.andieswim.com",
+    "category": "swim"
+  },
+  {
+    "key": "solid-and-striped",
+    "name": "Solid & Striped",
+    "domain": "www.solidandstriped.com",
+    "category": "swim"
+  },
+  {
+    "key": "frankies-bikinis",
+    "name": "Frankies Bikinis",
+    "domain": "www.frankiesbikinis.com",
+    "category": "swim"
+  },
+  {
+    "key": "tuckernuck",
+    "name": "Tuckernuck",
+    "domain": "www.tnuck.com",
+    "category": "multi-brand"
+  },
+  {
+    "key": "cleobella",
+    "name": "Cleobella",
+    "domain": "www.cleobella.com",
+    "category": "apparel"
+  },
+  {
+    "key": "ban-do",
+    "name": "ban.do",
+    "domain": "www.shopbando.com",
+    "category": "accessories"
+  },
+  {
+    "key": "pact",
+    "name": "Pact",
+    "domain": "www.wearpact.com",
+    "category": "apparel"
+  },
+  {
+    "key": "quince",
+    "name": "Quince",
+    "domain": "www.quince.com",
+    "category": "apparel"
+  },
+  {
+    "key": "naadam",
+    "name": "NAADAM",
+    "domain": "www.naadam.co",
+    "category": "apparel"
+  },
+  {
+    "key": "jenni-kayne",
+    "name": "Jenni Kayne",
+    "domain": "www.jennikayne.com",
+    "category": "apparel"
+  },
+  {
+    "key": "vince",
+    "name": "Vince",
+    "domain": "www.vince.com",
+    "category": "apparel"
+  },
+  {
+    "key": "theory",
+    "name": "Theory",
+    "domain": "www.theory.com",
+    "category": "apparel"
+  },
+  {
+    "key": "alc",
+    "name": "A.L.C.",
+    "domain": "www.alc.com",
+    "category": "apparel"
+  },
+  {
+    "key": "veronica-beard",
+    "name": "Veronica Beard",
+    "domain": "www.veronicabeard.com",
+    "category": "apparel"
+  },
+  {
+    "key": "ulla-johnson",
+    "name": "Ulla Johnson",
+    "domain": "www.ullajohnson.com",
+    "category": "apparel"
+  },
+  {
+    "key": "zimmermann",
+    "name": "Zimmermann",
+    "domain": "www.zimmermann.com",
+    "category": "apparel"
+  },
+  {
+    "key": "self-portrait",
+    "name": "Self-Portrait",
+    "domain": "www.selfportrait-studio.com",
+    "category": "apparel"
+  },
+  {
+    "key": "rixo",
+    "name": "RIXO",
+    "domain": "www.rixo.co.uk",
+    "category": "apparel"
+  },
+  {
+    "key": "hill-house-home",
+    "name": "Hill House Home",
+    "domain": "www.hill-house-home.com",
+    "category": "apparel"
+  },
+  {
+    "key": "by-far",
+    "name": "BY FAR",
+    "domain": "www.byfar.com",
+    "category": "bags"
+  },
+  {
+    "key": "polene",
+    "name": "Polène",
+    "domain": "www.polene-paris.com",
+    "category": "bags"
+  },
+  {
+    "key": "senreve",
+    "name": "Senreve",
+    "domain": "www.senreve.com",
+    "category": "bags"
+  },
+  {
+    "key": "coach",
+    "name": "Coach",
+    "domain": "www.coach.com",
+    "category": "bags"
+  },
+  {
+    "key": "kate-spade",
+    "name": "kate spade new york",
+    "domain": "www.katespade.com",
+    "category": "bags"
+  },
+  {
+    "key": "tory-burch",
+    "name": "Tory Burch",
+    "domain": "www.toryburch.com",
+    "category": "bags"
+  },
+  {
+    "key": "michael-kors",
+    "name": "Michael Kors",
+    "domain": "www.michaelkors.com",
+    "category": "bags"
+  },
+  {
+    "key": "rare-beauty",
+    "name": "Rare Beauty",
+    "domain": "www.rarebeauty.com",
+    "category": "beauty"
+  },
+  {
+    "key": "fenty-beauty",
+    "name": "Fenty Beauty",
+    "domain": "www.fentybeauty.com",
+    "category": "beauty"
+  },
+  {
+    "key": "charlotte-tilbury",
+    "name": "Charlotte Tilbury",
+    "domain": "www.charlottetilbury.com",
+    "category": "beauty"
+  },
+  {
+    "key": "tatcha",
+    "name": "Tatcha",
+    "domain": "www.tatcha.com",
+    "category": "beauty"
+  },
+  {
+    "key": "drunk-elephant",
+    "name": "Drunk Elephant",
+    "domain": "www.drunkelephant.com",
+    "category": "beauty"
+  },
+  {
+    "key": "summer-fridays",
+    "name": "Summer Fridays",
+    "domain": "www.summerfridays.com",
+    "category": "beauty"
+  },
+  {
+    "key": "rhode",
+    "name": "rhode",
+    "domain": "www.rhodeskin.com",
+    "category": "beauty"
+  },
+  {
+    "key": "ilia",
+    "name": "ILIA",
+    "domain": "www.iliabeauty.com",
+    "category": "beauty"
+  },
+  {
+    "key": "merit",
+    "name": "Merit",
+    "domain": "www.meritbeauty.com",
+    "category": "beauty"
+  },
+  {
+    "key": "colourpop",
+    "name": "ColourPop",
+    "domain": "www.colourpop.com",
+    "category": "beauty"
+  },
+  {
+    "key": "ouai",
+    "name": "OUAI",
+    "domain": "www.ouai.com",
+    "category": "beauty"
+  },
+  {
+    "key": "olaplex",
+    "name": "Olaplex",
+    "domain": "www.olaplex.com",
+    "category": "beauty"
+  },
+  {
+    "key": "good-american",
+    "name": "Good American",
+    "domain": "www.goodamerican.com",
+    "category": "denim"
+  },
+  {
+    "key": "djerf-avenue",
+    "name": "Djerf Avenue",
+    "domain": "djerfavenue.com",
+    "category": "apparel"
+  }
+]

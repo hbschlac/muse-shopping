@@ -20,13 +20,19 @@ const CartService = require('./cartService');
 const StoreConnectionService = require('./storeConnectionService');
 const RetailerAPIFactory = require('./retailerAPIFactory');
 const ManualOrderService = require('./manualOrderService');
-const HeadlessAutomationService = require('./headlessAutomationService');
 const StripeService = require('./stripeService');
 const StoreAccountService = require('./storeAccountService');
 const RequirementAdapterService = require('./requirementAdapterService');
 const TaxCalculationService = require('./taxCalculationService');
 const ShippingCalculationService = require('./shippingCalculationService');
 const { nanoid } = require('nanoid');
+
+// Placement methods Muse can complete inside its own checkout. Hidden-browser
+// (headless) placement was removed in Nov 2026: Muse only places orders through
+// sanctioned paths (retailer APIs, or agent protocols via src/services/agentBridges).
+// Bridge stores (placement 'bridge') check out through the store's own agent
+// checkout and are handed off with a continue_url, so they are not in this list.
+const IN_APP_PLACEMENT_METHODS = ['api'];
 
 class CheckoutService {
   /**
@@ -73,7 +79,7 @@ class CheckoutService {
       });
 
       // Require all stores to support in-app checkout for this flow
-      const blocked = storesToProcess.filter(store => !['api', 'headless'].includes(store.placementMethod));
+      const blocked = storesToProcess.filter(store => !IN_APP_PLACEMENT_METHODS.includes(store.placementMethod));
       if (blocked.length > 0) {
         const names = blocked.map(s => s.storeName || s.storeSlug || s.storeId).join(', ');
         throw new ValidationError(`These stores are not configured for in-app checkout: ${names}`);
@@ -578,7 +584,8 @@ class CheckoutService {
           result = await this.placeOrderViaAPI(order, session);
           break;
         case 'headless':
-          result = await this.placeOrderViaHeadless(order, session);
+          // Legacy sessions created before hidden-browser placement was removed.
+          result = await this.placeOrderManually(order, session);
           break;
         case 'manual':
           result = await this.placeOrderManually(order, session);
@@ -685,31 +692,6 @@ class CheckoutService {
     } catch (error) {
       logger.error(`Failed to place order via API: ${error.message}`);
       throw error;
-    }
-  }
-
-  /**
-   * Place order via headless browser automation (Tier 2)
-   * @param {Object} order - Order to place
-   * @param {Object} session - Checkout session
-   * @returns {Promise<Object>} Automation result
-   */
-  static async placeOrderViaHeadless(order, session) {
-    logger.info(`Placing order ${order.muse_order_number} via headless automation`);
-
-    try {
-      // Use headless automation service
-      const result = await HeadlessAutomationService.placeOrder(order, session);
-
-      logger.info(`Headless automation successful: ${result.storeOrderNumber}`);
-
-      return result;
-    } catch (error) {
-      logger.error(`Headless automation failed for ${order.muse_order_number}:`, error);
-
-      // If automation fails, fall back to manual placement
-      logger.info('Falling back to manual placement...');
-      return await this.placeOrderManually(order, session);
     }
   }
 
@@ -1043,29 +1025,17 @@ class CheckoutService {
   static validateStoresForInAppCheckout(session) {
     const stores = session.storesToProcess || [];
     const inAppStores = stores.filter(store =>
-      ['api', 'headless'].includes((store.placementMethod || '').toLowerCase())
+      IN_APP_PLACEMENT_METHODS.includes((store.placementMethod || '').toLowerCase())
     );
 
     const invalidStores = stores.filter(store =>
-      !['api', 'headless'].includes((store.placementMethod || '').toLowerCase())
+      !IN_APP_PLACEMENT_METHODS.includes((store.placementMethod || '').toLowerCase())
     );
 
     if (invalidStores.length > 0) {
       const names = invalidStores.map(s => s.storeName || s.storeSlug || s.storeId).join(', ');
       throw new ValidationError(
         `These stores are not configured for in-app checkout: ${names}`
-      );
-    }
-
-    const unsupportedHeadless = inAppStores.filter(store =>
-      (store.placementMethod || '').toLowerCase() === 'headless' &&
-      !HeadlessAutomationService.isSupported(store.storeId)
-    );
-
-    if (unsupportedHeadless.length > 0) {
-      const names = unsupportedHeadless.map(s => s.storeName || s.storeSlug || s.storeId).join(', ');
-      throw new ValidationError(
-        `Headless checkout not yet supported for: ${names}`
       );
     }
 
@@ -1110,12 +1080,10 @@ class CheckoutService {
       const issues = [];
       const account = accountByStoreId.get(store.storeId) || null;
 
-      if (!['api', 'headless'].includes(placementMethod)) {
+      if (placementMethod === 'bridge') {
+        issues.push('checkout_at_store_via_bridge');
+      } else if (!IN_APP_PLACEMENT_METHODS.includes(placementMethod)) {
         issues.push('not_in_app_enabled');
-      }
-
-      if (placementMethod === 'headless' && !HeadlessAutomationService.isSupported(store.storeId)) {
-        issues.push('headless_not_supported');
       }
 
       if (!paymentMethods[String(store.storeId)]) {
@@ -1237,8 +1205,15 @@ class CheckoutService {
       return 'api';
     }
 
+    // Agent-protocol stores (UCP, ACP). Checkout runs on the store's own agent
+    // checkout through src/services/agentBridges, not Muse's Stripe capture.
+    if (['ucp', 'acp', 'bridge'].includes(integrationType)) {
+      return 'bridge';
+    }
+
+    // Hidden-browser placement is retired; these stores fall back to manual.
     if (integrationType === 'headless') {
-      return 'headless';
+      return 'manual';
     }
 
     if (integrationType === 'manual' || integrationType === 'redirect') {
