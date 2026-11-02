@@ -8,7 +8,7 @@
   {
     "key": "gymshark",
     "name": "Gymshark",
-    "domain": "www.gymshark.com",
+    "domain": "us.shop.gymshark.com",
     "category": "activewear"
   },
   {
@@ -886,5 +886,17 @@
     "name": "Olaplex",
     "domain": "www.olaplex.com",
     "category": "beauty"
+  },
+  {
+    "key": "good-american",
+    "name": "Good American",
+    "domain": "www.goodamerican.com",
+    "category": "denim"
+  },
+  {
+    "key": "djerf-avenue",
+    "name": "Djerf Avenue",
+    "domain": "djerfavenue.com",
+    "category": "apparel"
   }
 ]

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-02T18:03:48.245Z",
+  "generatedAt": "2026-11-02T18:07:43.761Z",
   "partners": [
     {
       "key": "agolde",
@@ -488,6 +488,25 @@
       ]
     },
     {
+      "key": "good-american",
+      "name": "Good American",
+      "domain": "www.goodamerican.com",
+      "category": "denim",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://good-american.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
       "key": "gorjana",
       "name": "gorjana",
       "domain": "www.gorjana.com",
@@ -495,6 +514,25 @@
       "checkedAt": "2026-11-02",
       "protocol": "ucp-mcp",
       "endpoint": "https://gorjana.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "gymshark",
+      "name": "Gymshark",
+      "domain": "us.shop.gymshark.com",
+      "category": "activewear",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://gymsharkusa.myshopify.com/api/ucp/mcp",
       "ucpVersion": "2026-08-25",
       "platform": "shopify",
       "canSearch": true,
@@ -1435,6 +1473,15 @@
       "httpStatus": 403
     },
     {
+      "key": "djerf-avenue",
+      "name": "Djerf Avenue",
+      "domain": "djerfavenue.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 200
+    },
+    {
       "key": "doen",
       "name": "DÔEN",
       "domain": "www.doen.com",
@@ -1484,15 +1531,6 @@
       "name": "Gap",
       "domain": "www.gap.com",
       "category": "apparel",
-      "checkedAt": "2026-11-02",
-      "protocol": null,
-      "httpStatus": 404
-    },
-    {
-      "key": "gymshark",
-      "name": "Gymshark",
-      "domain": "www.gymshark.com",
-      "category": "activewear",
       "checkedAt": "2026-11-02",
       "protocol": null,
       "httpStatus": 404
@@ -1720,7 +1758,7 @@
       "category": "apparel",
       "checkedAt": "2026-11-02",
       "protocol": null,
-      "httpStatus": 0
+      "httpStatus": 503
     },
     {
       "key": "parade",
@@ -1864,7 +1902,7 @@
       "category": "shoes",
       "checkedAt": "2026-11-02",
       "protocol": null,
-      "httpStatus": 404
+      "httpStatus": 403
     },
     {
       "key": "ssense",
