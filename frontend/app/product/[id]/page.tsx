@@ -318,7 +318,7 @@ export default function ProductPage() {
     if (window.history.length > 1) {
       router.back();
     } else {
-      router.push('/chat');
+      router.push('/home');
     }
   };
 

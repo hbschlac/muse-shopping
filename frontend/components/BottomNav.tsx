@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, Compass, MessageCircle, Sparkles, ShoppingCart } from 'lucide-react';
+import { CHAT_ENABLED } from '@/lib/features';
 
 export default function BottomNav() {
   const pathname = usePathname();
@@ -10,7 +11,7 @@ export default function BottomNav() {
   const navItems = [
     { href: '/home', icon: Home, label: 'Home' },
     { href: '/discover', icon: Compass, label: 'Discover' },
-    { href: '/chat', icon: MessageCircle, label: 'Muse' },
+    ...(CHAT_ENABLED ? [{ href: '/chat', icon: MessageCircle, label: 'Muse' }] : []),
     { href: '/inspire', icon: Sparkles, label: 'Inspire' },
     { href: '/cart', icon: ShoppingCart, label: 'Cart' },
   ];

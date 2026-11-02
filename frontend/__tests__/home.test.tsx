@@ -38,7 +38,7 @@ describe('HomePage', () => {
     render(<HomePage />);
     expect(screen.getByLabelText('Home')).toBeInTheDocument();
     expect(screen.getByLabelText('Discover')).toBeInTheDocument();
-    expect(screen.getByLabelText('Muse')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Muse')).not.toBeInTheDocument();
     expect(screen.getByLabelText('Inspire')).toBeInTheDocument();
     expect(screen.getByLabelText('Cart')).toBeInTheDocument();
   });
@@ -48,7 +48,6 @@ describe('HomePage', () => {
 
     expect(screen.getByLabelText('Home')).toHaveAttribute('href', '/home');
     expect(screen.getByLabelText('Discover')).toHaveAttribute('href', '/discover');
-    expect(screen.getByLabelText('Muse')).toHaveAttribute('href', '/chat');
     expect(screen.getByLabelText('Inspire')).toHaveAttribute('href', '/inspire');
     expect(screen.getByLabelText('Cart')).toHaveAttribute('href', '/cart');
   });
