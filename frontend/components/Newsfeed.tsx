@@ -11,6 +11,7 @@ import TabbedRecommendationModule from '@/components/TabbedRecommendationModule'
 import InstagramBrandModule from '@/components/InstagramBrandModule';
 import BrandLogo from '@/components/BrandLogo';
 import type { Product, BrandModule as BrandModuleType } from '@/lib/types/api';
+import { CHAT_ENABLED } from '@/lib/features';
 
 /**
  * Brand Module Component - Horizontal scrolling product carousel
@@ -427,37 +428,39 @@ export default function Newsfeed() {
         </div>
       )}
 
-      {/* Chat Bar - Larger, closer to hero */}
-      <div className="px-4 pt-3 pb-6">
-        <div className="max-w-3xl mx-auto">
-          {/* Enhanced Chat Box */}
-          <Link
-            href="/chat"
-            className="block relative h-auto min-h-[72px] max-h-[180px] bg-white rounded-[16px] shadow-[0_4px_20px_rgba(0,0,0,0.12)] border-2 border-transparent hover:border-[var(--color-peach-light)] focus-within:border-[var(--color-coral)] transition-all duration-200 px-6 py-5"
-          >
-            <div className="flex items-center gap-4">
-              <div className="flex-1 text-lg text-gray-400">
-                Talk with Muse
+      {/* Chat Bar - Larger, closer to hero (hidden while chat is off) */}
+      {CHAT_ENABLED && (
+        <div className="px-4 pt-3 pb-6">
+          <div className="max-w-3xl mx-auto">
+            {/* Enhanced Chat Box */}
+            <Link
+              href="/chat"
+              className="block relative h-auto min-h-[72px] max-h-[180px] bg-white rounded-[16px] shadow-[0_4px_20px_rgba(0,0,0,0.12)] border-2 border-transparent hover:border-[var(--color-peach-light)] focus-within:border-[var(--color-coral)] transition-all duration-200 px-6 py-5"
+            >
+              <div className="flex items-center gap-4">
+                <div className="flex-1 text-lg text-gray-400">
+                  Talk with Muse
+                </div>
+                <div className="w-12 h-12 bg-[var(--gradient-coral)] text-white rounded-full hover:shadow-lg hover:scale-105 transition-all duration-200 flex-shrink-0 flex items-center justify-center">
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2.5}
+                      d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                    />
+                  </svg>
+                </div>
               </div>
-              <div className="w-12 h-12 bg-[var(--gradient-coral)] text-white rounded-full hover:shadow-lg hover:scale-105 transition-all duration-200 flex-shrink-0 flex items-center justify-center">
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2.5}
-                    d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                  />
-                </svg>
-              </div>
-            </div>
-          </Link>
+            </Link>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Loading State */}
       {loading && (
