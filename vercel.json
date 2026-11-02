@@ -16,6 +16,10 @@
       "dest": "/api/index.js"
     },
     {
+      "src": "/.well-known/ucp",
+      "dest": "/api/index.js"
+    },
+    {
       "src": "/api/v1/(.*)",
       "dest": "/api/index.js"
     },

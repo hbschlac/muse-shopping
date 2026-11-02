@@ -1,0 +1,2005 @@
+{
+  "generatedAt": "2026-11-02T18:03:48.245Z",
+  "partners": [
+    {
+      "key": "agolde",
+      "name": "AGOLDE",
+      "domain": "www.agolde.com",
+      "category": "denim",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://agolde.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "allbirds",
+      "name": "Allbirds",
+      "domain": "www.allbirds.com",
+      "category": "shoes",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://weareallbirds.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "alo-yoga",
+      "name": "Alo Yoga",
+      "domain": "www.aloyoga.com",
+      "category": "activewear",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://alo-yoga.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "american-eagle",
+      "name": "American Eagle",
+      "domain": "www.ae.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-rest",
+      "endpoint": "https://www.ae.com/ucp/v1",
+      "ucpVersion": "2026-08-25",
+      "platform": "other",
+      "canSearch": false,
+      "canCart": true,
+      "canCheckout": false,
+      "paymentHandlers": []
+    },
+    {
+      "key": "andie",
+      "name": "Andie",
+      "domain": "www.andieswim.com",
+      "category": "swim",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://andie-swim-1.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "ban-do",
+      "name": "ban.do",
+      "domain": "www.shopbando.com",
+      "category": "accessories",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://ban-do.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "baublebar",
+      "name": "BaubleBar",
+      "domain": "www.baublebar.com",
+      "category": "jewelry",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://baublebar.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "beyond-yoga",
+      "name": "Beyond Yoga",
+      "domain": "www.beyondyoga.com",
+      "category": "activewear",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://beyond-yoga-store.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "birdies",
+      "name": "Birdies",
+      "domain": "www.birdies.com",
+      "category": "shoes",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://birdies-slippers.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "by-far",
+      "name": "BY FAR",
+      "domain": "www.byfar.com",
+      "category": "bags",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://6k3dps-nr.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "cleobella",
+      "name": "Cleobella",
+      "domain": "www.cleobella.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://cleobella.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "colourpop",
+      "name": "ColourPop",
+      "domain": "www.colourpop.com",
+      "category": "beauty",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://colourpop-prd.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "commense",
+      "name": "Commense",
+      "domain": "thecommense.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://commenses.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "cult-gaia",
+      "name": "Cult Gaia",
+      "domain": "www.cultgaia.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://cultgaia.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "cuyana",
+      "name": "Cuyana",
+      "domain": "www.cuyana.com",
+      "category": "bags",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://cuyana-prod.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "dolce-vita",
+      "name": "Dolce Vita",
+      "domain": "www.dolcevita.com",
+      "category": "shoes",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://smdolcevita.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "edikted",
+      "name": "Edikted",
+      "domain": "www.edikted.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://edikted.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "everlane",
+      "name": "Everlane",
+      "domain": "www.everlane.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://m34kzg-ke.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "farfetch",
+      "name": "Farfetch",
+      "domain": "www.farfetch.com",
+      "category": "multi-brand",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp",
+      "endpoint": null,
+      "ucpVersion": "2026-04-08",
+      "platform": "other",
+      "canSearch": false,
+      "canCart": false,
+      "canCheckout": false,
+      "paymentHandlers": []
+    },
+    {
+      "key": "farm-rio",
+      "name": "FARM Rio",
+      "domain": "www.farmrio.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://farm-rio.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "fashion-nova",
+      "name": "Fashion Nova",
+      "domain": "www.fashionnova.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://fnova.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "fenty-beauty",
+      "name": "Fenty Beauty",
+      "domain": "www.fentybeauty.com",
+      "category": "beauty",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://fentybeautyshop.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "frame",
+      "name": "FRAME",
+      "domain": "www.frame-store.com",
+      "category": "denim",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://frame-denim.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "frankies-bikinis",
+      "name": "Frankies Bikinis",
+      "domain": "www.frankiesbikinis.com",
+      "category": "swim",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://frankies-bikinis-2.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "girlfriend-collective",
+      "name": "Girlfriend Collective",
+      "domain": "www.girlfriend.com",
+      "category": "activewear",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://girlfriend-store.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "glossier",
+      "name": "Glossier",
+      "domain": "www.glossier.com",
+      "category": "beauty",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://glossier-admin.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "gorjana",
+      "name": "gorjana",
+      "domain": "www.gorjana.com",
+      "category": "jewelry",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://gorjana.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "ilia",
+      "name": "ILIA",
+      "domain": "www.iliabeauty.com",
+      "category": "beauty",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://ilia-beauty-v2.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "jenni-kayne",
+      "name": "Jenni Kayne",
+      "domain": "www.jennikayne.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://jennikayne-prod.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "khaite",
+      "name": "KHAITE",
+      "domain": "www.khaite.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://khaite.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "kylie-cosmetics",
+      "name": "Kylie Cosmetics",
+      "domain": "kyliecosmetics.com",
+      "category": "beauty",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://kylie-jenner-us.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "larroude",
+      "name": "Larroudé",
+      "domain": "www.larroude.com",
+      "category": "shoes",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://larroude-com.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "loveshackfancy",
+      "name": "LoveShackFancy",
+      "domain": "www.loveshackfancy.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://loveshackfancy.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "mejuri",
+      "name": "Mejuri",
+      "domain": "www.mejuri.com",
+      "category": "jewelry",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://77123f.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "merit",
+      "name": "Merit",
+      "domain": "www.meritbeauty.com",
+      "category": "beauty",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://meritbeauty.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "meshki",
+      "name": "Meshki",
+      "domain": "www.meshki.com.au",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://meshki-clothing.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "naadam",
+      "name": "NAADAM",
+      "domain": "www.naadam.co",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://naadamcashmere.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "negative-underwear",
+      "name": "Negative Underwear",
+      "domain": "www.negativeunderwear.com",
+      "category": "intimates",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://negative-underwear.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "olaplex",
+      "name": "Olaplex",
+      "domain": "www.olaplex.com",
+      "category": "beauty",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://olaplex.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "on",
+      "name": "On",
+      "domain": "www.on.com",
+      "category": "shoes",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://on-central-prod-ecom.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "outdoor-voices",
+      "name": "Outdoor Voices",
+      "domain": "www.outdoorvoices.com",
+      "category": "activewear",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://outdoor-voices.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "petal-and-pup",
+      "name": "Petal & Pup",
+      "domain": "www.petalandpup.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://petal-and-pup-usa.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "polene",
+      "name": "Polène",
+      "domain": "www.polene-paris.com",
+      "category": "bags",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://polene-paris.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "rare-beauty",
+      "name": "Rare Beauty",
+      "domain": "www.rarebeauty.com",
+      "category": "beauty",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://therarebeauty.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "realisation-par",
+      "name": "Réalisation Par",
+      "domain": "www.realisationpar.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://realisationpar.com/api/ucp/mcp",
+      "ucpVersion": "2026-04-08",
+      "platform": "other",
+      "canSearch": false,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay"
+      ]
+    },
+    {
+      "key": "rhode",
+      "name": "rhode",
+      "domain": "www.rhodeskin.com",
+      "category": "beauty",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://rhodeskin.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "rixo",
+      "name": "RIXO",
+      "domain": "www.rixo.co.uk",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://rixo-uk.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "rothys",
+      "name": "Rothy's",
+      "domain": "rothys.com",
+      "category": "shoes",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://rothys.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "rouje",
+      "name": "Rouje",
+      "domain": "www.rouje.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://rouje-paris.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "schutz",
+      "name": "Schutz",
+      "domain": "www.schutz-shoes.com",
+      "category": "shoes",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://schutz.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "sezane",
+      "name": "Sézane",
+      "domain": "www.sezane.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-rest",
+      "endpoint": "https://api.sezane.com/ucp/v1",
+      "ucpVersion": "2026-01-23",
+      "platform": "other",
+      "canSearch": false,
+      "canCart": false,
+      "canCheckout": true,
+      "paymentHandlers": []
+    },
+    {
+      "key": "showpo",
+      "name": "Showpo",
+      "domain": "www.showpo.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://showpo-aunz-prod.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "skims",
+      "name": "SKIMS",
+      "domain": "skims.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://skimsbody.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "solid-and-striped",
+      "name": "Solid & Striped",
+      "domain": "www.solidandstriped.com",
+      "category": "swim",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://solid-striped.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "spanx",
+      "name": "Spanx",
+      "domain": "www.spanx.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://spanx-com.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "splits59",
+      "name": "Splits59",
+      "domain": "www.splits59.com",
+      "category": "activewear",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://splits-59.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "staud",
+      "name": "STAUD",
+      "domain": "www.staud.clothing",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://staud-clothing.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "stella-and-dot",
+      "name": "Stella & Dot",
+      "domain": "www.stelladot.com",
+      "category": "jewelry",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://stella-dot-jewelry-co.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "steve-madden",
+      "name": "Steve Madden",
+      "domain": "www.stevemadden.com",
+      "category": "shoes",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://stevemadden.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "summer-fridays",
+      "name": "Summer Fridays",
+      "domain": "www.summerfridays.com",
+      "category": "beauty",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://summerfridaysbeauty.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "summersalt",
+      "name": "Summersalt",
+      "domain": "www.summersalt.com",
+      "category": "swim",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://shopsummersalt.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "tatcha",
+      "name": "Tatcha",
+      "domain": "www.tatcha.com",
+      "category": "beauty",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://t6rvq5-fe.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "tkees",
+      "name": "TKEES",
+      "domain": "www.tkees.com",
+      "category": "shoes",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://tkees1.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "toteme",
+      "name": "Toteme",
+      "domain": "www.toteme-studio.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://toteme-studio-int.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "tuckernuck",
+      "name": "Tuckernuck",
+      "domain": "www.tnuck.com",
+      "category": "multi-brand",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://tnuckadmin.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "ulla-johnson",
+      "name": "Ulla Johnson",
+      "domain": "www.ullajohnson.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://ullajohnson.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "veronica-beard",
+      "name": "Veronica Beard",
+      "domain": "www.veronicabeard.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://veronicabeard.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    },
+    {
+      "key": "white-fox",
+      "name": "White Fox",
+      "domain": "www.whitefoxboutique.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": "ucp-mcp",
+      "endpoint": "https://white-fox-boutique-usa.myshopify.com/api/ucp/mcp",
+      "ucpVersion": "2026-08-25",
+      "platform": "shopify",
+      "canSearch": true,
+      "canCart": true,
+      "canCheckout": true,
+      "paymentHandlers": [
+        "com.google.pay",
+        "dev.shopify.card",
+        "dev.shopify.shop_pay"
+      ]
+    }
+  ],
+  "notYet": [
+    {
+      "key": "alc",
+      "name": "A.L.C.",
+      "domain": "www.alc.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 503
+    },
+    {
+      "key": "abercrombie",
+      "name": "Abercrombie & Fitch",
+      "domain": "www.abercrombie.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 404
+    },
+    {
+      "key": "adidas",
+      "name": "adidas",
+      "domain": "www.adidas.com",
+      "category": "shoes",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 403
+    },
+    {
+      "key": "aerie",
+      "name": "Aerie",
+      "domain": "www.aerie.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 200
+    },
+    {
+      "key": "anine-bing",
+      "name": "ANINE BING",
+      "domain": "www.anine-bing.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 0
+    },
+    {
+      "key": "anthropologie",
+      "name": "Anthropologie",
+      "domain": "www.anthropologie.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 403
+    },
+    {
+      "key": "aritzia",
+      "name": "Aritzia",
+      "domain": "www.aritzia.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 403
+    },
+    {
+      "key": "arket",
+      "name": "ARKET",
+      "domain": "www.arket.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 403
+    },
+    {
+      "key": "asos",
+      "name": "ASOS",
+      "domain": "www.asos.com",
+      "category": "multi-brand",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 503
+    },
+    {
+      "key": "bloomingdales",
+      "name": "Bloomingdale's",
+      "domain": "www.bloomingdales.com",
+      "category": "department",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 403
+    },
+    {
+      "key": "boden",
+      "name": "Boden",
+      "domain": "www.bodenusa.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 200
+    },
+    {
+      "key": "boohoo",
+      "name": "boohoo",
+      "domain": "www.boohoo.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 404
+    },
+    {
+      "key": "brilliant-earth",
+      "name": "Brilliant Earth",
+      "domain": "www.brilliantearth.com",
+      "category": "jewelry",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 403
+    },
+    {
+      "key": "charlotte-tilbury",
+      "name": "Charlotte Tilbury",
+      "domain": "www.charlottetilbury.com",
+      "category": "beauty",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 404
+    },
+    {
+      "key": "shopcider",
+      "name": "Cider",
+      "domain": "shopcider.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 200
+    },
+    {
+      "key": "coach",
+      "name": "Coach",
+      "domain": "www.coach.com",
+      "category": "bags",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 403
+    },
+    {
+      "key": "cos",
+      "name": "COS",
+      "domain": "www.cos.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 403
+    },
+    {
+      "key": "doen",
+      "name": "DÔEN",
+      "domain": "www.doen.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 404
+    },
+    {
+      "key": "drunk-elephant",
+      "name": "Drunk Elephant",
+      "domain": "www.drunkelephant.com",
+      "category": "beauty",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 410
+    },
+    {
+      "key": "fabletics",
+      "name": "Fabletics",
+      "domain": "www.fabletics.com",
+      "category": "activewear",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 404
+    },
+    {
+      "key": "free-people",
+      "name": "Free People",
+      "domain": "www.freepeople.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 403
+    },
+    {
+      "key": "ganni",
+      "name": "GANNI",
+      "domain": "www.ganni.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 404
+    },
+    {
+      "key": "gap",
+      "name": "Gap",
+      "domain": "www.gap.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 404
+    },
+    {
+      "key": "gymshark",
+      "name": "Gymshark",
+      "domain": "www.gymshark.com",
+      "category": "activewear",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 404
+    },
+    {
+      "key": "hm",
+      "name": "H&M",
+      "domain": "www2.hm.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 403
+    },
+    {
+      "key": "hello-molly",
+      "name": "Hello Molly",
+      "domain": "www.hellomolly.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 429
+    },
+    {
+      "key": "hill-house-home",
+      "name": "Hill House Home",
+      "domain": "www.hill-house-home.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 0
+    },
+    {
+      "key": "hoka",
+      "name": "HOKA",
+      "domain": "www.hoka.com",
+      "category": "shoes",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 0
+    },
+    {
+      "key": "hollister",
+      "name": "Hollister",
+      "domain": "www.hollisterco.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 404
+    },
+    {
+      "key": "house-of-cb",
+      "name": "House of CB",
+      "domain": "www.houseofcb.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 404
+    },
+    {
+      "key": "j-crew",
+      "name": "J.Crew",
+      "domain": "www.jcrew.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 404
+    },
+    {
+      "key": "jacquemus",
+      "name": "Jacquemus",
+      "domain": "www.jacquemus.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 403
+    },
+    {
+      "key": "kate-spade",
+      "name": "kate spade new york",
+      "domain": "www.katespade.com",
+      "category": "bags",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 403
+    },
+    {
+      "key": "kendra-scott",
+      "name": "Kendra Scott",
+      "domain": "www.kendrascott.com",
+      "category": "jewelry",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 200
+    },
+    {
+      "key": "lululemon",
+      "name": "lululemon",
+      "domain": "www.lululemon.com",
+      "category": "activewear",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 503
+    },
+    {
+      "key": "lulus",
+      "name": "Lulus",
+      "domain": "www.lulus.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 404
+    },
+    {
+      "key": "macys",
+      "name": "Macy's",
+      "domain": "www.macys.com",
+      "category": "department",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 403
+    },
+    {
+      "key": "madewell",
+      "name": "Madewell",
+      "domain": "www.madewell.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 404
+    },
+    {
+      "key": "mango",
+      "name": "Mango",
+      "domain": "www.mango.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 403
+    },
+    {
+      "key": "michael-kors",
+      "name": "Michael Kors",
+      "domain": "www.michaelkors.com",
+      "category": "bags",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 404
+    },
+    {
+      "key": "nanushka",
+      "name": "Nanushka",
+      "domain": "www.nanushka.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 404
+    },
+    {
+      "key": "nasty-gal",
+      "name": "Nasty Gal",
+      "domain": "www.nastygal.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 200
+    },
+    {
+      "key": "net-a-porter",
+      "name": "NET-A-PORTER",
+      "domain": "www.net-a-porter.com",
+      "category": "multi-brand",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 403
+    },
+    {
+      "key": "new-balance",
+      "name": "New Balance",
+      "domain": "www.newbalance.com",
+      "category": "shoes",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 403
+    },
+    {
+      "key": "nike",
+      "name": "Nike",
+      "domain": "www.nike.com",
+      "category": "shoes",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 404
+    },
+    {
+      "key": "nordstrom",
+      "name": "Nordstrom",
+      "domain": "www.nordstrom.com",
+      "category": "department",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 404
+    },
+    {
+      "key": "oh-polly",
+      "name": "Oh Polly",
+      "domain": "www.oh-polly.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 0
+    },
+    {
+      "key": "ouai",
+      "name": "OUAI",
+      "domain": "www.ouai.com",
+      "category": "beauty",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 0
+    },
+    {
+      "key": "pact",
+      "name": "Pact",
+      "domain": "www.wearpact.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 0
+    },
+    {
+      "key": "parade",
+      "name": "Parade",
+      "domain": "www.parade.com",
+      "category": "intimates",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 403
+    },
+    {
+      "key": "prettylittlething",
+      "name": "PrettyLittleThing",
+      "domain": "www.prettylittlething.us",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 404
+    },
+    {
+      "key": "princess-polly",
+      "name": "Princess Polly",
+      "domain": "www.princesspolly.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 404
+    },
+    {
+      "key": "quince",
+      "name": "Quince",
+      "domain": "www.quince.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 404
+    },
+    {
+      "key": "rag-and-bone",
+      "name": "rag & bone",
+      "domain": "www.rag-bone.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 404
+    },
+    {
+      "key": "reformation",
+      "name": "Reformation",
+      "domain": "www.thereformation.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 404
+    },
+    {
+      "key": "revolve",
+      "name": "Revolve",
+      "domain": "www.revolve.com",
+      "category": "multi-brand",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 200
+    },
+    {
+      "key": "saks",
+      "name": "Saks Fifth Avenue",
+      "domain": "www.saksfifthavenue.com",
+      "category": "department",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 403
+    },
+    {
+      "key": "sam-edelman",
+      "name": "Sam Edelman",
+      "domain": "www.samedelman.com",
+      "category": "shoes",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 404
+    },
+    {
+      "key": "self-portrait",
+      "name": "Self-Portrait",
+      "domain": "www.selfportrait-studio.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 404
+    },
+    {
+      "key": "senreve",
+      "name": "Senreve",
+      "domain": "www.senreve.com",
+      "category": "bags",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 503
+    },
+    {
+      "key": "sephora",
+      "name": "Sephora",
+      "domain": "www.sephora.com",
+      "category": "beauty",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 403
+    },
+    {
+      "key": "set-active",
+      "name": "SET Active",
+      "domain": "www.setactive.com",
+      "category": "activewear",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 200
+    },
+    {
+      "key": "shein",
+      "name": "SHEIN",
+      "domain": "www.shein.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 404
+    },
+    {
+      "key": "shopbop",
+      "name": "Shopbop",
+      "domain": "www.shopbop.com",
+      "category": "multi-brand",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 404
+    },
+    {
+      "key": "sorel",
+      "name": "Sorel",
+      "domain": "www.sorel.com",
+      "category": "shoes",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 404
+    },
+    {
+      "key": "ssense",
+      "name": "SSENSE",
+      "domain": "www.ssense.com",
+      "category": "multi-brand",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 404
+    },
+    {
+      "key": "sunfere",
+      "name": "Sunfere",
+      "domain": "www.sunfere.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 403
+    },
+    {
+      "key": "target",
+      "name": "Target",
+      "domain": "www.target.com",
+      "category": "general",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 404
+    },
+    {
+      "key": "theory",
+      "name": "Theory",
+      "domain": "www.theory.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 410
+    },
+    {
+      "key": "tory-burch",
+      "name": "Tory Burch",
+      "domain": "www.toryburch.com",
+      "category": "bags",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 404
+    },
+    {
+      "key": "ugg",
+      "name": "UGG",
+      "domain": "www.ugg.com",
+      "category": "shoes",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 0
+    },
+    {
+      "key": "ulta",
+      "name": "Ulta Beauty",
+      "domain": "www.ulta.com",
+      "category": "beauty",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 404
+    },
+    {
+      "key": "uniqlo",
+      "name": "Uniqlo",
+      "domain": "www.uniqlo.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 403
+    },
+    {
+      "key": "urban-outfitters",
+      "name": "Urban Outfitters",
+      "domain": "www.urbanoutfitters.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 403
+    },
+    {
+      "key": "vince",
+      "name": "Vince",
+      "domain": "www.vince.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 404
+    },
+    {
+      "key": "vivaia",
+      "name": "VIVAIA",
+      "domain": "www.vivaia.com",
+      "category": "shoes",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 403
+    },
+    {
+      "key": "vuori",
+      "name": "Vuori",
+      "domain": "vuoriclothing.com",
+      "category": "activewear",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 404
+    },
+    {
+      "key": "walmart",
+      "name": "Walmart",
+      "domain": "www.walmart.com",
+      "category": "general",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 404
+    },
+    {
+      "key": "zara",
+      "name": "Zara",
+      "domain": "www.zara.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 403
+    },
+    {
+      "key": "zimmermann",
+      "name": "Zimmermann",
+      "domain": "www.zimmermann.com",
+      "category": "apparel",
+      "checkedAt": "2026-11-02",
+      "protocol": null,
+      "httpStatus": 404
+    }
+  ]
+}
