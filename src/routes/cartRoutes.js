@@ -18,6 +18,11 @@ router.use(authMiddleware);
 // Add single item to cart
 router.post('/items', CartController.addItem);
 
+// Partner stores reached through agent bridges (UCP): add to cart, then
+// check out at each store (the shopper pays on the store's own page)
+router.post('/bridge-items', CartController.addBridgeItem);
+router.post('/bridge-checkout', CartController.startBridgeCheckout);
+
 // Add multiple items to cart
 router.post('/items/batch', CartController.addItems);
 

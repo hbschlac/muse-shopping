@@ -57,3 +57,47 @@ export async function removeFromCart(itemId: string): Promise<void> {
 export async function clearCart(): Promise<void> {
   await api.delete('/cart', { requiresAuth: true });
 }
+
+/**
+ * Add a partner-store product (reached through an agent bridge) to the cart.
+ * The store prices it live; variantId is needed when it has sizes or colors.
+ */
+export async function addBridgeItemToCart(input: {
+  partnerKey: string;
+  productId: string;
+  variantId?: string;
+  quantity?: number;
+}): Promise<CartItem> {
+  const response: any = await api.post('/cart/bridge-items', input, { requiresAuth: true });
+  return response.data || response;
+}
+
+export interface BridgeStoreCheckout {
+  partnerKey: string;
+  storeId: number;
+  storeName: string;
+  itemCount: number;
+  checkout: {
+    id: string | null;
+    status: string | null;
+    currency: string;
+    totals: Record<string, { cents: number; label: string }>;
+    continueUrl: string | null;
+  };
+}
+
+/**
+ * Build a checkout at each partner store in the cart. The shopper pays on the
+ * store's own page (continueUrl); Muse does not charge for these items.
+ */
+export async function startBridgeCheckout(partnerKeys?: string[]): Promise<{
+  stores: BridgeStoreCheckout[];
+  errors: { partnerKey: string; storeName: string; message: string }[];
+}> {
+  const response: any = await api.post(
+    '/cart/bridge-checkout',
+    partnerKeys ? { partnerKeys } : {},
+    { requiresAuth: true }
+  );
+  return response.data || response;
+}

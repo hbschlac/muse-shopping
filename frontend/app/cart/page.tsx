@@ -5,7 +5,13 @@ import { Trash2, Plus, Minus, ShoppingBag } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import BottomNav from '@/components/BottomNav';
 import PageHeader from '@/components/PageHeader';
-import { getCart, updateCartItem, removeFromCart } from '@/lib/api/cart';
+import { getCart, updateCartItem, removeFromCart, startBridgeCheckout } from '@/lib/api/cart';
+
+// Partner stores reached through agent bridges (UCP). Their items are paid for
+// on the store's own checkout page, not in Muse's checkout.
+const BRIDGE_PREFIX = 'bridge-';
+const isBridgeStore = (store: { storeSlug?: string; integrationType?: string }) =>
+  (store.storeSlug || '').startsWith(BRIDGE_PREFIX) || ['ucp', 'acp', 'bridge'].includes(store.integrationType || '');
 
 interface CartItem {
   id: number;
@@ -37,6 +43,8 @@ export default function CartPage() {
   const [cartStores, setCartStores] = useState<CartStore[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [bridgeBusy, setBridgeBusy] = useState<string | null>(null);
+  const [bridgeError, setBridgeError] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ storeId: number; itemId: number; itemName: string } | null>(null);
 
   useEffect(() => {
@@ -54,6 +62,32 @@ export default function CartPage() {
       setError(err.message || 'Failed to load cart');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const checkoutAtStore = async (store: CartStore) => {
+    const partnerKey = store.storeSlug.slice(BRIDGE_PREFIX.length);
+    // Open the tab synchronously so pop-up blockers allow it, then point it at the store.
+    const tab = window.open('', '_blank');
+    try {
+      setBridgeBusy(partnerKey);
+      setBridgeError(null);
+      const result = await startBridgeCheckout([partnerKey]);
+      const ready = result.stores.find(s => s.partnerKey === partnerKey);
+      const url = ready?.checkout.continueUrl;
+      if (!url) {
+        tab?.close();
+        setBridgeError(result.errors[0]?.message || `${store.storeName} could not start checkout. Try again.`);
+        return;
+      }
+      if (tab) tab.location.href = url;
+      else window.location.href = url;
+      loadCart();
+    } catch (err: any) {
+      tab?.close();
+      setBridgeError(err.message || `${store.storeName} could not start checkout. Try again.`);
+    } finally {
+      setBridgeBusy(null);
     }
   };
 
@@ -137,8 +171,12 @@ export default function CartPage() {
     return store.subtotalCents / 100;
   };
 
+  // Muse's own checkout covers only the stores it checks out itself; partner
+  // stores are paid on their own pages.
+  const museStores = cartStores.filter(s => !isBridgeStore(s));
+
   const calculateGrandTotal = () => {
-    return cartStores.reduce((sum, store) => sum + store.subtotalCents, 0) / 100;
+    return museStores.reduce((sum, store) => sum + store.subtotalCents, 0) / 100;
   };
 
   const totalItems = cartStores.reduce((sum, store) => sum + store.itemCount, 0);
@@ -285,11 +323,35 @@ export default function CartPage() {
                 ${calculateStoreTotal(store).toFixed(2)}
               </span>
             </div>
+
+            {isBridgeStore(store) && (
+              <div className="px-4 pb-4 bg-gray-50">
+                <button
+                  onClick={() => checkoutAtStore(store)}
+                  disabled={bridgeBusy !== null}
+                  className="w-full h-11 bg-gray-900 text-white text-sm font-semibold rounded-[12px] transition-opacity disabled:opacity-60"
+                >
+                  {bridgeBusy === store.storeSlug.slice(BRIDGE_PREFIX.length)
+                    ? 'Opening checkout…'
+                    : `Check out at ${store.storeName}`}
+                </button>
+                <p className="text-xs text-gray-600 text-center mt-2">
+                  You pay {store.storeName} directly. Shipping and tax are added at the store.
+                </p>
+              </div>
+            )}
           </div>
         ))}
       </div>
 
-      {/* Checkout Bar */}
+      {bridgeError && (
+        <div className="px-4 pt-4">
+          <p className="text-sm text-[var(--color-coral)] text-center">{bridgeError}</p>
+        </div>
+      )}
+
+      {/* Checkout Bar: only for stores Muse checks out itself */}
+      {museStores.length > 0 && (
       <div className="fixed bottom-[72px] left-0 right-0 bg-white border-t border-gray-200 p-4 z-20">
         <div className="max-w-screen-lg mx-auto">
           <div className="flex items-center justify-between mb-3">
@@ -307,10 +369,11 @@ export default function CartPage() {
             </button>
           </div>
           <p className="text-xs text-gray-600 text-center">
-            You'll complete {cartStores.length} separate {cartStores.length === 1 ? 'order' : 'orders'} from {cartStores.length} {cartStores.length === 1 ? 'store' : 'stores'}
+            You'll complete {museStores.length} separate {museStores.length === 1 ? 'order' : 'orders'} from {museStores.length} {museStores.length === 1 ? 'store' : 'stores'}
           </p>
         </div>
       </div>
+      )}
 
       <BottomNav />
 

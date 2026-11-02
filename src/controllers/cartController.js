@@ -4,6 +4,7 @@
  */
 
 const CartService = require('../services/cartService');
+const BridgeCartService = require('../services/bridgeCartService');
 const StyleProfileService = require('../services/styleProfileService');
 const { successResponse, errorResponse } = require('../utils/responseFormatter');
 const logger = require('../utils/logger');
@@ -276,6 +277,44 @@ class CartController {
       ));
     } catch (error) {
       logger.error('Error in checkItem controller:', error);
+      next(error);
+    }
+  }
+
+  /**
+   * Add a partner-store product (agent bridge) to cart, priced live by the store
+   * POST /api/v1/cart/bridge-items
+   * Body: { partnerKey, productId, variantId?, quantity? }
+   */
+  static async addBridgeItem(req, res, next) {
+    try {
+      const { partnerKey, productId, variantId, quantity } = req.body || {};
+      const cartItem = await BridgeCartService.addItem(req.userId, {
+        partnerKey,
+        productId,
+        variantId,
+        quantity: quantity ? Number.parseInt(quantity, 10) : 1,
+      });
+      return res.status(201).json(successResponse(cartItem, 'Item added to cart'));
+    } catch (error) {
+      logger.error('Error in addBridgeItem controller:', error);
+      next(error);
+    }
+  }
+
+  /**
+   * Build a checkout at each partner store in the cart; returns each store's
+   * continue_url. Muse does not charge for these items.
+   * POST /api/v1/cart/bridge-checkout
+   * Body: { email?, partnerKeys? }
+   */
+  static async startBridgeCheckout(req, res, next) {
+    try {
+      const { email, partnerKeys } = req.body || {};
+      const result = await BridgeCartService.startCheckout(req.userId, { email, partnerKeys });
+      return res.json(successResponse(result, 'Store checkouts ready'));
+    } catch (error) {
+      logger.error('Error in startBridgeCheckout controller:', error);
       next(error);
     }
   }
