@@ -10,6 +10,9 @@ router.get('/demo', NewsfeedController.getDemoFeed);
 // Complete feed (stories + modules) - optional auth for demo/public access
 router.get('/', optionalAuthMiddleware, NewsfeedController.getFeed);
 
+// New arrivals per store (Nordstrom, Nordstrom Rack, TJ Maxx) - public, not personalized
+router.get('/new-arrivals', NewsfeedController.getNewArrivals);
+
 // Stories endpoints - require auth
 router.get('/stories', authMiddleware, NewsfeedController.getStories);
 router.get('/stories/:storyId', authMiddleware, NewsfeedController.getStoryDetails);
