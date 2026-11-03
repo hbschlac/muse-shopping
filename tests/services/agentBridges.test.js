@@ -191,7 +191,7 @@ describe('AgentBridges registry and search', () => {
     const result = await AgentBridges.search('dress', { partners: ['allbirds', 'skims'], factories });
 
     expect(result.searched).toEqual(['allbirds', 'skims']);
-    expect(result.products).toEqual([{ partnerKey: 'allbirds', title: 'x' }]);
+    expect(result.products).toEqual([expect.objectContaining({ partnerKey: 'allbirds', title: 'x', tags: expect.any(Object) })]);
     expect(result.errors).toEqual([{ partnerKey: 'skims', message: 'store down' }]);
   });
 

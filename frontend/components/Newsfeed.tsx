@@ -10,6 +10,7 @@ import PageHeader from '@/components/PageHeader';
 import TabbedRecommendationModule from '@/components/TabbedRecommendationModule';
 import InstagramBrandModule from '@/components/InstagramBrandModule';
 import BrandLogo from '@/components/BrandLogo';
+import NewArrivals from '@/components/NewArrivals';
 import type { Product, BrandModule as BrandModuleType } from '@/lib/types/api';
 import { CHAT_ENABLED } from '@/lib/features';
 
@@ -461,6 +462,9 @@ export default function Newsfeed() {
           </div>
         </div>
       )}
+
+      {/* New arrivals by store, newest first */}
+      <NewArrivals />
 
       {/* Loading State */}
       {loading && (

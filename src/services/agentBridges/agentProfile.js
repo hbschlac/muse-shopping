@@ -32,6 +32,18 @@ function capability(specPath, schemaName) {
   }];
 }
 
+// Extensions are only active when both sides declare them. Without
+// `fulfillment`, a store ignores the shipping address Muse sends and keeps
+// asking the shopper for it (seen live at SKIMS, Nov 3 2026).
+function extension(name, specPath, schemaName) {
+  return [{
+    version: UCP_VERSION,
+    spec: `${SPEC_BASE}/specification/shopping/extensions/${specPath}/`,
+    schema: `${SPEC_BASE}/schemas/shopping/${schemaName}.json`,
+    extends: ['dev.ucp.shopping.checkout', 'dev.ucp.shopping.cart'],
+  }];
+}
+
 function parsePublicKey() {
   const raw = process.env.UCP_SIGNING_PUBLIC_JWK;
   if (!raw) return [];
@@ -66,6 +78,8 @@ function buildAgentProfile() {
         'dev.ucp.shopping.catalog.lookup': capability('shopping/catalog', 'shopping/catalog_lookup'),
         'dev.ucp.shopping.cart': capability('shopping/cart', 'shopping/cart'),
         'dev.ucp.shopping.checkout': capability('shopping/checkout', 'shopping/checkout'),
+        // Lets Muse fill in the shopper's shipping address and pick a delivery option.
+        'dev.ucp.shopping.fulfillment': extension('fulfillment', 'fulfillment', 'fulfillment'),
       },
       // Muse does not hold or forward payment credentials. Checkout is handed
       // back to the store (continue_url) until a delegated-payment handler

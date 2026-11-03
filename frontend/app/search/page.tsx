@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Search as SearchIcon, SlidersHorizontal } from 'lucide-react';
-import ProductCard from '@/components/ProductCard';
 import BottomNav from '@/components/BottomNav';
 import PageHeader from '@/components/PageHeader';
 
@@ -13,19 +13,45 @@ const recentSearches = [
   'vintage denim',
 ];
 
-const products = [
-  { id: '1', image: '/placeholder-1.jpg', brand: 'Reformation', price: 178 },
-  { id: '2', image: '/placeholder-2.jpg', brand: 'Everlane', price: 98 },
-  { id: '3', image: '/placeholder-3.jpg', brand: 'Madewell', price: 128 },
-  { id: '4', image: '/placeholder-4.jpg', brand: 'Free People', price: 88 },
-  { id: '5', image: '/placeholder-5.jpg', brand: 'Veja', price: 150 },
-  { id: '6', image: '/placeholder-6.jpg', brand: 'Girlfriend Collective', price: 68 },
-];
+import {
+  searchPartnerStores,
+  partnerProductHref,
+  formatMoney,
+  type BridgeProduct,
+} from '@/lib/api/bridges';
 
 export default function SearchPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+  // Results come live from partner stores: price and stock are what the store says now.
+  const [products, setProducts] = useState<BridgeProduct[]>([]);
+  const [searchError, setSearchError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (q.length < 2) {
+      setProducts([]);
+      return;
+    }
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      try {
+        setIsSearching(true);
+        setSearchError(null);
+        const result = await searchPartnerStores(q);
+        if (!cancelled) setProducts(result.products || []);
+      } catch (err: any) {
+        if (!cancelled) setSearchError(err.message || 'Search failed');
+      } finally {
+        if (!cancelled) setIsSearching(false);
+      }
+    }, 400);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [searchQuery]);
 
   return (
     <div className="min-h-screen bg-[var(--color-ecru)] pb-24">
@@ -77,14 +103,39 @@ export default function SearchPage() {
         <div className="px-4 pt-4">
           <div className="mb-4">
             <p className="text-sm text-gray-600">
-              {products.length} {products.length === 1 ? 'result' : 'results'} for "{searchQuery}"
+              {isSearching
+                ? `Checking stores for "${searchQuery}"…`
+                : `${products.length} ${products.length === 1 ? 'result' : 'results'} for "${searchQuery}" · live prices and stock`}
             </p>
+            {searchError && <p className="text-sm text-[var(--color-coral)] mt-1">{searchError}</p>}
           </div>
-          {products.length > 0 ? (
+          {isSearching && products.length === 0 ? null : products.length > 0 ? (
             <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
-              {products.map((product) => (
-                <ProductCard key={product.id} {...product} />
-              ))}
+              {products.map((product) => {
+                const onSale = product.compareAtPrice && product.price && product.compareAtPrice.cents > product.price.cents;
+                const sizesLeft = product.variants.filter(v => v.available).length;
+                return (
+                  <Link key={`${product.partnerKey}:${product.id}`} href={partnerProductHref(product)} className="block">
+                    <div className="relative aspect-[3/4] bg-gray-100 rounded-[16px] overflow-hidden mb-2">
+                      {product.imageUrl && (
+                        <img src={product.imageUrl} alt={product.title} className="w-full h-full object-cover" />
+                      )}
+                      {product.available === false && (
+                        <span className="absolute top-2 left-2 px-2 py-1 rounded-full bg-white/90 text-[11px] font-medium text-gray-900">Sold out</span>
+                      )}
+                    </div>
+                    <p className="text-xs font-medium text-gray-600">{product.brand}</p>
+                    <p className="text-sm text-gray-900 line-clamp-1">{product.title}</p>
+                    <p className="text-sm font-semibold text-gray-900">
+                      {formatMoney(product.price)}
+                      {onSale && <span className="ml-1 text-xs font-normal text-gray-500 line-through">{formatMoney(product.compareAtPrice)}</span>}
+                    </p>
+                    {product.available !== false && product.variants.length > 1 && sizesLeft > 0 && sizesLeft <= 3 && (
+                      <p className="text-[11px] text-[var(--color-coral)]">Only {sizesLeft} {sizesLeft === 1 ? 'option' : 'options'} left</p>
+                    )}
+                  </Link>
+                );
+              })}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-20 px-6 text-center">

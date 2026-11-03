@@ -70,10 +70,18 @@ export async function login(data: LoginData): Promise<AuthResponse> {
  * Logout user
  */
 export async function logout(): Promise<void> {
+  const refreshTokenVal =
+    typeof window !== 'undefined' ? localStorage.getItem('refresh_token') : null;
   try {
-    await api.post('/auth/logout', {}, { requiresAuth: true });
+    // Backend requires { refresh_token } so it can revoke it server-side.
+    if (refreshTokenVal) {
+      await api.post('/auth/logout', { refresh_token: refreshTokenVal });
+    }
   } finally {
     clearAuthToken();
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('user');
+    }
   }
 }
 
