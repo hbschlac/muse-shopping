@@ -23,6 +23,10 @@
       "dest": "/api/index.js"
     },
     {
+      "src": "/.well-known/http-message-signatures-directory",
+      "dest": "/api/index.js"
+    },
+    {
       "src": "/(kya\\.md|\\.well-known/kya)",
       "dest": "/api/index.js"
     },
