@@ -35,10 +35,11 @@ app.use('/public', express.static(path.join(__dirname, '../public')));
 
 // UCP agent profile: stores fetch this before answering Muse's agent calls.
 // See src/services/agentBridges/agentProfile.js.
-app.get('/.well-known/ucp', (req, res) => {
-  const { buildAgentProfile } = require('../src/services/agentBridges/agentProfile');
+app.get('/.well-known/ucp', async (req, res) => {
+  const { buildAgentProfileFromSigner } = require('../src/services/agentBridges/agentProfile');
+  const profile = await buildAgentProfileFromSigner();
   res.set('Cache-Control', 'public, max-age=3600');
-  res.type('application/json').send(JSON.stringify(buildAgentProfile()));
+  res.type('application/json').send(JSON.stringify(profile));
 });
 
 // Know Your Agent profile for card networks and partner stores (docs/KYA.md).

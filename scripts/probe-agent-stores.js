@@ -59,6 +59,11 @@ async function probe(candidate) {
     entry.canCart = caps.includes('dev.ucp.shopping.cart');
     entry.canCheckout = caps.includes('dev.ucp.shopping.checkout');
     entry.paymentHandlers = Object.keys(ucp.payment_handlers || {});
+    // Stores that take Stripe shared payment tokens name their Stripe profile here.
+    const stripeHandler = ((ucp.payment_handlers || {})['com.stripe.payments'] || [])[0];
+    if (stripeHandler && stripeHandler.config && stripeHandler.config.business_profile) {
+      entry.stripeBusinessProfile = stripeHandler.config.business_profile;
+    }
   } else if (acpRes.json) {
     entry.protocol = 'acp';
     entry.endpoint = acpRes.json.base_url || acpRes.json.endpoint || null;

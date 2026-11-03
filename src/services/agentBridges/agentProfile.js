@@ -9,10 +9,18 @@
  *
  * Spec: https://ucp.dev/2026-08-25/specification/overview/
  *
- * Signing keys: the profile carries the PUBLIC half of an EC P-256 key (JWK) in
+ * Signing keys: the profile carries the PUBLIC half of Muse's signing key (JWK) in
  * `keys`. Set UCP_SIGNING_PUBLIC_JWK to that JSON. Stores use it to verify RFC 9421
  * request signatures (the "Signed" tier) and to check webhooks. The private half
  * never goes in this file or the repo.
+ *
+ * UCP accepts EC P-256/P-384 and OKP Ed25519 keys, so the same Ed25519 key Muse uses
+ * for Web Bot Auth / Visa TAP (held in Cloud KMS) can sign UCP calls too. One key,
+ * one signer, one place to rotate.
+ *
+ * Payment handlers: empty unless a delegated-payment rail is switched on. Setting
+ * STRIPE_AGENT_PROFILE_ID declares the Stripe Payments handler (com.stripe.payments),
+ * which lets Muse send a Stripe shared payment token (SPT) to stores that accept it.
  */
 
 const UCP_VERSION = '2026-08-25';
@@ -32,17 +40,91 @@ function capability(specPath, schemaName) {
   }];
 }
 
+// JWK members that carry private key material (RFC 7517/7518). None may be published.
+const PRIVATE_JWK_MEMBERS = ['d', 'p', 'q', 'dp', 'dq', 'qi', 'k', 'oth'];
+
+// UCP derives the algorithm from kty/crv. Anything else is refused rather than guessed.
+function algorithmFor(jwk) {
+  if (jwk.kty === 'OKP' && jwk.crv === 'Ed25519') return 'EdDSA';
+  if (jwk.kty === 'EC' && jwk.crv === 'P-256') return 'ES256';
+  if (jwk.kty === 'EC' && jwk.crv === 'P-384') return 'ES384';
+  return null;
+}
+
+// Public half only, with the algorithm UCP derives from kty/crv. null if unusable.
+function toPublishedKey(jwk) {
+  if (!jwk || typeof jwk !== 'object') return null;
+  const alg = algorithmFor(jwk);
+  if (!alg) return null;
+  // Never publish private key material, even if it was pasted by mistake.
+  const publicOnly = { ...jwk };
+  for (const member of PRIVATE_JWK_MEMBERS) delete publicOnly[member];
+  return { use: 'sig', kid: publicOnly.kid || 'muse_2026', ...publicOnly, alg };
+}
+
+// Fallback only: a hand-copied JWK can drift from KMS after a rotation. Prefer
+// the signer (see buildAgentProfileFromSigner). If you do use this, update it in
+// the same step as AGENT_SIGNING_KMS_KEY_VERSION.
 function parsePublicKey() {
   const raw = process.env.UCP_SIGNING_PUBLIC_JWK;
   if (!raw) return [];
   try {
-    const jwk = JSON.parse(raw);
-    // Never publish private key material, even if it was pasted by mistake.
-    const { d, ...publicOnly } = jwk;
-    return [{ use: 'sig', alg: 'ES256', kid: publicOnly.kid || 'muse_2026', ...publicOnly }];
+    const key = toPublishedKey(JSON.parse(raw));
+    return key ? [key] : [];
   } catch (err) {
     return [];
   }
+}
+
+function loadSigning() {
+  try {
+    return require('../agentSigning');
+  } catch (err) {
+    return null;
+  }
+}
+
+/**
+ * The profile with `keys` read from the shared agent signer (Cloud KMS), so the
+ * UCP profile, the Web Bot Auth directory and Visa TAP always publish the same
+ * key versions. Falls back to UCP_SIGNING_PUBLIC_JWK, then to no keys (unsigned),
+ * if the signer is not deployed or not configured.
+ */
+async function buildAgentProfileFromSigner(signing = loadSigning()) {
+  const profile = buildAgentProfile();
+  if (!signing || typeof signing.publicKeys !== 'function') return profile;
+  try {
+    const keys = (await signing.publicKeys()).map(toPublishedKey).filter(Boolean);
+    if (keys.length) profile.keys = keys;
+  } catch (err) {
+    // Signer off or misconfigured: keep the fallback keys rather than fail the profile.
+  }
+  return profile;
+}
+
+const STRIPE_HANDLER_VERSION = '2026-06-25';
+
+/**
+ * Delegated-payment handlers Muse can use as a UCP platform.
+ * Only rails that are actually configured are declared.
+ */
+function buildPaymentHandlers() {
+  const handlers = {};
+  const stripeProfile = (process.env.STRIPE_AGENT_PROFILE_ID || '').trim();
+  if (stripeProfile) {
+    handlers['com.stripe.payments'] = [{
+      id: 'stripe_payments',
+      version: STRIPE_HANDLER_VERSION,
+      spec: 'https://docs.stripe.com/agentic-commerce/protocols/ucp/stripe-payments-handler',
+      schema: `https://ucp.stripe.com/payments/${STRIPE_HANDLER_VERSION}/schema.json`,
+      available_instruments: [{ type: 'card' }],
+      config: {
+        environment: process.env.STRIPE_AGENT_ENV === 'livemode' ? 'livemode' : 'testmode',
+        business_profile: stripeProfile,
+      },
+    }];
+  }
+  return handlers;
 }
 
 /**
@@ -67,10 +149,10 @@ function buildAgentProfile() {
         'dev.ucp.shopping.cart': capability('shopping/cart', 'shopping/cart'),
         'dev.ucp.shopping.checkout': capability('shopping/checkout', 'shopping/checkout'),
       },
-      // Muse does not hold or forward payment credentials. Checkout is handed
-      // back to the store (continue_url) until a delegated-payment handler
-      // (Shop Pay, Stripe shared payment tokens) is approved for Muse.
-      payment_handlers: {},
+      // Muse does not hold card numbers. Until a delegated-payment rail is
+      // switched on, this is empty and checkout is handed back to the store
+      // (continue_url). See buildPaymentHandlers().
+      payment_handlers: buildPaymentHandlers(),
     },
     keys: parsePublicKey(),
   };
@@ -78,6 +160,9 @@ function buildAgentProfile() {
 
 module.exports = {
   UCP_VERSION,
+  STRIPE_HANDLER_VERSION,
+  buildPaymentHandlers,
   getProfileUrl,
   buildAgentProfile,
+  buildAgentProfileFromSigner,
 };
