@@ -1,0 +1,35 @@
+name: Agent key watch
+
+# Checks the live Web Bot Auth / Visa TAP key directory from the outside:
+# public keys only, every key signs, signatures short-lived, no stale keys.
+# A failure emails the repo owner (GitHub's default for failed scheduled runs).
+on:
+  schedule:
+    - cron: '17 15 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'src/services/agentSigning/**'
+      - 'api/index.js'
+      - 'vercel.json'
+
+permissions:
+  contents: read
+
+jobs:
+  directory:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Wait for the production deploy
+        if: github.event_name == 'push'
+        run: sleep 120
+      - name: Check https://www.muse.shopping directory
+        env:
+          # Flip to 'true' once Cloud KMS is live, so a missing directory alerts.
+          REQUIRE_AGENT_DIRECTORY: ${{ vars.REQUIRE_AGENT_DIRECTORY || 'false' }}
+        run: node scripts/check-agent-directory.js https://www.muse.shopping

@@ -11,6 +11,7 @@
 
 const logger = require('../../utils/logger');
 const { getProfileUrl } = require('./agentProfile');
+const { bridgeSignatureHeaders } = require('../agentSigning');
 
 const DEFAULT_TIMEOUT_MS = 8000;
 const MANIFEST_TTL_MS = 6 * 60 * 60 * 1000;
@@ -41,9 +42,12 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = DEFAULT_TIMEOUT_M
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
+    // Web Bot Auth headers, signed through Cloud KMS. Empty unless
+    // AGENT_SIGN_BRIDGE_REQUESTS=true and the store is a registered partner.
+    const signed = await bridgeSignatureHeaders(url);
     return await fetch(url, {
       ...options,
-      headers: { 'User-Agent': USER_AGENT, ...(options.headers || {}) },
+      headers: { 'User-Agent': USER_AGENT, ...signed, ...(options.headers || {}) },
       signal: controller.signal,
     });
   } finally {

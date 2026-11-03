@@ -90,6 +90,25 @@ describe('getNewArrivals', () => {
   });
 });
 
+describe('schema setup', () => {
+  it('creates the table once per process, before the first read, and retries after a failure', async () => {
+    let svc;
+    jest.isolateModules(() => { svc = require('../../src/services/newArrivalsService'); });
+    pool.query.mockReset();
+    pool.query
+      .mockRejectedValueOnce(new Error('db down'))
+      .mockResolvedValue({ rows: [] });
+
+    await svc.getNewArrivals({ stores: ['tjmaxx'] });
+    await svc.getNewArrivals({ stores: ['tjmaxx'] });
+    await svc.getNewArrivals({ stores: ['tjmaxx'] });
+
+    const ddl = pool.query.mock.calls.filter(([sql]) => sql.includes('CREATE TABLE IF NOT EXISTS store_catalog_items'));
+    expect(ddl).toHaveLength(2); // failed once, succeeded once, then cached
+    expect(pool.query.mock.calls[0][0]).toContain('CREATE TABLE IF NOT EXISTS store_catalog_items');
+  });
+});
+
 describe('TJ Maxx tile parser', () => {
   it('reads brand, name, price and compare-at price from a tile', () => {
     const items = parseTiles([
