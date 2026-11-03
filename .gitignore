@@ -2,7 +2,21 @@
 node_modules/
 package-lock.json
 
-# Environment variables
+# Private keys and cloud credentials. Muse's agent key lives only in Cloud KMS;
+# nothing here should ever exist. See docs/security/AGENT_SIGNING_KEY.md.
+*.key
+*.p8
+*.p12
+*.pfx
+*private*.jwk
+*private*.jwk.json
+id_ed25519*
+id_rsa*
+service-account*.json
+gcp-key*.json
+
+# Environment variables (vercel env pull writes VERCEL_OIDC_TOKEN into these)
+.env.vercel
 .env
 .env.*
 .env.local
