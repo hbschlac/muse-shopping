@@ -87,6 +87,9 @@ cat > "$ALERT1" <<JSON
 JSON
 run gcloud alpha monitoring policies create --policy-from-file "$ALERT1" --project "$GCP_PROJECT_ID"
 
+# Volume alert is opt-in (VOLUME_ALERT=1): each alert condition may carry a
+# small monthly Cloud Monitoring charge. The unexpected-caller alert above is the one that matters.
+if [ "${VOLUME_ALERT:-0}" = 1 ]; then
 run gcloud logging metrics create agent_key_sign_count --project "$GCP_PROJECT_ID" \
   --description "Muse agent key signatures" \
   --log-filter "resource.type=\"cloudkms_cryptokeyversion\" AND protoPayload.methodName=\"AsymmetricSign\" AND protoPayload.resourceName:\"cryptoKeys/${KMS_KEY}/\""
@@ -105,6 +108,7 @@ cat > "$ALERT2" <<JSON
 }
 JSON
 run gcloud alpha monitoring policies create --policy-from-file "$ALERT2" --project "$GCP_PROJECT_ID"
+fi
 
 cat <<OUT
 
