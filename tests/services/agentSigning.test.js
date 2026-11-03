@@ -100,6 +100,46 @@ describe('signHttpRequest (dev signer)', () => {
     await expect(signing.signHttpRequest(args)).rejects.toMatchObject({ code });
   });
 
+  test('UCP request: covers method/authority/path/query/ucp-agent/body digest/idempotency-key and verifies', async () => {
+    const body = '{"jsonrpc":"2.0","id":1,"method":"tools/call"}';
+    const headers = { 'Content-Type': 'application/json', 'UCP-Agent': 'profile="https://www.muse.shopping/.well-known/ucp"', 'Idempotency-Key': 'abc-123' };
+    const h = await signing.signUcpRequest({ url: 'https://agolde.myshopify.com/api/ucp/mcp?x=1', body, headers });
+    const digest = `sha-256=:${crypto.createHash('sha256').update(body).digest('base64')}:`;
+    expect(h['Content-Digest']).toBe(digest);
+    const [jwk] = await signing.publicKeys();
+    expect(jwk.d).toBeUndefined();
+    const r = verifySignature({
+      signatureInput: h['Signature-Input'],
+      signature: h.Signature,
+      values: {
+        '"@method"': 'POST',
+        '"@authority"': 'agolde.myshopify.com',
+        '"@path"': '/api/ucp/mcp',
+        '"@query"': '?x=1',
+        '"ucp-agent"': headers['UCP-Agent'],
+        '"content-digest"': digest,
+        '"content-type"': 'application/json',
+        '"idempotency-key"': 'abc-123',
+        '"signature-agent"': h['Signature-Agent'],
+      },
+      jwk,
+    });
+    expect(r.ok).toBe(true);
+    expect(r.components).toEqual(['"@method"', '"@authority"', '"@path"', '"@query"', '"ucp-agent"', '"content-digest"', '"content-type"', '"idempotency-key"', '"signature-agent"']);
+    expect(r.params.keyid).toBe(jwk.kid);
+  });
+
+  test('UCP request without body or query covers only the required components', async () => {
+    const h = await signing.signUcpRequest({ method: 'GET', url: 'https://www.allbirds.com/.well-known/ucp' });
+    expect(h['Signature-Input']).toMatch(/^sig1=\("@method" "@authority" "@path" "signature-agent"\)/);
+    expect(h['Content-Digest']).toBeUndefined();
+  });
+
+  test('a covered header that is not supplied is refused', async () => {
+    await expect(signing.signHttpRequest({ url: 'https://www.allbirds.com/', tag: 'web-bot-auth', components: ['@authority', 'ucp-agent'] }))
+      .rejects.toMatchObject({ code: 'MISSING_HEADER' });
+  });
+
   test('extra hosts can be allowed explicitly, including wildcards', () => {
     expect(hostAllowed('api.visa.com', {})).toBe(false);
     expect(hostAllowed('api.visa.com', { AGENT_SIGNING_ALLOWED_HOSTS: '*.visa.com' })).toBe(true);

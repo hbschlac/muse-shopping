@@ -27,7 +27,10 @@ src/services/agentSigning  →  Signature-Input / Signature / Signature-Agent he
 ```
 
 - Code: `src/services/agentSigning/`. `signHttpRequest()` is the only way to
-  get a signature. There is no "sign these bytes" export.
+  get a signature (`signUcpRequest()` wraps it for UCP: method, authority, path,
+  query, UCP-Agent, Content-Digest of the exact body, Content-Type,
+  Idempotency-Key, in the Web Bot Auth shape). `publicKeys()` lists the public
+  JWKs for the UCP profile. There is no "sign these bytes" export.
 - Directory: `https://www.muse.shopping/.well-known/http-message-signatures-directory`
   serves the public keys, read from KMS at runtime and signed by each key.
 - Env vars are identifiers, not secrets:

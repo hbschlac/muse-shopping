@@ -30,7 +30,12 @@ const DEFAULT_SIGNATURE_AGENT = 'https://www.muse.shopping';
 const DIRECTORY_PATH = '/.well-known/http-message-signatures-directory';
 const DIRECTORY_CONTENT_TYPE = 'application/http-message-signatures-directory+json';
 const DIRECTORY_AUTHORITIES = new Set(['www.muse.shopping', 'muse.shopping']);
-const ALLOWED_COMPONENTS = new Set(['@authority', '@path', '@method', '@target-uri', 'signature-agent']);
+const ALLOWED_COMPONENTS = new Set([
+  '@authority', '@path', '@method', '@target-uri', '@query',
+  'signature-agent', 'content-digest', 'content-type', 'ucp-agent', 'idempotency-key',
+]);
+// Header components the caller supplies (signature-agent and content-digest are ours).
+const CALLER_HEADERS = new Set(['content-type', 'ucp-agent', 'idempotency-key']);
 const DEFAULT_COMPONENTS = {
   [TAGS.WEB_BOT_AUTH]: ['@authority', 'signature-agent'],
   [TAGS.TAP_BROWSE]: ['@authority', '@path'],
@@ -127,7 +132,7 @@ async function produce(entry, values, components, params, keyidOverride) {
  * Returns headers to add: { 'Signature-Input', 'Signature', ['Signature-Agent'] }.
  */
 async function signHttpRequest({
-  method = 'GET', url, tag, ttlSeconds, components, label = 'sig1', signatureAgent,
+  method = 'GET', url, tag, ttlSeconds, components, label = 'sig1', signatureAgent, body, headers: reqHeaders = {},
 } = {}) {
   const s = await init();
   if (![TAGS.WEB_BOT_AUTH, TAGS.TAP_BROWSE, TAGS.TAP_PAY].includes(tag)) {
@@ -157,8 +162,25 @@ async function signHttpRequest({
     '@path': target.pathname || '/',
     '@method': String(method).toUpperCase(),
     '@target-uri': target.href,
+    '@query': target.search || '?',
     'signature-agent': agentValue,
   };
+  const lowerHeaders = Object.fromEntries(Object.entries(reqHeaders || {}).map(([k, v]) => [k.toLowerCase(), v]));
+  for (const n of names) {
+    if (!CALLER_HEADERS.has(n)) continue;
+    const v = lowerHeaders[n];
+    if (v === undefined || v === null || String(v) === '') {
+      throw new AgentSigningError(`Covered header missing: ${n}`, 'MISSING_HEADER');
+    }
+    values[n] = String(v).trim();
+  }
+  let contentDigest;
+  if (names.includes('content-digest')) {
+    if (body === undefined || body === null) throw new AgentSigningError('content-digest needs the raw body', 'MISSING_BODY');
+    // Digest of the exact bytes sent; never re-serialize the body after signing.
+    contentDigest = `sha-256=:${crypto.createHash('sha256').update(Buffer.isBuffer(body) ? body : Buffer.from(String(body), 'utf8')).digest('base64')}:`;
+    values['content-digest'] = contentDigest;
+  }
   const created = Math.floor(Date.now() / 1000);
   const params = {
     created,
@@ -191,7 +213,40 @@ async function signHttpRequest({
     Signature: `${label}=:${signature}:`,
   };
   if (names.includes('signature-agent')) headers['Signature-Agent'] = agentValue;
+  if (contentDigest) headers['Content-Digest'] = contentDigest;
   return headers;
+}
+
+/**
+ * UCP request signature (ucp.dev signatures spec), in the Web Bot Auth shape so
+ * one signature serves both: @method @authority @path, plus @query when there
+ * is a query string, ucp-agent when that header is sent, content-digest and
+ * content-type when there is a body, idempotency-key when given.
+ * Pass the exact body bytes/string you will send and the headers you will send.
+ */
+async function signUcpRequest({ method = 'POST', url, body, headers = {}, ttlSeconds } = {}) {
+  const lower = Object.fromEntries(Object.entries(headers).map(([k, v]) => [k.toLowerCase(), v]));
+  const components = ['@method', '@authority', '@path'];
+  let hasQuery = false;
+  try { hasQuery = Boolean(new URL(url).search); } catch (e) { /* signHttpRequest reports BAD_URL */ }
+  if (hasQuery) components.push('@query');
+  if (lower['ucp-agent']) components.push('ucp-agent');
+  const hasBody = body !== undefined && body !== null && String(body).length > 0;
+  if (hasBody) components.push('content-digest', 'content-type');
+  if (lower['idempotency-key']) components.push('idempotency-key');
+  components.push('signature-agent');
+  return signHttpRequest({
+    method, url, tag: TAGS.WEB_BOT_AUTH, ttlSeconds, components, body: hasBody ? body : undefined, headers,
+  });
+}
+
+/** Public JWKs of every published key (active first), kid = RFC 7638 thumbprint. */
+async function publicKeys() {
+  const s = await init();
+  return s.signers.map(({ jwk, keyid }) => {
+    const { d, p, q, dp, dq, qi, ...pub } = jwk;
+    return { ...pub, kid: keyid };
+  });
 }
 
 // Bridge requests: Web Bot Auth headers, cached per host. The signature only
@@ -283,6 +338,8 @@ module.exports = {
   DIRECTORY_CONTENT_TYPE,
   AgentSigningError,
   signHttpRequest,
+  signUcpRequest,
+  publicKeys,
   bridgeSignatureHeaders,
   buildDirectory,
   directoryHandler,
