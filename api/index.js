@@ -53,6 +53,11 @@ app.get(['/kya.md', '/.well-known/kya'], (req, res) => {
   }
 });
 
+// Visa Acceptance (ICC) sandbox check. Mounted on its own so it works on
+// Preview deploys even when the full route tree can't load (Preview lacks
+// production-only env such as ENCRYPTION_KEY). Returns 404 in production.
+app.use('/api/v1/visa-acceptance', require('../src/routes/visaAcceptanceRoutes'));
+
 // Try to load the full API routes, but don't fail if it doesn't work
 let routesLoaded = false;
 try {
