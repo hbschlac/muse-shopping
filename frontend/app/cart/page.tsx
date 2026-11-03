@@ -5,7 +5,15 @@ import { Trash2, Plus, Minus, ShoppingBag } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import BottomNav from '@/components/BottomNav';
 import PageHeader from '@/components/PageHeader';
-import { getCart, updateCartItem, removeFromCart, startBridgeCheckout } from '@/lib/api/cart';
+import {
+  getCart,
+  updateCartItem,
+  removeFromCart,
+  startBridgeCheckout,
+  getShippingAddress,
+  saveShippingAddress,
+  type ShipTo,
+} from '@/lib/api/cart';
 
 // Partner stores reached through agent bridges (UCP). Their items are paid for
 // on the store's own checkout page, not in Muse's checkout.
@@ -45,11 +53,39 @@ export default function CartPage() {
   const [error, setError] = useState<string | null>(null);
   const [bridgeBusy, setBridgeBusy] = useState<string | null>(null);
   const [bridgeError, setBridgeError] = useState<string | null>(null);
+  // The address Muse fills in on each partner store's checkout.
+  const [shipTo, setShipTo] = useState<ShipTo | null>(null);
+  const [editingShipTo, setEditingShipTo] = useState(false);
+  const [shipForm, setShipForm] = useState<ShipTo>({ name: '', address1: '', address2: '', city: '', state: '', zip: '', phone: '' });
+  const [savingShipTo, setSavingShipTo] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<{ storeId: number; itemId: number; itemName: string } | null>(null);
 
   useEffect(() => {
     loadCart();
+    getShippingAddress().then(setShipTo).catch(() => setShipTo(null));
   }, []);
+
+  const startEditShipTo = () => {
+    setShipForm({
+      name: shipTo?.name || '', address1: shipTo?.address1 || '', address2: shipTo?.address2 || '',
+      city: shipTo?.city || '', state: shipTo?.state || '', zip: shipTo?.zip || '', phone: '',
+    });
+    setEditingShipTo(true);
+  };
+
+  const submitShipTo = async () => {
+    try {
+      setSavingShipTo(true);
+      setBridgeError(null);
+      const saved = await saveShippingAddress(shipForm);
+      setShipTo({ ...saved, hasPhone: !!shipForm.phone });
+      setEditingShipTo(false);
+    } catch (err: any) {
+      setBridgeError(err.message || 'Could not save the address');
+    } finally {
+      setSavingShipTo(false);
+    }
+  };
 
   const loadCart = async () => {
     try {
@@ -336,13 +372,73 @@ export default function CartPage() {
                     : `Check out at ${store.storeName}`}
                 </button>
                 <p className="text-xs text-gray-600 text-center mt-2">
-                  You pay {store.storeName} directly. Shipping and tax are added at the store.
+                  {shipTo
+                    ? `Opens ${store.storeName}'s checkout with your address filled in. You pay ${store.storeName} directly.`
+                    : `You pay ${store.storeName} directly. Shipping and tax are added at the store.`}
                 </p>
               </div>
             )}
           </div>
         ))}
       </div>
+
+      {cartStores.some(isBridgeStore) && (
+        <div className="px-4 pt-6">
+          <div className="bg-white rounded-[16px] p-4 shadow-sm">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-gray-900">Ship to</p>
+              {shipTo && !editingShipTo && (
+                <button onClick={startEditShipTo} className="text-sm font-medium text-[var(--color-coral)]">Edit</button>
+              )}
+            </div>
+            {!editingShipTo && shipTo && (
+              <>
+                <p className="text-sm text-gray-700 mt-1">
+                  {shipTo.name}, {shipTo.address1}{shipTo.address2 ? `, ${shipTo.address2}` : ''}, {shipTo.city}, {shipTo.state} {shipTo.zip}
+                </p>
+                <p className="text-xs text-gray-600 mt-2">
+                  Muse fills this in at each store&apos;s checkout, so you only have to pay.
+                </p>
+              </>
+            )}
+            {!editingShipTo && !shipTo && (
+              <>
+                <p className="text-sm text-gray-700 mt-1">Add your address and Muse will fill in each store&apos;s checkout for you.</p>
+                <button onClick={startEditShipTo} className="mt-3 h-10 px-4 bg-gray-900 text-white text-sm font-semibold rounded-[10px]">Add address</button>
+              </>
+            )}
+            {editingShipTo && (
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                {([
+                  ['name', 'Full name', 2, 'name'],
+                  ['address1', 'Street address', 2, 'address-line1'],
+                  ['address2', 'Apt, suite (optional)', 2, 'address-line2'],
+                  ['city', 'City', 2, 'address-level2'],
+                  ['state', 'State', 1, 'address-level1'],
+                  ['zip', 'ZIP', 1, 'postal-code'],
+                  ['phone', 'Phone (stores ask for it)', 2, 'tel'],
+                ] as const).map(([key, label, span, auto]) => (
+                  <input
+                    key={key}
+                    aria-label={label}
+                    placeholder={label}
+                    autoComplete={auto}
+                    value={(shipForm as any)[key] || ''}
+                    onChange={e => setShipForm(f => ({ ...f, [key]: e.target.value }))}
+                    className={`h-11 px-3 rounded-[10px] border border-gray-300 text-sm ${span === 2 ? 'col-span-2' : ''}`}
+                  />
+                ))}
+                <div className="col-span-2 flex gap-2 mt-1">
+                  <button onClick={() => setEditingShipTo(false)} className="flex-1 h-11 bg-gray-200 text-gray-900 text-sm font-semibold rounded-[10px]">Cancel</button>
+                  <button onClick={submitShipTo} disabled={savingShipTo} className="flex-1 h-11 bg-gray-900 text-white text-sm font-semibold rounded-[10px] disabled:opacity-60">
+                    {savingShipTo ? 'Saving…' : 'Save'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {bridgeError && (
         <div className="px-4 pt-4">

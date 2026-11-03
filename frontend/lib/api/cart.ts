@@ -101,3 +101,26 @@ export async function startBridgeCheckout(partnerKeys?: string[]): Promise<{
   );
   return response.data || response;
 }
+
+export interface ShipTo {
+  name: string;
+  address1: string;
+  address2?: string | null;
+  city: string;
+  state: string;
+  zip: string;
+  country?: string;
+  phone?: string;
+  hasPhone?: boolean;
+}
+
+/** The address Muse fills in on partner-store checkouts (null if none saved). */
+export async function getShippingAddress(): Promise<ShipTo | null> {
+  const response: any = await api.get('/cart/shipping-address', { requiresAuth: true });
+  return response?.data ?? null;
+}
+
+export async function saveShippingAddress(address: ShipTo): Promise<ShipTo> {
+  const response: any = await api.put('/cart/shipping-address', address, { requiresAuth: true });
+  return response.data || response;
+}

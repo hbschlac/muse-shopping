@@ -151,16 +151,101 @@ class UcpBridge {
 
   /**
    * Build a checkout at the store and return its totals and continue_url.
+   * When a shipping address is given, Muse fills in the store's checkout for the
+   * shopper (contact, name, address, phone) and the store picks its delivery
+   * option, so the shopper only has to pay on the store's page.
+   * Verified live 2026-11-03 at Allbirds: the continue_url page opened with
+   * email, name, address and Standard Shipping filled in.
+   *
    * @param {Array<{variantId: string, quantity: number}>} lines
-   * @param {Object} [buyer] - optional { email } to prefill the store's checkout
+   * @param {Object} [opts]
+   * @param {Object} [opts.buyer] - { email, firstName, lastName, phone }
+   * @param {Object} [opts.shippingAddress] - { firstName, lastName, address1, address2,
+   *   city, state, zip, country, phone }
    */
-  async startCheckout(lines, { buyer = null } = {}) {
+  async startCheckout(lines, { buyer = null, shippingAddress = null } = {}) {
     const endpoint = await this.endpoint();
     const checkout = { line_items: toLineItems(lines) };
-    if (buyer && buyer.email) checkout.buyer = { email: buyer.email };
+    const ucpBuyer = toBuyer(buyer, shippingAddress);
+    if (ucpBuyer) checkout.buyer = ucpBuyer;
     const result = await this.client.callTool(endpoint, 'create_checkout', { checkout });
-    return summarizeCheckout(result?.checkout || result);
+    const created = result?.checkout || result;
+
+    const destination = toDestination(shippingAddress, ucpBuyer);
+    if (!destination || !created?.id || !Array.isArray(created.line_items) || !created.line_items.length) {
+      return summarizeCheckout(created);
+    }
+
+    // update_checkout replaces the whole checkout (PUT semantics): resend the
+    // line items with their ids and the buyer along with the address.
+    const lineItems = created.line_items.map(li => ({
+      id: li.id,
+      item: { id: li.item?.id },
+      quantity: li.quantity,
+    }));
+    try {
+      const updated = await this.client.callTool(endpoint, 'update_checkout', {
+        id: created.id,
+        checkout: {
+          line_items: lineItems,
+          ...(ucpBuyer ? { buyer: ucpBuyer } : {}),
+          fulfillment: {
+            methods: [{
+              type: 'shipping',
+              line_item_ids: lineItems.map(li => li.id),
+              destinations: [destination],
+            }],
+          },
+        },
+      });
+      return summarizeCheckout(updated?.checkout || updated);
+    } catch (err) {
+      // The checkout still exists; the shopper can enter the address at the store.
+      return { ...summarizeCheckout(created), prefillError: err.message };
+    }
   }
+}
+
+function splitName(name) {
+  const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return { first: null, last: null };
+  return { first: parts[0], last: parts.slice(1).join(' ') || null };
+}
+
+function toBuyer(buyer, address) {
+  const b = buyer || {};
+  const fromName = splitName(address?.name);
+  const out = {};
+  if (b.email) out.email = b.email;
+  const first = b.firstName || address?.firstName || fromName.first;
+  const last = b.lastName || address?.lastName || fromName.last;
+  if (first) out.first_name = first;
+  if (last) out.last_name = last;
+  const phone = b.phone || address?.phone;
+  if (phone) out.phone_number = phone;
+  return Object.keys(out).length ? out : null;
+}
+
+/**
+ * Muse address -> UCP postal address. Stores ask for a phone on the
+ * destination (SKIMS returned delivery_phone_number_required without it).
+ */
+function toDestination(address, ucpBuyer) {
+  if (!address || !address.address1 || !address.city || !address.zip) return null;
+  const fromName = splitName(address.name);
+  const destination = {
+    first_name: address.firstName || fromName.first || ucpBuyer?.first_name || undefined,
+    last_name: address.lastName || fromName.last || ucpBuyer?.last_name || undefined,
+    street_address: address.address1,
+    extended_address: address.address2 || undefined,
+    address_locality: address.city,
+    address_region: address.state || undefined,
+    postal_code: String(address.zip),
+    address_country: (address.country || 'US').toUpperCase(),
+    phone_number: address.phone || ucpBuyer?.phone_number || undefined,
+  };
+  Object.keys(destination).forEach(k => destination[k] === undefined && delete destination[k]);
+  return destination;
 }
 
 function toLineItems(lines) {
@@ -176,6 +261,7 @@ function toLineItems(lines) {
 
 module.exports = {
   UcpBridge,
+  toDestination,
   normalizeProduct,
   summarizeCheckout,
 };

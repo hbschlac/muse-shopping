@@ -120,14 +120,24 @@ describe('BridgeCartService.startCheckout', () => {
     pool.query
       .mockResolvedValueOnce({ rows: cartRows })                    // bridge lines
       .mockResolvedValueOnce({ rows: [{ email: 'a@example.com' }] }) // account email
+      .mockResolvedValueOnce({ rows: [{                              // saved default address
+        name: 'Jane Smith', address1: '350 5th Ave', address2: null, city: 'New York',
+        state: 'NY', zip: '10118', country: 'US', phone: '+12125550100',
+      }] })
       .mockResolvedValue({ rows: [] });                              // cart updates
 
     const result = await BridgeCartService.startCheckout(7);
 
     expect(allbirds.startCheckout).toHaveBeenCalledWith(
       [{ variantId: 'gid://shopify/ProductVariant/11', quantity: 2 }],
-      { buyer: { email: 'a@example.com' } }
+      {
+        buyer: { email: 'a@example.com' },
+        shippingAddress: expect.objectContaining({ name: 'Jane Smith', address1: '350 5th Ave', zip: '10118', phone: '+12125550100' }),
+      }
     );
+    expect(result.shipTo).toMatchObject({ name: 'Jane Smith', city: 'New York' });
+    expect(result.shipTo.phone).toBeUndefined();
+    expect(result.stores[0].prefilled).toBe(true);
     expect(result.stores).toHaveLength(1);
     expect(result.stores[0]).toMatchObject({ partnerKey: 'allbirds', storeName: 'Allbirds', itemCount: 2 });
     expect(result.stores[0].checkout.continueUrl).toBe('https://www.allbirds.com/checkouts/co_1');
@@ -143,5 +153,60 @@ describe('BridgeCartService.startCheckout', () => {
   test('errors when the cart has no partner-store items', async () => {
     pool.query.mockResolvedValueOnce({ rows: [] });
     await expect(BridgeCartService.startCheckout(7)).rejects.toThrow(/no partner-store items/);
+  });
+});
+
+describe('UcpBridge.startCheckout prefill', () => {
+  const { UcpBridge, toDestination } = require('../../src/services/agentBridges/ucpBridge');
+  const ADDRESS = { name: 'Jane Smith', address1: '350 5th Ave', city: 'New York', state: 'NY', zip: '10118', country: 'us', phone: '+12125550100' };
+
+  test('maps a Muse address to a UCP destination with a phone', () => {
+    expect(toDestination(ADDRESS, null)).toEqual({
+      first_name: 'Jane', last_name: 'Smith', street_address: '350 5th Ave',
+      address_locality: 'New York', address_region: 'NY', postal_code: '10118',
+      address_country: 'US', phone_number: '+12125550100',
+    });
+    expect(toDestination({ name: 'X', address1: '1 A St' }, null)).toBeNull();
+  });
+
+  test('creates the checkout, then fills in buyer and shipping with the line ids', async () => {
+    const callTool = jest.fn()
+      .mockResolvedValueOnce({ checkout: { id: 'co_1', status: 'requires_escalation',
+        line_items: [{ id: 'line_1', item: { id: 'v11' }, quantity: 1 }], continue_url: 'https://s/1' } })
+      .mockResolvedValueOnce({ checkout: { id: 'co_1', status: 'requires_escalation',
+        line_items: [{ id: 'line_1', item: { id: 'v11', price: 1800 }, quantity: 1 }],
+        totals: [{ type: 'fulfillment', amount: 500 }, { type: 'total', amount: 2300 }], continue_url: 'https://s/1' } });
+    const bridge = new UcpBridge({ ...PARTNER, endpoint: 'https://allbirds/api/ucp/mcp' }, { callTool });
+
+    const summary = await bridge.startCheckout([{ variantId: 'v11', quantity: 1 }], { buyer: { email: 'a@example.com' }, shippingAddress: ADDRESS });
+
+    expect(callTool.mock.calls[0][1]).toBe('create_checkout');
+    const [, tool, args] = callTool.mock.calls[1];
+    expect(tool).toBe('update_checkout');
+    expect(args.id).toBe('co_1');
+    expect(args.checkout.line_items).toEqual([{ id: 'line_1', item: { id: 'v11' }, quantity: 1 }]);
+    expect(args.checkout.buyer).toEqual({ email: 'a@example.com', first_name: 'Jane', last_name: 'Smith', phone_number: '+12125550100' });
+    expect(args.checkout.fulfillment.methods[0]).toMatchObject({ type: 'shipping', line_item_ids: ['line_1'] });
+    expect(args.checkout.fulfillment.methods[0].destinations[0].postal_code).toBe('10118');
+    expect(summary.totals.fulfillment.cents).toBe(500);
+    expect(summary.continueUrl).toBe('https://s/1');
+  });
+
+  test('keeps the created checkout if the store rejects the prefill', async () => {
+    const callTool = jest.fn()
+      .mockResolvedValueOnce({ checkout: { id: 'co_2', line_items: [{ id: 'l', item: { id: 'v' }, quantity: 1 }], continue_url: 'https://s/2' } })
+      .mockRejectedValueOnce(new Error('invalid_address'));
+    const bridge = new UcpBridge({ ...PARTNER, endpoint: 'https://x' }, { callTool });
+    const summary = await bridge.startCheckout([{ variantId: 'v', quantity: 1 }], { shippingAddress: ADDRESS });
+    expect(summary.continueUrl).toBe('https://s/2');
+    expect(summary.prefillError).toBe('invalid_address');
+  });
+
+  test('without an address it only creates the checkout', async () => {
+    const callTool = jest.fn().mockResolvedValueOnce({ checkout: { id: 'co_3', line_items: [], continue_url: 'https://s/3' } });
+    const bridge = new UcpBridge({ ...PARTNER, endpoint: 'https://x' }, { callTool });
+    await bridge.startCheckout([{ variantId: 'v', quantity: 1 }], { buyer: { email: 'a@example.com' } });
+    expect(callTool).toHaveBeenCalledTimes(1);
+    expect(callTool.mock.calls[0][2].checkout.buyer).toEqual({ email: 'a@example.com' });
   });
 });

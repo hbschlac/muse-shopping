@@ -44,6 +44,37 @@ function optionValue(options, names) {
   return key ? options[key] : null;
 }
 
+function clean(value, max) {
+  const v = String(value ?? '').trim();
+  return v ? v.slice(0, max) : null;
+}
+
+/**
+ * Accepts the shapes Muse already uses ({ name, address1, address2, city, state,
+ * zip, country, phone }); returns null when required parts are missing.
+ */
+function normalizeAddress(input) {
+  if (!input) return null;
+  const firstLast = [input.firstName, input.lastName].filter(Boolean).join(' ');
+  const address = {
+    name: clean(input.name || firstLast, 255),
+    address1: clean(input.address1 || input.line1 || input.street, 255),
+    address2: clean(input.address2 || input.line2, 255),
+    city: clean(input.city, 100),
+    state: clean(input.state || input.region, 50),
+    zip: clean(input.zip || input.postalCode || input.postal_code, 20),
+    country: (clean(input.country, 2) || 'US').toUpperCase(),
+    phone: clean(input.phone, 50),
+  };
+  if (!address.name || !address.address1 || !address.city || !address.state || !address.zip) return null;
+  return address;
+}
+
+// What the cart page shows; no phone.
+function publicAddress(a) {
+  return { name: a.name, address1: a.address1, address2: a.address2, city: a.city, state: a.state, zip: a.zip, country: a.country };
+}
+
 class BridgeCartService {
   /**
    * Find or create the `stores` row for a bridge partner.
@@ -184,10 +215,11 @@ class BridgeCartService {
    * @param {number} userId
    * @param {Object} [opts]
    * @param {string} [opts.email] - prefill the store's checkout; defaults to the account email
+   * @param {Object} [opts.shippingAddress] - defaults to the shopper's saved default address
    * @param {string[]} [opts.partnerKeys] - only these stores
    * @returns {Promise<{stores: Array, errors: Array}>}
    */
-  static async startCheckout(userId, { email = null, partnerKeys = null } = {}) {
+  static async startCheckout(userId, { email = null, shippingAddress = null, partnerKeys = null } = {}) {
     const byPartner = await this.getBridgeLines(userId);
     let keys = [...byPartner.keys()];
     if (Array.isArray(partnerKeys) && partnerKeys.length) {
@@ -203,10 +235,19 @@ class BridgeCartService {
       buyerEmail = user.rows[0]?.email || null;
     }
 
+    // Fill in the store's checkout for the shopper: the store gets the address,
+    // picks a delivery option and returns real shipping and tax.
+    const address = shippingAddress
+      ? normalizeAddress(shippingAddress)
+      : await this.getShippingAddress(userId);
+
     const settled = await Promise.allSettled(keys.map(key => {
       const lines = byPartner.get(key).map(l => ({ variantId: l.bridge.variantId, quantity: l.quantity }));
       return withTimeout(
-        AgentBridges.getBridge(key).startCheckout(lines, { buyer: buyerEmail ? { email: buyerEmail } : null }),
+        AgentBridges.getBridge(key).startCheckout(lines, {
+          buyer: buyerEmail ? { email: buyerEmail } : null,
+          shippingAddress: address,
+        }),
         CHECKOUT_TIMEOUT_MS,
         key
       );
@@ -231,6 +272,7 @@ class BridgeCartService {
       await this.recordCheckout(lines, checkout);
       stores.push({
         partnerKey: key,
+        prefilled: !!address && !checkout.prefillError,
         storeId: lines[0].store_id,
         storeName: lines[0].store_name,
         itemCount: lines.reduce((n, l) => n + l.quantity, 0),
@@ -239,7 +281,67 @@ class BridgeCartService {
     }
 
     logger.info(`Bridge checkout for user ${userId}: ${stores.length} store(s) ready, ${errors.length} failed`);
-    return { stores, errors };
+    return { stores, errors, shipTo: address ? publicAddress(address) : null };
+  }
+
+  /**
+   * The shopper's default shipping address: their saved default, else the
+   * address from their last Muse checkout. Null when Muse has none.
+   */
+  static async getShippingAddress(userId) {
+    const saved = await pool.query(
+      `SELECT name, address1, address2, city, state, zip, country, phone
+       FROM user_saved_addresses
+       WHERE user_id = $1 AND is_active = true AND address_type IN ('shipping', 'both')
+       ORDER BY is_default DESC, updated_at DESC NULLS LAST, id DESC
+       LIMIT 1`,
+      [userId]
+    );
+    if (saved.rows[0]) return normalizeAddress(saved.rows[0]);
+
+    const last = await pool.query(
+      `SELECT shipping_address FROM checkout_sessions
+       WHERE user_id = $1 AND shipping_address IS NOT NULL
+       ORDER BY created_at DESC LIMIT 1`,
+      [userId]
+    );
+    const fromCheckout = last.rows[0]?.shipping_address;
+    return fromCheckout ? normalizeAddress(typeof fromCheckout === 'string' ? JSON.parse(fromCheckout) : fromCheckout) : null;
+  }
+
+  /**
+   * Save the shopper's default shipping address (used to fill in store checkouts).
+   */
+  static async saveShippingAddress(userId, input) {
+    const address = normalizeAddress(input);
+    if (!address) {
+      throw new ValidationError('Name, street address, city, state and ZIP are required');
+    }
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(
+        `UPDATE user_saved_addresses SET is_default = false
+         WHERE user_id = $1 AND address_type IN ('shipping', 'both')`,
+        [userId]
+      );
+      await client.query(
+        `INSERT INTO user_saved_addresses
+           (user_id, name, address1, address2, city, state, zip, country, phone,
+            address_type, is_default, is_active, nickname, metadata)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'shipping', true, true, 'Muse', $10)`,
+        [userId, address.name, address.address1, address.address2, address.city,
+          address.state, address.zip, address.country, address.phone,
+          JSON.stringify({ source: 'muse_cart' })]
+      );
+      await client.query('COMMIT');
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
+    return publicAddress(address);
   }
 
   /**

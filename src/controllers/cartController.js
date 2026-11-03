@@ -310,11 +310,41 @@ class CartController {
    */
   static async startBridgeCheckout(req, res, next) {
     try {
-      const { email, partnerKeys } = req.body || {};
-      const result = await BridgeCartService.startCheckout(req.userId, { email, partnerKeys });
+      const { email, partnerKeys, shippingAddress } = req.body || {};
+      const result = await BridgeCartService.startCheckout(req.userId, { email, partnerKeys, shippingAddress });
       return res.json(successResponse(result, 'Store checkouts ready'));
     } catch (error) {
       logger.error('Error in startBridgeCheckout controller:', error);
+      next(error);
+    }
+  }
+
+  /**
+   * The ship-to address Muse fills in at partner-store checkouts
+   * GET /api/v1/cart/shipping-address
+   */
+  static async getShippingAddress(req, res, next) {
+    try {
+      const address = await BridgeCartService.getShippingAddress(req.userId);
+      const { phone, ...shown } = address || {};
+      return res.json(successResponse(address ? { ...shown, hasPhone: !!phone } : null));
+    } catch (error) {
+      logger.error('Error in getShippingAddress controller:', error);
+      next(error);
+    }
+  }
+
+  /**
+   * Save the shopper's default ship-to address
+   * PUT /api/v1/cart/shipping-address
+   * Body: { name, address1, address2?, city, state, zip, country?, phone? }
+   */
+  static async saveShippingAddress(req, res, next) {
+    try {
+      const address = await BridgeCartService.saveShippingAddress(req.userId, req.body || {});
+      return res.json(successResponse(address, 'Shipping address saved'));
+    } catch (error) {
+      logger.error('Error in saveShippingAddress controller:', error);
       next(error);
     }
   }
