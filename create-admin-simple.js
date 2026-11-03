@@ -12,7 +12,7 @@ async function createAdmin() {
   const adminDetails = {
     fullName: 'Hannah Schlacter',
     email: 'hannah@muse.shopping',
-    password: 'MuseAdmin2024!'
+    password: process.env.ADMIN_PASSWORD
   };
 
   const client = new Client({

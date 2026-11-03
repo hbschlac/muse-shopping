@@ -140,7 +140,7 @@ Success! Updating UI...
 ## Admin Login Credentials
 
 - **Email**: hannah@muse.shopping
-- **Password**: MuseAdmin2024!
+- **Password**: [removed: set via ADMIN_PASSWORD, stored in 1Password]
 
 ## Files Modified
 
