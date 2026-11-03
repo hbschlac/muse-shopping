@@ -264,7 +264,11 @@ const bridgeCache = new Map(); // host -> { headers, until }
 async function bridgeSignatureHeaders(url, env = process.env) {
   if (String(env.AGENT_SIGN_BRIDGE_REQUESTS || '').toLowerCase() !== 'true') return {};
   let host;
-  try { host = new URL(url).host.toLowerCase(); } catch (e) { return {}; }
+  let pathname;
+  try { ({ pathname } = new URL(url)); host = new URL(url).host.toLowerCase(); } catch (e) { return {}; }
+  // When UCP request signing is on, MCP calls are signed by signUcpRequest
+  // (covers the body). Don't add a second signature to them here.
+  if (String(env.AGENT_SIGN_UCP_REQUESTS || '').toLowerCase() === 'true' && /\/mcp\/?$/.test(pathname)) return {};
   if (!hostAllowed(new URL(url).hostname, env)) return {};
   const hit = bridgeCache.get(host);
   const nowS = Math.floor(Date.now() / 1000);

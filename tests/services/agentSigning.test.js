@@ -166,6 +166,10 @@ describe('signHttpRequest (dev signer)', () => {
     const h = await signing.bridgeSignatureHeaders('https://www.allbirds.com/x');
     expect(h.Signature).toMatch(/^sig1=:/);
     expect(await signing.bridgeSignatureHeaders('https://not-a-partner.example/x')).toEqual({});
+    process.env.AGENT_SIGN_UCP_REQUESTS = 'true';
+    expect(await signing.bridgeSignatureHeaders('https://agolde.myshopify.com/api/ucp/mcp')).toEqual({});
+    expect((await signing.bridgeSignatureHeaders('https://www.allbirds.com/.well-known/ucp')).Signature).toBeDefined();
+    delete process.env.AGENT_SIGN_UCP_REQUESTS;
     process.env.AGENT_SIGNING_DISABLED = 'true';
     signing._reset();
     expect(await signing.bridgeSignatureHeaders('https://www.allbirds.com/x')).toEqual({});

@@ -41,7 +41,8 @@ src/services/agentSigning  →  Signature-Input / Signature / Signature-Agent he
 | `AGENT_SIGNING_KMS_PUBLISHED_VERSIONS` | comma list | Extra versions to publish during rotation |
 | `GCP_WIF_AUDIENCE` | `//iam.googleapis.com/projects/NUM/locations/global/workloadIdentityPools/vercel/providers/vercel-production` | |
 | `AGENT_SIGNING_BACKEND` | `gcp-kms` | Production ignores anything else |
-| `AGENT_SIGN_BRIDGE_REQUESTS` | `true` | Sign UCP bridge calls (off until the key is registered) |
+| `AGENT_SIGN_BRIDGE_REQUESTS` | `true` | Web Bot Auth headers on bridge calls (off until the key is registered) |
+| `AGENT_SIGN_UCP_REQUESTS` | `true` | Full UCP signatures on MCP calls (PR #15). When on, bridge signing skips `/mcp` calls so each carries one signature; recommended over bridge signing for MCP because it covers the body |
 | `AGENT_TAP_KEYID` | from Visa | Only if Visa assigns its own keyid |
 | `AGENT_SIGNING_ALLOWED_HOSTS` | `*.visa.com` | Hosts beyond partners.json |
 | `AGENT_SIGNING_MAX_PER_MINUTE` | `300` | Per-instance cap |
