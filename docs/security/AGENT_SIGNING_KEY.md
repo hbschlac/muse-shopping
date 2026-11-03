@@ -107,10 +107,11 @@ config means no signatures, and the directory answers 503.
 8. **Spec drift.** The directory and header formats follow the current Web Bot Auth
    draft and Visa's reference code. If Visa or Cloudflare change them, update
    `index.js` and the tests together.
-9. **UCP (P-256) key.** `agentProfile.js` still publishes `UCP_SIGNING_PUBLIC_JWK`
-   from env (public half only, with `d` stripped). If UCP request signing is turned
-   on, create a P-256 key in KMS (the signer already supports
-   `EC_SIGN_P256_SHA256`) and publish it from KMS instead.
+9. **UCP uses the same key, published twice.** UCP accepts Ed25519 (OKP) keys, so
+   the one KMS key signs UCP calls too (PR #15 lets `agentProfile.js` publish an
+   Ed25519 `UCP_SIGNING_PUBLIC_JWK`). That env var is a hand-copied *public* key: if
+   it drifts from KMS after a rotation, stores reject UCP signatures. Update it in the
+   same step as `AGENT_SIGNING_KMS_KEY_VERSION`, or later read it from the signer.
 10. **The gcloud scripts have only been dry-run.** Review each printed command
     before `--apply`.
 
