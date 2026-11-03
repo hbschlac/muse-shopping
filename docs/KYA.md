@@ -128,21 +128,25 @@ MuseShopping-Agent/1.0 (+https://www.muse.shopping/.well-known/ucp)
 
 ### 5.3 Request signing keys (Planned)
 
-- **UCP signed tier:** the profile has a `keys` array for the public half of an EC P-256 (ES256)
-  key, used by stores to verify RFC 9421 HTTP Message Signatures. The array is **empty today**, so
-  Muse calls stores unsigned. The private key will live only in Vercel's encrypted environment
-  variables (or a managed key store), never in the repo or this document.
-- **Web Bot Auth:** Muse will sign outbound agent requests with HTTP Message Signatures
-  (`Signature`, `Signature-Input`, `Signature-Agent` headers) and publish its public keys at
-  `https://www.muse.shopping/.well-known/http-message-signatures-directory`.
+- **Web Bot Auth / TAP signing key:** an **Ed25519** key (what Cloudflare's Web Bot Auth requires
+  and Visa's TAP reference code uses). Muse will sign outbound agent requests with HTTP Message
+  Signatures (RFC 9421: `Signature`, `Signature-Input`, `Signature-Agent` headers) and publish the
+  public key at `https://www.muse.shopping/.well-known/http-message-signatures-directory`.
   `[PLACEHOLDER: key ID(s) and thumbprint once generated]`
-- **Visa Trusted Agent Protocol:** Muse plans to register its public key with Visa's TAP key
-  directory so that Cloudflare and Akamai can verify Muse at a store's edge. Registration status:
-  `[PLACEHOLDER: not yet submitted / submitted on DATE / approved on DATE]`.
-- **Mastercard Agent Pay agent registration:** `[PLACEHOLDER: status]`
-- **Key handling:** one signing key per environment, rotated at least every `[PLACEHOLDER]` days
-  and immediately on suspected exposure; revoked by removing it from the directory. Language models
-  have no access to signing keys.
+- **UCP signed tier:** the UCP profile has its own `keys` array for UCP request signatures. It is
+  **empty today**, so Muse calls stores unsigned.
+- **Key custody:** the private key is created and held in Google Cloud KMS and cannot be exported.
+  Production signs through KMS using Vercel's OIDC identity, so the key never sits in the repo, in
+  environment variables, or in this document, and no language model can reach it.
+- **Rotation and revocation:** rotated at least every `[PLACEHOLDER]` days and immediately on
+  suspected exposure; revoked by removing it from the directory and disabling it in KMS.
+- **Registration (all pending):**
+  - Cloudflare verified bots: Bot Submission Form, "Request Signature" method.
+    `[PLACEHOLDER: status]`
+  - Visa Trusted Agent Protocol agent directory: through Visa onboarding (Visa publishes no
+    self-serve form). `[PLACEHOLDER: status]`
+  - Akamai: `[PLACEHOLDER: route and status]`
+  - Mastercard Agent Pay agent directory: `[PLACEHOLDER: route and status]`
 
 ## 6. Checkout and payment
 
