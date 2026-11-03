@@ -46,7 +46,7 @@ data.data.tokens.access_token  // ✅ Correct path
 ```
 URL: http://localhost:3000/api/v1/admin/email-ui/login
 Email: hannah@muse.shopping
-Password: MuseAdmin2024!
+Password: [removed: set via ADMIN_PASSWORD, stored in 1Password]
 ```
 
 ### What Should Happen
@@ -76,7 +76,7 @@ You can test the login API directly:
 ```bash
 curl -X POST http://localhost:3000/api/v1/auth/login \
   -H 'Content-Type: application/json' \
-  -d '{"email":"hannah@muse.shopping","password":"MuseAdmin2024!"}'
+  -d '{"email":"hannah@muse.shopping","password":"[removed: set via ADMIN_PASSWORD, stored in 1Password]"}'
 ```
 
 Should return success with a token.

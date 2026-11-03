@@ -7,7 +7,10 @@
     },
     {
       "src": "api/index.js",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": ["docs/KYA.md"]
+      }
     }
   ],
   "routes": [
@@ -17,6 +20,10 @@
     },
     {
       "src": "/.well-known/ucp",
+      "dest": "/api/index.js"
+    },
+    {
+      "src": "/(kya\\.md|\\.well-known/kya)",
       "dest": "/api/index.js"
     },
     {
