@@ -1,4 +1,5 @@
 const winston = require('winston');
+const { redactInfo } = require('./redact');
 require('dotenv').config();
 
 // Configure transports based on environment
@@ -32,6 +33,9 @@ const logger = winston.createLogger({
     winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
     winston.format.errors({ stack: true }),
     winston.format.splat(),
+    // Strip keys, tokens and signatures before anything is written (src/utils/redact.js).
+    // Must run after splat(), which merges metadata objects back into the entry.
+    winston.format(redactInfo)(),
     winston.format.json()
   ),
   defaultMeta: { service: 'muse-shopping-api' },
