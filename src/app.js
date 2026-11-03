@@ -18,6 +18,9 @@ const { sanitizeInput } = require('./middleware/securityMiddleware');
 const performanceMonitoring = require('./middleware/performanceMonitoring');
 
 const app = express();
+
+// Take the Vercel OIDC token off the request before anything can log or forward it.
+app.use(require('./services/agentSigning/oidcToken').captureOidcToken);
 const API_VERSION = process.env.API_VERSION || 'v1';
 
 // Trust the first proxy hop (Vercel's edge network).
@@ -78,6 +81,11 @@ app.use(performanceMonitoring);
 // API routes
 // UCP agent profile: stores fetch this before answering Muse's agent calls.
 // See src/services/agentBridges/agentProfile.js.
+// Web Bot Auth / Visa TAP key directory. See src/services/agentSigning.
+app.get('/.well-known/http-message-signatures-directory', (req, res) => {
+  require('./services/agentSigning').directoryHandler(req, res);
+});
+
 app.get('/.well-known/ucp', (req, res) => {
   const { buildAgentProfile } = require('./services/agentBridges/agentProfile');
   res.set('Cache-Control', 'public, max-age=3600');

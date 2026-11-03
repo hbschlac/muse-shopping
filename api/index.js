@@ -14,6 +14,10 @@ const app = express();
 // Set to 1 (not true) to prevent client-supplied XFF spoofing.
 app.set('trust proxy', 1);
 
+// Take the Vercel OIDC token off the request before anything else can log or
+// forward it. Only the agent signer uses it (src/services/agentSigning).
+app.use(require('../src/services/agentSigning/oidcToken').captureOidcToken);
+
 // Enable CORS
 app.use(cors({
   origin: [
@@ -39,6 +43,12 @@ app.get('/.well-known/ucp', (req, res) => {
   const { buildAgentProfile } = require('../src/services/agentBridges/agentProfile');
   res.set('Cache-Control', 'public, max-age=3600');
   res.type('application/json').send(JSON.stringify(buildAgentProfile()));
+});
+
+// Web Bot Auth / Visa TAP key directory: Muse's public agent keys, read from
+// Cloud KMS and signed by each key. 503 until KMS is configured; never a dev key.
+app.get('/.well-known/http-message-signatures-directory', (req, res) => {
+  require('../src/services/agentSigning').directoryHandler(req, res);
 });
 
 // Try to load the full API routes, but don't fail if it doesn't work
