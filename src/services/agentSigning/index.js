@@ -40,6 +40,7 @@ const DEFAULT_COMPONENTS = {
   [TAGS.WEB_BOT_AUTH]: ['@authority', 'signature-agent'],
   [TAGS.TAP_BROWSE]: ['@authority', '@path'],
   [TAGS.TAP_PAY]: ['@authority', '@path'],
+  [TAGS.MC_PAY]: ['@authority', '@path'],
 };
 
 class AgentSigningError extends Error {
@@ -135,7 +136,7 @@ async function signHttpRequest({
   method = 'GET', url, tag, ttlSeconds, components, label = 'sig1', signatureAgent, body, headers: reqHeaders = {},
 } = {}) {
   const s = await init();
-  if (![TAGS.WEB_BOT_AUTH, TAGS.TAP_BROWSE, TAGS.TAP_PAY].includes(tag)) {
+  if (![TAGS.WEB_BOT_AUTH, TAGS.TAP_BROWSE, TAGS.TAP_PAY, TAGS.MC_PAY].includes(tag)) {
     throw new AgentSigningError(`Tag not allowed: ${tag}`, 'TAG_FORBIDDEN');
   }
   let target;

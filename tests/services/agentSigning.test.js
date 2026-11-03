@@ -135,6 +135,13 @@ describe('signHttpRequest (dev signer)', () => {
     expect(h['Content-Digest']).toBeUndefined();
   });
 
+  test('payment tags are per request (Visa agent-payer-auth, Mastercard agent-pay-auth)', async () => {
+    for (const tag of ['agent-payer-auth', 'agent-pay-auth']) {
+      const h = await signing.signHttpRequest({ url: 'https://www.allbirds.com/checkout', tag });
+      expect(h['Signature-Input']).toContain(`tag="${tag}"`);
+    }
+  });
+
   test('a covered header that is not supplied is refused', async () => {
     await expect(signing.signHttpRequest({ url: 'https://www.allbirds.com/', tag: 'web-bot-auth', components: ['@authority', 'ucp-agent'] }))
       .rejects.toMatchObject({ code: 'MISSING_HEADER' });

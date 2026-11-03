@@ -15,6 +15,8 @@ const TAGS = Object.freeze({
   WEB_BOT_AUTH: 'web-bot-auth',
   TAP_BROWSE: 'agent-browser-auth',
   TAP_PAY: 'agent-payer-auth',
+  // Mastercard Agent Pay uses its own payment tag.
+  MC_PAY: 'agent-pay-auth',
   DIRECTORY: 'http-message-signatures-directory',
 });
 
