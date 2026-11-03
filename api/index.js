@@ -41,6 +41,18 @@ app.get('/.well-known/ucp', (req, res) => {
   res.type('application/json').send(JSON.stringify(buildAgentProfile()));
 });
 
+// Know Your Agent profile for card networks and partner stores (docs/KYA.md).
+app.get(['/kya.md', '/.well-known/kya'], (req, res) => {
+  const fs = require('fs');
+  try {
+    const body = fs.readFileSync(path.join(__dirname, '../docs/KYA.md'), 'utf8');
+    res.set('Cache-Control', 'public, max-age=3600');
+    res.type('text/markdown; charset=utf-8').send(body);
+  } catch (err) {
+    res.status(404).type('text/plain').send('Not found');
+  }
+});
+
 // Try to load the full API routes, but don't fail if it doesn't work
 let routesLoaded = false;
 try {
