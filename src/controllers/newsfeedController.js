@@ -1,11 +1,38 @@
 const NewsfeedService = require('../services/newsfeedService');
+const crypto = require('crypto');
 const NewArrivalsService = require('../services/newArrivalsService');
+const Rakuten = require('../services/newArrivalSources/rakuten');
+
+function bearerMatches(header, secret) {
+  if (!secret) return false;
+  const given = Buffer.from(String(header || '').replace(/^Bearer\s+/i, ''));
+  const want = Buffer.from(secret);
+  return given.length === want.length && crypto.timingSafeEqual(given, want);
+}
 
 class NewsfeedController {
   /**
    * GET /api/v1/newsfeed/new-arrivals?category=womens-clothing&stores=nordstrom,tjmaxx
    * One carousel per store, newest first. Stores with too few items are left out.
    */
+  /**
+   * POST /api/v1/newsfeed/new-arrivals/poll
+   * Called on a schedule (GitHub Actions). Pulls the latest items from every
+   * cloud source (Rakuten) and saves them; new ones fire the alert.
+   * Auth: Authorization: Bearer <NEW_ARRIVALS_POLL_SECRET>
+   */
+  static async pollNewArrivals(req, res, next) {
+    try {
+      if (!bearerMatches(req.headers.authorization, process.env.NEW_ARRIVALS_POLL_SECRET)) {
+        return res.status(401).json({ success: false, error: 'unauthorized' });
+      }
+      const rakuten = await Rakuten.pollRakuten();
+      res.json({ success: true, data: { rakuten } });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   static async getNewArrivals(req, res, next) {
     try {
       const stores = req.query.stores ? String(req.query.stores).split(',').map(s => s.trim()).filter(Boolean) : null;

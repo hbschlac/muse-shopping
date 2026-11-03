@@ -12,6 +12,7 @@ router.get('/', optionalAuthMiddleware, NewsfeedController.getFeed);
 
 // New arrivals per store (Nordstrom, Nordstrom Rack, TJ Maxx) - public, not personalized
 router.get('/new-arrivals', NewsfeedController.getNewArrivals);
+router.post('/new-arrivals/poll', NewsfeedController.pollNewArrivals);
 
 // Stories endpoints - require auth
 router.get('/stories', authMiddleware, NewsfeedController.getStories);

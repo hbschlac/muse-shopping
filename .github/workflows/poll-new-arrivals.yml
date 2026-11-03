@@ -1,0 +1,27 @@
+name: Poll new arrivals
+
+# Asks the live API to pull the latest items from cloud sources (Rakuten).
+# New items are saved and fire the new-arrivals alert.
+# Needs the repo secret NEW_ARRIVALS_POLL_SECRET (same value as in Vercel).
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Poll
+        env:
+          SECRET: ${{ secrets.NEW_ARRIVALS_POLL_SECRET }}
+        run: |
+          if [ -z "$SECRET" ]; then
+            echo "NEW_ARRIVALS_POLL_SECRET is not set; skipping."
+            exit 0
+          fi
+          curl -fsS -X POST -H "Authorization: Bearer $SECRET" \
+            https://www.muse.shopping/api/v1/newsfeed/new-arrivals/poll
