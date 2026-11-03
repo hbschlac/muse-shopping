@@ -23,6 +23,7 @@
 const crypto = require('crypto');
 const pool = require('../../db/pool');
 const logger = require('../../utils/logger');
+const { SCHEMA_SQL } = require('./schema');
 
 const DECISIONS = new Set(['info', 'allowed', 'blocked', 'approved', 'declined', 'error']);
 const LOCK_KEY = 4172025; // pg advisory lock id that serializes the hash chain
@@ -130,7 +131,38 @@ function buildRow(event) {
   };
 }
 
+let schemaReady = null;
+const SCHEMA_LOCK_KEY = 4172026;
+
+async function applySchema() {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    // Serialize cold starts: parallel CREATE ... IF NOT EXISTS can still collide.
+    await client.query('SELECT pg_advisory_xact_lock($1)', [SCHEMA_LOCK_KEY]);
+    await client.query(SCHEMA_SQL);
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/** Create agent_events on first use (production migrations are run by hand). */
+function ensureSchema() {
+  if (!schemaReady) {
+    schemaReady = applySchema().catch((err) => {
+      schemaReady = null; // try again on the next call
+      throw err;
+    });
+  }
+  return schemaReady;
+}
+
 async function insertChained(row) {
+  await ensureSchema();
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -180,6 +212,7 @@ async function recordAgentEvent(event, opts = {}) {
 
 /** Events for one shopping session, oldest first (for review and support). */
 async function listSessionEvents(cartSessionId) {
+  await ensureSchema();
   const result = await pool.query(
     'SELECT * FROM agent_events WHERE cart_session_id = $1 ORDER BY id ASC',
     [cartSessionId],
@@ -193,6 +226,7 @@ async function listSessionEvents(cartSessionId) {
  * @returns {Promise<{ok: boolean, checked: number, brokenAt?: number}>}
  */
 async function verifyChain({ afterId = 0, limit = 10000 } = {}) {
+  await ensureSchema();
   let prevHash = null;
   if (afterId > 0) {
     const prev = await pool.query('SELECT hash FROM agent_events WHERE id = $1', [afterId]);
@@ -218,6 +252,7 @@ module.exports = {
   recordAgentEvent,
   listSessionEvents,
   verifyChain,
+  ensureSchema,
   redact,
   _internal: { hashRow, canonicalJson, buildRow, luhnValid },
 };

@@ -4,6 +4,8 @@
 
 process.env.ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || '0'.repeat(64);
 jest.mock('../../src/db/pool', () => ({ query: jest.fn() }));
+jest.mock('../../src/services/agentAudit', () => ({ recordAgentEvent: jest.fn().mockResolvedValue({ id: 1 }) }));
+const { recordAgentEvent } = require('../../src/services/agentAudit');
 
 const pool = require('../../src/db/pool');
 const AgentBridges = require('../../src/services/agentBridges');
@@ -41,9 +43,12 @@ function mockBridge(overrides = {}) {
   return bridge;
 }
 
+const actions = () => recordAgentEvent.mock.calls.map(([e]) => e.action);
+
 beforeEach(() => {
   jest.restoreAllMocks();
   pool.query.mockReset();
+  recordAgentEvent.mockClear();
   jest.spyOn(AgentBridges, 'getPartner').mockReturnValue(PARTNER);
 });
 
@@ -69,6 +74,8 @@ describe('BridgeCartService.addItem', () => {
       productImageUrl: 'https://cdn.shopify.com/v11.png',
       metadata: { bridge: expect.objectContaining({ partnerKey: 'allbirds', variantId: 'gid://shopify/ProductVariant/11' }) },
     }));
+    expect(actions()).toEqual(['product.checked', 'cart.item_added']);
+    expect(recordAgentEvent.mock.calls[1][0]).toMatchObject({ actor: 'muse-agent', decision: 'allowed', userId: 7, partnerKey: 'allbirds', amountCents: 22000 });
   });
 
   test('creates the store row the first time a partner is used', async () => {
@@ -90,6 +97,8 @@ describe('BridgeCartService.addItem', () => {
     mockBridge();
     await expect(BridgeCartService.addItem(7, { partnerKey: 'allbirds', productId: PRODUCT.id, variantId: 'gid://shopify/ProductVariant/10' }))
       .rejects.toThrow(/sold out/);
+    expect(actions()).toEqual(['product.checked', 'cart.item_rejected']);
+    expect(recordAgentEvent.mock.calls[1][0]).toMatchObject({ decision: 'blocked', reason: 'Sold out at the store' });
     await expect(BridgeCartService.addItem(7, { partnerKey: 'allbirds', productId: PRODUCT.id }))
       .rejects.toThrow(/Choose a size or color/);
   });
@@ -138,6 +147,17 @@ describe('BridgeCartService.startCheckout', () => {
     expect(result.shipTo).toMatchObject({ name: 'Jane Smith', city: 'New York' });
     expect(result.shipTo.phone).toBeUndefined();
     expect(result.stores[0].prefilled).toBe(true);
+
+    // Activity log: one cart session id for the whole run; the failed store is logged too.
+    expect(actions().sort()).toEqual(['cart.prices_refreshed', 'checkout.created', 'checkout.created', 'checkout.prefilled'].sort());
+    const ids = new Set(recordAgentEvent.mock.calls.map(([e]) => e.cartSessionId));
+    expect(ids.size).toBe(1);
+    expect(result.cartSessionId).toMatch(/^bcs_/);
+    expect(ids.has(result.cartSessionId)).toBe(true);
+    const failed = recordAgentEvent.mock.calls.find(([e]) => e.partnerKey === 'staud')[0];
+    expect(failed).toMatchObject({ action: 'checkout.created', decision: 'error', reason: 'rate limited' });
+    const refreshed = recordAgentEvent.mock.calls.find(([e]) => e.action === 'cart.prices_refreshed')[0];
+    expect(refreshed.details.changes).toEqual([{ cartItemId: 1, variantId: 'gid://shopify/ProductVariant/11', fromCents: 11000, toCents: 9900 }]);
     expect(result.stores).toHaveLength(1);
     expect(result.stores[0]).toMatchObject({ partnerKey: 'allbirds', storeName: 'Allbirds', itemCount: 2 });
     expect(result.stores[0].checkout.continueUrl).toBe('https://www.allbirds.com/checkouts/co_1');
@@ -148,6 +168,21 @@ describe('BridgeCartService.startCheckout', () => {
     expect(update[1][2]).toBe(1);
     // No Stripe or payment SQL anywhere in the flow.
     expect(pool.query.mock.calls.some(([sql]) => /payment_transactions/.test(sql))).toBe(false);
+  });
+
+  test('a log write failure does not block the store checkout', async () => {
+    recordAgentEvent.mockRejectedValue(new Error('db down'));
+    const store = { startCheckout: jest.fn().mockResolvedValue({ id: 'co', continueUrl: 'https://s/c', lineItems: [] }) };
+    jest.spyOn(AgentBridges, 'getBridge').mockReturnValue(store);
+    pool.query
+      .mockResolvedValueOnce({ rows: [cartRows[0]] })
+      .mockResolvedValueOnce({ rows: [{ email: 'a@example.com' }] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValue({ rows: [] });
+    const result = await BridgeCartService.startCheckout(7);
+    expect(result.stores[0].checkout.continueUrl).toBe('https://s/c');
+    recordAgentEvent.mockResolvedValue({ id: 1 });
   });
 
   test('errors when the cart has no partner-store items', async () => {

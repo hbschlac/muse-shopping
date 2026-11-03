@@ -3,6 +3,8 @@
 Every action and decision Muse's agent takes for a shopper is written to `agent_events`
 through `src/services/agentAudit`. The log is for accountability and fraud review.
 
+- **No manual migration.** The service creates the table on first use (`schema.js`, same DDL as
+  migration 080, serialized with an advisory lock), because production migrations are run by hand.
 - **Append-only.** The table rejects `UPDATE`, `DELETE` and `TRUNCATE` (migration 080).
 - **Tamper-evident.** Each row's SHA-256 hash covers its content and the previous row's hash.
   `AgentAudit.verifyChain()` recomputes the chain and returns the first row that doesn't match.
