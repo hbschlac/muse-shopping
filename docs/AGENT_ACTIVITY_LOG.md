@@ -62,3 +62,11 @@ Muse never stores a card. Cards are captured in Visa-hosted fields or held in th
 Shop Pay wallet. For each shopping session (cart) Muse gets a network token with a fresh
 cryptogram scoped to that session's approved intent, uses it once per store, and never
 writes the token or cryptogram anywhere, including this log.
+
+## Where checkout writes these
+
+`src/services/agentCheckout` (one review, one confirm, pay per store) writes `intent.created`,
+`intent.approved` (required), `intent.declined` / `intent.cancelled` / `intent.expired`,
+`payment.submitted` (required, before each store is paid), `payment.completed` / `payment.failed`,
+`payment.blocked` (store total above the approved ceiling) and `handoff.offered`. If a required
+write fails, that store is not paid and falls back to its "Check out at {store}" link.

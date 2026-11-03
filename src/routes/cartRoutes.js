@@ -25,6 +25,13 @@ router.post('/bridge-checkout', CartController.startBridgeCheckout);
 router.get('/shipping-address', CartController.getShippingAddress);
 router.put('/shipping-address', CartController.saveShippingAddress);
 
+// One-step agent checkout: one review, one confirm, Muse pays each store
+// (off unless AGENT_CHECKOUT_ENABLED=true; stores hand off until a rail exists)
+router.post('/agent-checkout', CartController.prepareAgentCheckout);
+router.get('/agent-checkout/:intentId', CartController.getAgentCheckout);
+router.post('/agent-checkout/:intentId/confirm', CartController.confirmAgentCheckout);
+router.post('/agent-checkout/:intentId/cancel', CartController.cancelAgentCheckout);
+
 // Add multiple items to cart
 router.post('/items/batch', CartController.addItems);
 

@@ -8,6 +8,12 @@ const BridgeCartService = require('../services/bridgeCartService');
 const StyleProfileService = require('../services/styleProfileService');
 const { successResponse, errorResponse } = require('../utils/responseFormatter');
 const logger = require('../utils/logger');
+const AgentCheckout = require('../services/agentCheckout');
+const { NotFoundError } = require('../utils/errors');
+
+function agentCheckoutEnabled() {
+  return process.env.AGENT_CHECKOUT_ENABLED === 'true';
+}
 
 class CartController {
   /**
@@ -315,6 +321,55 @@ class CartController {
       return res.json(successResponse(result, 'Store checkouts ready'));
     } catch (error) {
       logger.error('Error in startBridgeCheckout controller:', error);
+      next(error);
+    }
+  }
+
+  /**
+   * One-step agent checkout. Off unless AGENT_CHECKOUT_ENABLED=true.
+   * POST /api/v1/cart/agent-checkout            build the review (intent)
+   * GET  /api/v1/cart/agent-checkout/:intentId  status
+   * POST /api/v1/cart/agent-checkout/:intentId/confirm  Body: { summaryHash, method? }
+   * POST /api/v1/cart/agent-checkout/:intentId/cancel
+   */
+  static async prepareAgentCheckout(req, res, next) {
+    try {
+      if (!agentCheckoutEnabled()) throw new NotFoundError('Agent checkout');
+      const { email, partnerKeys, shippingAddress } = req.body || {};
+      const review = await AgentCheckout.prepare(req.userId, { email, partnerKeys, shippingAddress });
+      return res.json(successResponse(review, 'Review your cart'));
+    } catch (error) {
+      logger.error('Error in prepareAgentCheckout controller:', error);
+      next(error);
+    }
+  }
+
+  static async getAgentCheckout(req, res, next) {
+    try {
+      if (!agentCheckoutEnabled()) throw new NotFoundError('Agent checkout');
+      return res.json(successResponse(await AgentCheckout.getIntent(req.userId, req.params.intentId)));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async confirmAgentCheckout(req, res, next) {
+    try {
+      if (!agentCheckoutEnabled()) throw new NotFoundError('Agent checkout');
+      const { summaryHash, method, ...railApproval } = req.body || {};
+      const result = await AgentCheckout.confirm(req.userId, req.params.intentId, { summaryHash, method, ...railApproval });
+      return res.json(successResponse(result, 'Checkout confirmed'));
+    } catch (error) {
+      logger.error('Error in confirmAgentCheckout controller:', error);
+      next(error);
+    }
+  }
+
+  static async cancelAgentCheckout(req, res, next) {
+    try {
+      if (!agentCheckoutEnabled()) throw new NotFoundError('Agent checkout');
+      return res.json(successResponse(await AgentCheckout.cancel(req.userId, req.params.intentId)));
+    } catch (error) {
       next(error);
     }
   }
