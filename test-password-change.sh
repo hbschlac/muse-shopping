@@ -7,7 +7,7 @@ echo ""
 echo "Step 1: Logging in as admin..."
 LOGIN_RESPONSE=$(curl -s -X POST http://localhost:3000/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email": "hannah@muse.shopping", "password": "MuseAdmin2024!"}')
+  -d '{"email": "hannah@muse.shopping", "password": "'"$ADMIN_PASSWORD"'"}')
 
 echo "$LOGIN_RESPONSE" | jq . > /dev/null 2>&1
 if [ $? -ne 0 ]; then
@@ -73,7 +73,7 @@ echo "Step 4: Resetting password to original..."
 RESET_RESPONSE=$(curl -s -X PUT http://localhost:3000/api/v1/users/me/profile \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $NEW_TOKEN" \
-  -d "{\"full_name\": \"$FULL_NAME\", \"password\": \"MuseAdmin2024!\"}")
+  -d "{\"full_name\": \"$FULL_NAME\", \"password\": \"$ADMIN_PASSWORD\"}")
 
 RESET_SUCCESS=$(echo "$RESET_RESPONSE" | jq -r '.success')
 if [ "$RESET_SUCCESS" != "true" ]; then
@@ -88,7 +88,7 @@ echo ""
 echo "Step 5: Verifying original password..."
 FINAL_LOGIN_RESPONSE=$(curl -s -X POST http://localhost:3000/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email": "hannah@muse.shopping", "password": "MuseAdmin2024!"}')
+  -d '{"email": "hannah@muse.shopping", "password": "'"$ADMIN_PASSWORD"'"}')
 
 FINAL_SUCCESS=$(echo "$FINAL_LOGIN_RESPONSE" | jq -r '.success')
 if [ "$FINAL_SUCCESS" != "true" ]; then
