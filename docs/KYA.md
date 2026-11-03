@@ -39,8 +39,8 @@ merchant of record for every order.
 | Product | Muse Shopping, www.muse.shopping |
 | Legal entity | None yet. Muse is an independent side project run by its founder; no company has been formed. This section will be updated when one is. |
 | Founder / accountable owner | `[PLACEHOLDER: name]` |
-| Security contact | `[PLACEHOLDER: e.g. security@muse.shopping]` |
-| Partnerships / agent program contact | `[PLACEHOLDER: e.g. partners@muse.shopping]` |
+| Security contact | hannah@muse.shopping |
+| Partnerships / agent program contact | hannah@muse.shopping |
 | Legal contact | legal@muse.shopping (listed in the Muse Terms of Service; `[PLACEHOLDER: confirm]`) |
 | Operating region | United States (`[PLACEHOLDER: confirm]`) |
 | Hosting | Vercel (application), Neon (Postgres database) |
@@ -248,7 +248,7 @@ Secrets live in Vercel environment variables, not in the code.
 2. Check the `User-Agent` and the `meta["ucp-agent"].profile` value on incoming calls.
 3. Once signing is live: verify the RFC 9421 signature against the key in the profile or the Web Bot
    Auth key directory, or through the Visa TAP directory at your CDN.
-4. To block, rate-limit or report Muse, write to `[PLACEHOLDER: partners/security contact]`. Muse
+4. To block, rate-limit or report Muse, write to hannah@muse.shopping. Muse
    will remove a store from its partner list on request.
 
 ## 11. Change log
