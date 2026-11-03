@@ -38,7 +38,7 @@ merchant of record for every order.
 |---|---|
 | Product | Muse Shopping, www.muse.shopping |
 | Legal entity | None yet. Muse is an independent side project run by its founder; no company has been formed. This section will be updated when one is. |
-| Founder / accountable owner | `[PLACEHOLDER: name]` |
+| Founder / accountable owner | Hannah, founder |
 | Security contact | hannah@muse.shopping |
 | Partnerships / agent program contact | hannah@muse.shopping |
 | Legal contact | legal@muse.shopping (listed in the Muse Terms of Service; `[PLACEHOLDER: confirm]`) |
