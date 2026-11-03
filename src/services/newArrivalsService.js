@@ -185,9 +185,56 @@ async function getNewArrivals({ category = 'womens-clothing', stores = null, lim
  * @param {string} source
  * @returns {Promise<{seen: number, added: number}>}
  */
-async function recordSeenItems(storeSlug, items, source = 'scraper') {
+/**
+ * Tell the outside world that new items just showed up at a store.
+ * Posts JSON to NEW_ARRIVALS_WEBHOOK_URL (any webhook receiver) and, when
+ * SLACK_WEBHOOK_URL is set, a Slack message. Never throws.
+ */
+async function notifyNewArrivals(storeSlug, newItems, { fetchImpl = global.fetch } = {}) {
+  if (!newItems.length) return { sent: [] };
+  const store = STORES.find(s => s.slug === storeSlug) || { slug: storeSlug, name: storeSlug };
+  const sent = [];
+  const payload = {
+    event: 'new_arrivals',
+    store: { slug: store.slug, name: store.name },
+    count: newItems.length,
+    detected_at: new Date().toISOString(),
+    items: newItems.slice(0, 50).map(i => ({
+      id: String(i.externalId), name: i.name, brand: i.brandName || null,
+      price: i.priceCents != null ? i.priceCents / 100 : null,
+      image_url: i.imageUrl || null, url: i.productUrl,
+    })),
+  };
+
+  if (process.env.NEW_ARRIVALS_WEBHOOK_URL && fetchImpl) {
+    try {
+      const res = await fetchImpl(process.env.NEW_ARRIVALS_WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'User-Agent': 'MuseShopping-NewArrivals/1.0' },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) sent.push('webhook');
+      else logger.warn(`New arrivals webhook returned ${res.status}`);
+    } catch (err) {
+      logger.warn(`New arrivals webhook failed: ${err.message}`);
+    }
+  }
+
+  if (process.env.SLACK_WEBHOOK_URL) {
+    const AlertService = require('./alertService');
+    const names = payload.items.slice(0, 5).map(i => i.name).join(', ');
+    const ok = await AlertService.sendSlackAlert('info', `${payload.count} new at ${store.name}`, names, {}).catch(() => false);
+    if (ok) sent.push('slack');
+  }
+
+  logger.info(`New arrivals: ${payload.count} new at ${store.name}${sent.length ? ` (alerted: ${sent.join(', ')})` : ''}`);
+  return { sent, payload };
+}
+
+async function recordSeenItems(storeSlug, items, source = 'scraper', { notify = true } = {}) {
   await ensureSchema();
   let added = 0;
+  const newItems = [];
   for (const it of items) {
     if (!it.externalId || !it.name || !it.productUrl) continue;
     const { rows } = await pool.query(`
@@ -208,9 +255,13 @@ async function recordSeenItems(storeSlug, items, source = 'scraper') {
     `, [storeSlug, String(it.externalId), it.name, it.brandName || null, it.priceCents ?? null,
       it.originalPriceCents ?? null, it.imageUrl || null, it.productUrl, it.department || null,
       it.category || null, source]);
-    if (rows[0]?.inserted) added += 1;
+    if (rows[0]?.inserted) {
+      added += 1;
+      newItems.push(it);
+    }
   }
-  return { seen: items.length, added };
+  const alerted = notify ? (await notifyNewArrivals(storeSlug, newItems)).sent : [];
+  return { seen: items.length, added, alerted };
 }
 
-module.exports = { ensureSchema, getNewArrivals, recordSeenItems, STORES, CATEGORIES, NEW_WINDOW_DAYS };
+module.exports = { ensureSchema, getNewArrivals, recordSeenItems, notifyNewArrivals, STORES, CATEGORIES, NEW_WINDOW_DAYS };
