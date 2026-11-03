@@ -31,5 +31,5 @@ jobs:
       - name: Check https://www.muse.shopping directory
         env:
           # Flip to 'true' once Cloud KMS is live, so a missing directory alerts.
-          REQUIRE_AGENT_DIRECTORY: ${{ vars.REQUIRE_AGENT_DIRECTORY || 'false' }}
+          REQUIRE_AGENT_DIRECTORY: ${{ vars.REQUIRE_AGENT_DIRECTORY || 'true' }}
         run: node scripts/check-agent-directory.js https://www.muse.shopping
