@@ -33,6 +33,46 @@ const CATEGORIES = {
   },
 };
 
+// Same DDL as migrations/079_create_store_new_arrivals.sql. Applied once per
+// process so the live database gets the table without a manual migration run.
+// Every statement is idempotent and only adds.
+const SCHEMA_SQL = `
+  CREATE TABLE IF NOT EXISTS store_catalog_items (
+    id SERIAL PRIMARY KEY,
+    store_slug VARCHAR(100) NOT NULL,
+    external_id VARCHAR(255) NOT NULL,
+    name TEXT NOT NULL,
+    brand_name VARCHAR(255),
+    price_cents INTEGER,
+    original_price_cents INTEGER,
+    image_url TEXT,
+    product_url TEXT NOT NULL,
+    department VARCHAR(50),
+    category VARCHAR(100),
+    is_available BOOLEAN DEFAULT true,
+    source VARCHAR(50) NOT NULL DEFAULT 'scraper',
+    first_seen_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_seen_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (store_slug, external_id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_store_catalog_items_new
+    ON store_catalog_items (store_slug, department, first_seen_at DESC);
+  INSERT INTO stores (name, slug, display_name, website_url, integration_type, supports_checkout, category)
+  VALUES ('tjmaxx', 'tjmaxx', 'TJ Maxx', 'https://tjmaxx.tjx.com', 'redirect', false, 'fashion')
+  ON CONFLICT DO NOTHING;
+`;
+
+let schemaReady = null;
+function ensureSchema() {
+  if (!schemaReady) {
+    schemaReady = pool.query(SCHEMA_SQL).catch(err => {
+      schemaReady = null; // try again on the next request
+      logger.warn(`New arrivals: schema setup failed: ${err.message}`);
+    });
+  }
+  return schemaReady;
+}
+
 const CATALOG_QUERY = `
   SELECT external_id AS id, name, brand_name, price_cents, original_price_cents,
          image_url, product_url, category, first_seen_at
@@ -104,6 +144,7 @@ async function loadStoreRows(store, category) {
 async function getNewArrivals({ category = 'womens-clothing', stores = null, limit = 20, now = new Date() } = {}) {
   const cat = CATEGORIES[category];
   if (!cat) return [];
+  await ensureSchema();
   const targets = STORES.filter(s => !stores || stores.includes(s.slug));
   const cutoff = now.getTime() - NEW_WINDOW_DAYS * 24 * 60 * 60 * 1000;
 
@@ -145,6 +186,7 @@ async function getNewArrivals({ category = 'womens-clothing', stores = null, lim
  * @returns {Promise<{seen: number, added: number}>}
  */
 async function recordSeenItems(storeSlug, items, source = 'scraper') {
+  await ensureSchema();
   let added = 0;
   for (const it of items) {
     if (!it.externalId || !it.name || !it.productUrl) continue;
@@ -171,4 +213,4 @@ async function recordSeenItems(storeSlug, items, source = 'scraper') {
   return { seen: items.length, added };
 }
 
-module.exports = { getNewArrivals, recordSeenItems, STORES, CATEGORIES, NEW_WINDOW_DAYS };
+module.exports = { ensureSchema, getNewArrivals, recordSeenItems, STORES, CATEGORIES, NEW_WINDOW_DAYS };

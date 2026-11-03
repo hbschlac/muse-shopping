@@ -7,7 +7,7 @@
 
 INSERT INTO stores (name, slug, display_name, website_url, integration_type, supports_checkout, category)
 VALUES ('tjmaxx', 'tjmaxx', 'TJ Maxx', 'https://tjmaxx.tjx.com', 'redirect', false, 'fashion')
-ON CONFLICT (slug) DO NOTHING;
+ON CONFLICT DO NOTHING;
 
 CREATE TABLE IF NOT EXISTS store_catalog_items (
   id SERIAL PRIMARY KEY,
