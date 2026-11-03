@@ -3,7 +3,7 @@
  */
 
 import { api } from './client';
-import type { NewsfeedResponse, Story, BrandModule } from '../types/api';
+import type { NewsfeedResponse, Story, BrandModule, NewArrivalsCarousel } from '../types/api';
 
 /**
  * Get newsfeed content (hero campaigns, stories, brand modules)
@@ -24,6 +24,18 @@ export async function getNewsfeed(
     { requiresAuth: !!userId }
   );
   return response.data;
+}
+
+/**
+ * Get "New at <store>" carousels for Home (public, not personalized)
+ */
+export async function getNewArrivals(
+  category: string = 'womens-clothing'
+): Promise<NewArrivalsCarousel[]> {
+  const response = await api.get<{ success: boolean; data: { carousels: NewArrivalsCarousel[] } }>(
+    `/newsfeed/new-arrivals?category=${encodeURIComponent(category)}`
+  );
+  return response.data?.carousels || [];
 }
 
 /**

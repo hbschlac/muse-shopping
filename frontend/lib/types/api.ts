@@ -380,3 +380,24 @@ export interface StoreAccountPaymentMethodPayload {
   paymentMethodToken: string;
   [key: string]: any;
 }
+
+// New arrivals carousels on Home (one per store)
+export interface NewArrivalItem {
+  id: string;
+  name: string;
+  brand_name: string | null;
+  price: number | null;
+  original_price: number | null;
+  image_url: string | null;
+  product_url: string;
+  first_seen_at: string;
+}
+
+export interface NewArrivalsCarousel {
+  store: { slug: string; name: string; url: string };
+  category: string;
+  title: string;
+  subtitle: string;
+  new_count: number;
+  items: NewArrivalItem[];
+}
