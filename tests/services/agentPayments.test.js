@@ -140,3 +140,27 @@ describe('UCP profile', () => {
     });
   });
 });
+
+describe('UCP profile keys from the shared signer', () => {
+  const { buildAgentProfileFromSigner } = require('../../src/services/agentBridges/agentProfile');
+  const saved = { ...process.env };
+  afterEach(() => { process.env = { ...saved }; });
+
+  it('publishes every key version the signer publishes, public half only', async () => {
+    process.env.UCP_SIGNING_PUBLIC_JWK = JSON.stringify({ kty: 'OKP', crv: 'Ed25519', x: 'STALE' });
+    const signing = { publicKeys: async () => [
+      { kty: 'OKP', crv: 'Ed25519', x: 'NEW', kid: 'thumb-new', d: 'SECRET' },
+      { kty: 'OKP', crv: 'Ed25519', x: 'OLD', kid: 'thumb-old' },
+    ] };
+    const { keys } = await buildAgentProfileFromSigner(signing);
+    expect(keys.map(k => k.kid)).toEqual(['thumb-new', 'thumb-old']);
+    expect(keys.every(k => k.alg === 'EdDSA' && k.d === undefined)).toBe(true);
+  });
+
+  it('falls back to the env key when the signer is off', async () => {
+    process.env.UCP_SIGNING_PUBLIC_JWK = JSON.stringify({ kty: 'OKP', crv: 'Ed25519', x: 'ENV', kid: 'env' });
+    const signing = { publicKeys: async () => { throw new Error('NOT_CONFIGURED'); } };
+    expect((await buildAgentProfileFromSigner(signing)).keys[0].x).toBe('ENV');
+    expect((await buildAgentProfileFromSigner(null)).keys[0].x).toBe('ENV');
+  });
+});

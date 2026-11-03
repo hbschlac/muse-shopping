@@ -51,20 +51,55 @@ function algorithmFor(jwk) {
   return null;
 }
 
+// Public half only, with the algorithm UCP derives from kty/crv. null if unusable.
+function toPublishedKey(jwk) {
+  if (!jwk || typeof jwk !== 'object') return null;
+  const alg = algorithmFor(jwk);
+  if (!alg) return null;
+  // Never publish private key material, even if it was pasted by mistake.
+  const publicOnly = { ...jwk };
+  for (const member of PRIVATE_JWK_MEMBERS) delete publicOnly[member];
+  return { use: 'sig', kid: publicOnly.kid || 'muse_2026', ...publicOnly, alg };
+}
+
+// Fallback only: a hand-copied JWK can drift from KMS after a rotation. Prefer
+// the signer (see buildAgentProfileFromSigner). If you do use this, update it in
+// the same step as AGENT_SIGNING_KMS_KEY_VERSION.
 function parsePublicKey() {
   const raw = process.env.UCP_SIGNING_PUBLIC_JWK;
   if (!raw) return [];
   try {
-    const jwk = JSON.parse(raw);
-    const alg = algorithmFor(jwk);
-    if (!alg) return [];
-    // Never publish private key material, even if it was pasted by mistake.
-    const publicOnly = { ...jwk };
-    for (const member of PRIVATE_JWK_MEMBERS) delete publicOnly[member];
-    return [{ use: 'sig', kid: publicOnly.kid || 'muse_2026', ...publicOnly, alg }];
+    const key = toPublishedKey(JSON.parse(raw));
+    return key ? [key] : [];
   } catch (err) {
     return [];
   }
+}
+
+function loadSigning() {
+  try {
+    return require('../agentSigning');
+  } catch (err) {
+    return null;
+  }
+}
+
+/**
+ * The profile with `keys` read from the shared agent signer (Cloud KMS), so the
+ * UCP profile, the Web Bot Auth directory and Visa TAP always publish the same
+ * key versions. Falls back to UCP_SIGNING_PUBLIC_JWK, then to no keys (unsigned),
+ * if the signer is not deployed or not configured.
+ */
+async function buildAgentProfileFromSigner(signing = loadSigning()) {
+  const profile = buildAgentProfile();
+  if (!signing || typeof signing.publicKeys !== 'function') return profile;
+  try {
+    const keys = (await signing.publicKeys()).map(toPublishedKey).filter(Boolean);
+    if (keys.length) profile.keys = keys;
+  } catch (err) {
+    // Signer off or misconfigured: keep the fallback keys rather than fail the profile.
+  }
+  return profile;
 }
 
 const STRIPE_HANDLER_VERSION = '2026-06-25';
@@ -129,4 +164,5 @@ module.exports = {
   buildPaymentHandlers,
   getProfileUrl,
   buildAgentProfile,
+  buildAgentProfileFromSigner,
 };
