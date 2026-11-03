@@ -163,7 +163,11 @@ it gets from any direct shopper.
 shopper, it would use only agent-scoped credentials issued for Muse (Visa Intelligent Commerce
 tokens, Mastercard Agent Pay tokens, or a store-approved handler such as Shop Pay or a Stripe shared
 payment token), with a passkey or equivalent approval by the shopper for each purchase, and spending
-rules the shopper sets. None of this is built. Muse would update this document and the profile's
+rules the shopper sets. The current plan is Visa Intelligent Commerce first, called through Visa's
+MCP server: one passkey approval per checkout, one payment mandate per store capped at that store's
+quoted total and expiring after about 30 minutes, then payment credentials retrieved per store and
+transaction events confirmed back to Visa. Mastercard Agent Pay and American Express would follow
+behind the same interface. None of this is built. Muse would update this document and the profile's
 `payment_handlers` before turning any of it on.
 
 **Muse's older in-app checkout (not the agent).** Muse still has an earlier checkout for stores it
