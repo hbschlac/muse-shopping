@@ -18,11 +18,21 @@
  * code treat them like any other store.
  */
 
+const crypto = require('crypto');
 const pool = require('../db/pool');
 const logger = require('../utils/logger');
 const { ValidationError, NotFoundError } = require('../utils/errors');
 const AgentBridges = require('./agentBridges');
 const CartService = require('./cartService');
+const { recordAgentEvent } = require('./agentAudit');
+
+const ACTOR = 'muse-agent';
+
+// Best-effort: a log failure must not block browsing or the store handoff.
+// (No step here moves money; the payment rails log with { required: true }.)
+function logEvent(event) {
+  return recordAgentEvent({ actor: ACTOR, ...event }).catch(() => null);
+}
 
 const CHECKOUT_TIMEOUT_MS = 10000;
 
@@ -133,31 +143,54 @@ class BridgeCartService {
     }
 
     const product = await AgentBridges.getBridge(partnerKey).getProduct(productId);
-    if (!product) throw new NotFoundError(`Product ${productId} at ${partner.name}`);
+    const reject = async (reason, err) => {
+      await logEvent({
+        action: 'cart.item_rejected', decision: 'blocked', reason,
+        userId, partnerKey, details: { productId, variantId, quantity },
+      });
+      throw err;
+    };
+    if (!product) {
+      await logEvent({
+        action: 'product.checked', decision: 'error', reason: `${partner.name} did not return the product`,
+        userId, partnerKey, details: { productId },
+      });
+      await reject('Product not found at the store', new NotFoundError(`Product ${productId} at ${partner.name}`));
+    }
 
     const variants = product.variants || [];
     let variant = null;
     if (variantId) {
       variant = variants.find(v => v.id === variantId);
-      if (!variant) throw new ValidationError(`Variant ${variantId} is not part of this product`);
+      if (!variant) await reject('Variant is not part of this product', new ValidationError(`Variant ${variantId} is not part of this product`));
     } else if (variants.length === 1) {
       variant = variants[0];
     } else {
-      throw new ValidationError('Choose a size or color (variantId) before adding to cart');
-    }
-
-    if (variant.available === false) {
-      throw new ValidationError(`${product.title}${variant.title ? ` (${variant.title})` : ''} is sold out at ${partner.name}`);
+      await reject('No size or color chosen', new ValidationError('Choose a size or color (variantId) before adding to cart'));
     }
 
     const price = variant.price || product.price;
+    await logEvent({
+      action: 'product.checked',
+      decision: 'info',
+      reason: `Live check at ${partner.name}: ${variant.available === false ? 'sold out' : 'in stock'}`,
+      userId, partnerKey,
+      amountCents: price?.cents ?? null,
+      currency: price?.currency || 'USD',
+      details: { productId: product.id, variantId: variant.id, available: variant.available, compareAtCents: product.compareAtPrice?.cents ?? null },
+    });
+
+    if (variant.available === false) {
+      await reject('Sold out at the store', new ValidationError(`${product.title}${variant.title ? ` (${variant.title})` : ''} is sold out at ${partner.name}`));
+    }
+
     if (!price || typeof price.cents !== 'number') {
-      throw new ValidationError(`${partner.name} did not return a price for this item`);
+      await reject('Store returned no price', new ValidationError(`${partner.name} did not return a price for this item`));
     }
 
     const store = await this.ensureStore(partner);
 
-    return CartService.addItem(userId, {
+    const added = await CartService.addItem(userId, {
       storeId: store.id,
       brandId: null,
       productName: product.title,
@@ -181,6 +214,15 @@ class BridgeCartService {
         },
       },
     });
+
+    await logEvent({
+      action: 'cart.item_added', decision: 'allowed',
+      reason: `Added ${quantity} x ${product.title} from ${partner.name}`,
+      userId, partnerKey,
+      amountCents: price.cents * quantity, currency: price.currency || 'USD',
+      details: { cartItemId: added?.id ?? null, productId: product.id, variantId: variant.id, quantity },
+    });
+    return added;
   }
 
   /**
@@ -220,6 +262,8 @@ class BridgeCartService {
    * @returns {Promise<{stores: Array, errors: Array}>}
    */
   static async startCheckout(userId, { email = null, shippingAddress = null, partnerKeys = null } = {}) {
+    // One id per checkout run, so the log shows everything the agent did for it.
+    const cartSessionId = `bcs_${crypto.randomUUID()}`;
     const byPartner = await this.getBridgeLines(userId);
     let keys = [...byPartner.keys()];
     if (Array.isArray(partnerKeys) && partnerKeys.length) {
@@ -264,12 +308,44 @@ class BridgeCartService {
           ? 'The store did not return a checkout link'
           : (outcome.reason?.message || 'failed');
         logger.warn(`Bridge checkout failed for ${key}: ${message}`);
+        await logEvent({
+          action: 'checkout.created', decision: 'error', reason: message,
+          userId, cartSessionId, partnerKey: key,
+          details: { lineCount: lines.length },
+        });
         errors.push({ partnerKey: key, storeName: lines[0].store_name, message });
         continue;
       }
 
       const checkout = outcome.value;
-      await this.recordCheckout(lines, checkout);
+      const total = checkout.totals?.total?.cents ?? null;
+      await logEvent({
+        action: 'checkout.created', decision: 'info',
+        reason: `Built checkout at ${lines[0].store_name} for ${lines.length} line(s)`,
+        userId, cartSessionId, partnerKey: key,
+        amountCents: total, currency: checkout.currency || 'USD',
+        details: { checkoutId: checkout.id, status: checkout.status, lineCount: lines.length },
+      });
+      if (address) {
+        await logEvent({
+          action: checkout.prefillError ? 'checkout.prefill_failed' : 'checkout.prefilled',
+          decision: checkout.prefillError ? 'error' : 'info',
+          reason: checkout.prefillError
+            ? `Store rejected the shipping details: ${checkout.prefillError}`
+            : `Filled in contact and shipping for ${address.city}, ${address.state}`,
+          userId, cartSessionId, partnerKey: key,
+          amountCents: total, currency: checkout.currency || 'USD',
+          details: {
+            checkoutId: checkout.id,
+            status: checkout.status,
+            shipToCity: address.city, shipToState: address.state, shipToCountry: address.country,
+            shippingCents: checkout.totals?.fulfillment?.cents ?? null,
+            taxCents: checkout.totals?.tax?.cents ?? null,
+            stillNeeded: (checkout.needsFromShopper || []).map(n => n.code),
+          },
+        });
+      }
+      await this.recordCheckout(lines, checkout, { userId, cartSessionId, partnerKey: key });
       stores.push({
         partnerKey: key,
         prefilled: !!address && !checkout.prefillError,
@@ -281,7 +357,7 @@ class BridgeCartService {
     }
 
     logger.info(`Bridge checkout for user ${userId}: ${stores.length} store(s) ready, ${errors.length} failed`);
-    return { stores, errors, shipTo: address ? publicAddress(address) : null };
+    return { cartSessionId, stores, errors, shipTo: address ? publicAddress(address) : null };
   }
 
   /**
@@ -347,7 +423,7 @@ class BridgeCartService {
   /**
    * Refresh cart prices from the store's checkout and remember the handoff.
    */
-  static async recordCheckout(lines, checkout) {
+  static async recordCheckout(lines, checkout, logContext = {}) {
     const livePrice = new Map(
       (checkout.lineItems || [])
         .filter(li => li.variantId && typeof li.priceCents === 'number')
@@ -359,6 +435,18 @@ class BridgeCartService {
       continueUrl: checkout.continueUrl,
       at: new Date().toISOString(),
     };
+
+    const changes = lines
+      .map(l => ({ cartItemId: l.id, variantId: l.bridge.variantId, fromCents: l.price_cents, toCents: livePrice.get(l.bridge.variantId) }))
+      .filter(c => typeof c.toCents === 'number' && c.toCents !== c.fromCents);
+    if (logContext.userId) {
+      await logEvent({
+        action: 'cart.prices_refreshed', decision: 'info',
+        reason: changes.length ? `${changes.length} price(s) changed at the store` : 'Prices unchanged at the store',
+        userId: logContext.userId, cartSessionId: logContext.cartSessionId, partnerKey: logContext.partnerKey,
+        details: { checkoutId: checkout.id, changes },
+      });
+    }
 
     await Promise.all(lines.map(line => {
       const price = livePrice.get(line.bridge.variantId);
