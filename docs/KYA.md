@@ -3,7 +3,7 @@
 **Agent:** Muse Shopping agent (`MuseShopping-Agent/1.0`)
 **Agent profile (agent ID):** https://www.muse.shopping/.well-known/ucp
 **This document:** https://www.muse.shopping/kya.md (source: `docs/KYA.md` in the muse-shopping repo)
-**Last updated:** 2026-11-02
+**Last updated:** 2026-11-03
 
 This page is for the teams that vet AI shopping agents: the Visa Intelligent Commerce and Trusted
 Agent Protocol programs, Mastercard Agent Pay, American Express, Shopify, and any store that speaks
@@ -37,9 +37,8 @@ merchant of record for every order.
 | | |
 |---|---|
 | Product | Muse Shopping, www.muse.shopping |
-| Legal entity | `[PLACEHOLDER: legal entity name, state of incorporation]` |
-| Registered address | `[PLACEHOLDER]` |
-| Founder / accountable owner | `[PLACEHOLDER: name, title]` |
+| Legal entity | None yet. Muse is an independent side project run by its founder; no company has been formed. This section will be updated when one is. |
+| Founder / accountable owner | `[PLACEHOLDER: name]` |
 | Security contact | `[PLACEHOLDER: e.g. security@muse.shopping]` |
 | Partnerships / agent program contact | `[PLACEHOLDER: e.g. partners@muse.shopping]` |
 | Legal contact | legal@muse.shopping (listed in the Muse Terms of Service; `[PLACEHOLDER: confirm]`) |
@@ -245,4 +244,5 @@ Secrets live in Vercel environment variables, not in the code.
 
 | Date | Change |
 |---|---|
+| 2026-11-03 | Operator: no legal entity yet (side project). Signing key: Ed25519 in Cloud KMS. Planned Visa Intelligent Commerce flow named. |
 | 2026-11-02 | First version. UCP bridges and agent profile live; cart handoff and Muse MCP server in review; signing keys, Web Bot Auth and TAP registration planned. |
