@@ -83,7 +83,7 @@ describe('getNewArrivals', () => {
       { externalId: '3', name: 'C' },
     ]);
 
-    expect(result).toEqual({ seen: 3, added: 1 });
+    expect(result).toEqual({ seen: 3, added: 1, alerted: [] });
     expect(pool.query).toHaveBeenCalledTimes(2);
     expect(pool.query.mock.calls[0][0]).toContain('ON CONFLICT (store_slug, external_id)');
     expect(pool.query.mock.calls[0][0]).not.toMatch(/first_seen_at\s*=/);
@@ -106,6 +106,40 @@ describe('schema setup', () => {
     const ddl = pool.query.mock.calls.filter(([sql]) => sql.includes('CREATE TABLE IF NOT EXISTS store_catalog_items'));
     expect(ddl).toHaveLength(2); // failed once, succeeded once, then cached
     expect(pool.query.mock.calls[0][0]).toContain('CREATE TABLE IF NOT EXISTS store_catalog_items');
+  });
+});
+
+describe('new-item alerts', () => {
+  const saved = { ...process.env };
+  afterEach(() => { process.env = { ...saved }; });
+
+  it('posts new items to NEW_ARRIVALS_WEBHOOK_URL and stays quiet when nothing is new', async () => {
+    process.env.NEW_ARRIVALS_WEBHOOK_URL = 'https://hooks.example/new';
+    delete process.env.SLACK_WEBHOOK_URL;
+    const fetchImpl = jest.fn().mockResolvedValue({ ok: true, status: 200 });
+
+    const none = await NewArrivals.notifyNewArrivals('tjmaxx', [], { fetchImpl });
+    expect(none.sent).toEqual([]);
+    expect(fetchImpl).not.toHaveBeenCalled();
+
+    const { sent } = await NewArrivals.notifyNewArrivals('tjmaxx', [
+      { externalId: '1', name: 'Linen Midi Dress', priceCents: 2999, productUrl: 'https://tj/1' },
+    ], { fetchImpl });
+
+    expect(sent).toEqual(['webhook']);
+    const [url, init] = fetchImpl.mock.calls[0];
+    expect(url).toBe('https://hooks.example/new');
+    expect(JSON.parse(init.body)).toMatchObject({
+      event: 'new_arrivals', store: { slug: 'tjmaxx', name: 'TJ Maxx' }, count: 1,
+      items: [{ id: '1', name: 'Linen Midi Dress', price: 29.99, url: 'https://tj/1' }],
+    });
+  });
+
+  it('never throws when the webhook is down', async () => {
+    process.env.NEW_ARRIVALS_WEBHOOK_URL = 'https://hooks.example/new';
+    const fetchImpl = jest.fn().mockRejectedValue(new Error('ECONNREFUSED'));
+    await expect(NewArrivals.notifyNewArrivals('tjmaxx', [{ externalId: '1', name: 'A', productUrl: 'u' }], { fetchImpl }))
+      .resolves.toMatchObject({ sent: [] });
   });
 });
 
