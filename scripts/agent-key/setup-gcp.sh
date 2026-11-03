@@ -72,12 +72,12 @@ if [ "$APPLY" = 1 ] && [ -z "${ALERT_CHANNEL:-}" ]; then
   echo "Alert channel: $CHANNEL (confirm the verification email if Google sends one)"
 fi
 
-UNEXPECTED_FILTER="resource.type=\"cloudkms_cryptokeyversion\" AND protoPayload.methodName=\"AsymmetricSign\" AND protoPayload.resourceName:\"cryptoKeys/${KMS_KEY}/\" AND NOT protoPayload.authenticationInfo.principalSubject:\"${PROD_SUBJECT}\""
+UNEXPECTED_FILTER="protoPayload.serviceName=\"cloudkms.googleapis.com\" AND protoPayload.methodName=\"AsymmetricSign\" AND protoPayload.resourceName:\"cryptoKeys/${KMS_KEY}/\" AND NOT protoPayload.authenticationInfo.principalSubject:\"${PROD_SUBJECT}\""
 ALERT1=$(mktemp)
 cat > "$ALERT1" <<JSON
 {
   "displayName": "Muse agent key: signature from an unexpected caller",
-  "documentation": {"content": "Someone other than Vercel production of muse-shopping signed with Muse's agent key. Follow docs/security/AGENT_SIGNING_KEY.md, section 'If the key is compromised'."},
+  "documentation": {"mimeType": "text/markdown", "content": "Someone other than Vercel production of muse-shopping signed with Muse's agent key. Follow docs/security/AGENT_SIGNING_KEY.md, section 'If the key is compromised'."},
   "combiner": "OR",
   "conditions": [{"displayName": "AsymmetricSign by non-production principal",
     "conditionMatchedLog": {"filter": $(python3 -c "import json,sys;print(json.dumps(sys.argv[1]))" "$UNEXPECTED_FILTER")}}],
@@ -92,12 +92,12 @@ run gcloud alpha monitoring policies create --policy-from-file "$ALERT1" --proje
 if [ "${VOLUME_ALERT:-0}" = 1 ]; then
 run gcloud logging metrics create agent_key_sign_count --project "$GCP_PROJECT_ID" \
   --description "Muse agent key signatures" \
-  --log-filter "resource.type=\"cloudkms_cryptokeyversion\" AND protoPayload.methodName=\"AsymmetricSign\" AND protoPayload.resourceName:\"cryptoKeys/${KMS_KEY}/\""
+  --log-filter "protoPayload.serviceName=\"cloudkms.googleapis.com\" AND protoPayload.methodName=\"AsymmetricSign\" AND protoPayload.resourceName:\"cryptoKeys/${KMS_KEY}/\""
 ALERT2=$(mktemp)
 cat > "$ALERT2" <<JSON
 {
   "displayName": "Muse agent key: unusual signing volume",
-  "documentation": {"content": "More than ${SIGN_ALERT_PER_HOUR:-3000} agent signatures in an hour. Check Vercel logs for agent_signature lines; a gap between those and the KMS count means someone else is signing."},
+  "documentation": {"mimeType": "text/markdown", "content": "More than ${SIGN_ALERT_PER_HOUR:-3000} agent signatures in an hour. Check Vercel logs for agent_signature lines; a gap between those and the KMS count means someone else is signing."},
   "combiner": "OR",
   "conditions": [{"displayName": "Signatures per hour",
     "conditionThreshold": {
