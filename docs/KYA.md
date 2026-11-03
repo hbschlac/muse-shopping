@@ -133,7 +133,8 @@ MuseShopping-Agent/1.0 (+https://www.muse.shopping/.well-known/ucp)
   public key at `https://www.muse.shopping/.well-known/http-message-signatures-directory`.
   `[PLACEHOLDER: key ID(s) and thumbprint once generated]`
 - **UCP signed tier:** the UCP profile has its own `keys` array for UCP request signatures. It is
-  **empty today**, so Muse calls stores unsigned.
+  **empty today**, so Muse calls stores unsigned. UCP accepts Ed25519 keys (published as `EdDSA`),
+  so Muse plans to publish the same Ed25519 public key there rather than run a second key.
 - **Key custody:** the private key is created and held in Google Cloud KMS and cannot be exported.
   Production signs through KMS using Vercel's OIDC identity, so the key never sits in the repo, in
   environment variables, or in this document, and no language model can reach it.
@@ -170,7 +171,19 @@ rules the shopper sets. The current plan is Visa Intelligent Commerce first, cal
 MCP server: one passkey approval per checkout, one payment mandate per store capped at that store's
 quoted total and expiring after about 30 minutes, then payment credentials retrieved per store and
 transaction events confirmed back to Visa. Mastercard Agent Pay and American Express would follow
-behind the same interface. None of this is built. Muse would update this document and the profile's
+behind the same interface. None of this is turned on.
+
+**Other agent-payment programs Muse is applying to (Planned, none live):**
+
+| Program | What Muse would use it for | Status |
+|---|---|---|
+| Stripe shared payment tokens (SPT) and Agentic Commerce Suite (covers the Agentic Commerce Protocol, ACP) | Pay at stores that accept Stripe tokens, through UCP (`com.stripe.payments`) or Stripe's checkout API. The card is collected by Stripe's Payment Element in the shopper's browser; Muse gets a token capped at the store's total that expires within 30 minutes. Stripe may provision Visa and Mastercard agent tokens behind it. | Code in review, off in production. Waitlist pending. |
+| Visa Intelligent Commerce Connect | One Visa integration that covers TAP, ACP, UCP and MPP, and non-Visa cards | Pilot interest form pending |
+| Machine Payments Protocol (MPP, Stripe and Tempo) | Not used for buying from stores. Muse would only use it if it charged other agents per call for its own MCP tools. | Not planned yet |
+
+The UCP profile declares a payment handler only after its rail is approved and configured. Muse
+selects one rail per store from the handlers that store publishes; when none match, the shopper
+checks out on the store's site as today. Muse would update this document and the profile's
 `payment_handlers` before turning any of it on.
 
 **Muse's older in-app checkout (not the agent).** Muse still has an earlier checkout for stores it
@@ -244,5 +257,6 @@ Secrets live in Vercel environment variables, not in the code.
 
 | Date | Change |
 |---|---|
+| 2026-11-03 | Stripe SPT rail code (off), UCP profile accepts the shared Ed25519 key, program table for Stripe/ACP, Visa Intelligent Commerce Connect and MPP. |
 | 2026-11-03 | Operator: no legal entity yet (side project). Signing key: Ed25519 in Cloud KMS. Planned Visa Intelligent Commerce flow named. |
 | 2026-11-02 | First version. UCP bridges and agent profile live; cart handoff and Muse MCP server in review; signing keys, Web Bot Auth and TAP registration planned. |
