@@ -13,8 +13,7 @@
  *   node scripts/scrape-tjmaxx-new-arrivals.js --dump /tmp/tj  # also save page HTML
  *   node scripts/scrape-tjmaxx-new-arrivals.js --url <listing url> --pages 3
  *
- * Without --url it opens the home page and follows the women's "New Arrivals"
- * link. If the site's layout changes and it finds 0 items, rerun with --dump
+ * Without --url it reads the women's New Arrivals page (DEFAULT_LIST_URL). If the site's layout changes and it finds 0 items, rerun with --dump
  * and fix extractTiles() against the saved HTML.
  */
 
@@ -23,11 +22,13 @@ const fs = require('fs');
 const path = require('path');
 
 const HOME_URL = 'https://tjmaxx.tjx.com/store/index.jsp';
-const PRODUCT_HREF = /\/store\/jump\/product\//i;
+const PRODUCT_HREF = /\/product\//i;
 const MAX_PAGES = 5;
+// Women > New Arrivals, copied from the site on 2026-11-03.
+const DEFAULT_LIST_URL = 'https://tjmaxx.tjx.com/store/shop/new-arrivals/women/_/N-842114098+2107733895?ln=3:1';
 
 function parseArgs(argv) {
-  const args = { dryRun: false, dump: null, url: process.env.TJMAXX_START_URL || null, pages: 3, headless: false };
+  const args = { dryRun: false, dump: null, url: process.env.TJMAXX_START_URL || DEFAULT_LIST_URL, pages: 3, headless: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--dry-run') args.dryRun = true;
@@ -90,7 +91,7 @@ function parseTiles(rawTiles, baseUrl = 'https://tjmaxx.tjx.com') {
 // Runs inside the page.
 function extractTiles() {
   const out = [];
-  const anchors = [...document.querySelectorAll('a[href*="/store/jump/product/"]')];
+  const anchors = [...document.querySelectorAll('a[href*="/product/"]')];
   for (const a of anchors) {
     let tile = a;
     for (let i = 0; i < 6 && tile.parentElement; i++) {
@@ -118,6 +119,20 @@ function findNewArrivalsLink() {
   return best.length ? best[0][1] : null;
 }
 
+// Runs inside the page. What a 0-item page actually showed, for debugging.
+function describePage() {
+  const hrefs = [...document.querySelectorAll('a[href]')].map(a => a.getAttribute('href'));
+  return {
+    title: document.title,
+    url: location.href,
+    links: hrefs.length,
+    productLinks: hrefs.filter(h => /product/i.test(h)).slice(0, 5),
+    sampleLinks: [...new Set(hrefs.filter(h => /^\/|tjmaxx/.test(h)))].slice(0, 15),
+    prices: ((document.body && document.body.innerText) || '').match(/\$\s*\d+(\.\d\d)?/g)?.length || 0,
+    text: ((document.body && document.body.innerText) || '').replace(/\s+/g, ' ').slice(0, 300),
+  };
+}
+
 function findNextPageLink() {
   const next = document.querySelector('a[rel="next"], a[aria-label*="Next" i], a.next, li.next a');
   return next ? next.href : null;
@@ -143,7 +158,7 @@ async function main() {
 
     for (let n = 1; n <= args.pages && url; n++) {
       console.log(`Page ${n}: ${url}`);
-      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+      await page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 }).catch(err => console.log(`  (load: ${err.message})`));
       await pause(3000, 6000);
       await page.evaluate(() => window.scrollBy(0, document.body.scrollHeight));
       await pause(1500, 3000);
@@ -154,6 +169,10 @@ async function main() {
       }
       const items = parseTiles(await page.evaluate(extractTiles));
       console.log(`  ${items.length} items`);
+      if (items.length === 0) {
+        console.log('  What the page showed:', JSON.stringify(await page.evaluate(describePage), null, 2));
+        if (args.dump) await page.screenshot({ path: path.join(args.dump, `tjmaxx-page-${n}.png`), fullPage: false });
+      }
       all.push(...items);
       url = await page.evaluate(findNextPageLink);
     }
