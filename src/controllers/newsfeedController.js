@@ -1,6 +1,27 @@
 const NewsfeedService = require('../services/newsfeedService');
+const NewArrivalsService = require('../services/newArrivalsService');
 
 class NewsfeedController {
+  /**
+   * GET /api/v1/newsfeed/new-arrivals?category=womens-clothing&stores=nordstrom,tjmaxx
+   * One carousel per store, newest first. Stores with too few items are left out.
+   */
+  static async getNewArrivals(req, res, next) {
+    try {
+      const stores = req.query.stores ? String(req.query.stores).split(',').map(s => s.trim()).filter(Boolean) : null;
+      const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 20, 1), 40);
+      const carousels = await NewArrivalsService.getNewArrivals({
+        category: req.query.category || 'womens-clothing',
+        stores,
+        limit,
+      });
+      res.set('Cache-Control', 'public, max-age=600');
+      res.json({ success: true, data: { carousels } });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   /**
    * GET /api/v1/newsfeed
    * Get complete personalized newsfeed (stories + modules)

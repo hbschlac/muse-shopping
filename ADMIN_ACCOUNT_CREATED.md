@@ -10,7 +10,7 @@ http://localhost:3000/api/v1/admin/email-ui/login
 **Your Credentials:**
 ```
 Email: hannah@muse.shopping
-Password: MuseAdmin2024!
+Password: [removed: set via ADMIN_PASSWORD, stored in 1Password]
 ```
 
 **User ID:** 96
@@ -31,7 +31,7 @@ http://localhost:3000/api/v1/admin/email-ui/login
 
 ### 3. Login
 - Email: `hannah@muse.shopping`
-- Password: `MuseAdmin2024!`
+- Password: `[removed: set via ADMIN_PASSWORD, stored in 1Password]`
 
 ### 4. Start Managing Emails!
 - Compose emails
@@ -214,7 +214,7 @@ node create-admin-simple.js
 1. ✅ **Login with your admin account**
    - URL: http://localhost:3000/api/v1/admin/email-ui/login
    - Email: hannah@muse.shopping
-   - Password: MuseAdmin2024!
+   - Password: [removed: set via ADMIN_PASSWORD, stored in 1Password]
 
 2. ✅ **Test the email interface**
    - Compose an email
@@ -264,4 +264,4 @@ You now have:
 🌐 **Login:** http://localhost:3000/api/v1/admin/email-ui/login
 
 📧 **Email:** hannah@muse.shopping
-🔑 **Password:** MuseAdmin2024!
+🔑 **Password:** [removed: set via ADMIN_PASSWORD, stored in 1Password]

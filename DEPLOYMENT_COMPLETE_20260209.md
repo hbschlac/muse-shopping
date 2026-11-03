@@ -8,7 +8,7 @@
 
 **Credentials:**
 - Email: hannah@muse.shopping
-- Password: MuseAdmin2024! (CHANGE THIS AFTER FIRST LOGIN!)
+- Password: [removed: set via ADMIN_PASSWORD, stored in 1Password] (CHANGE THIS AFTER FIRST LOGIN!)
 
 **Features:**
 - ✅ Secure JWT authentication
@@ -74,7 +74,7 @@ All aliases active and forwarding to hbschlac@gmail.com:
 ### 1. Login & Change Password (DO THIS NOW!)
 ```
 1. Go to: https://muse.shopping/api/v1/admin/email-ui/login
-2. Login with hannah@muse.shopping / MuseAdmin2024!
+2. Login with hannah@muse.shopping / [removed: set via ADMIN_PASSWORD, stored in 1Password]
 3. Click "Account" → "Manage My Account"
 4. Enter new secure password
 5. Save changes
@@ -123,7 +123,7 @@ FRONTEND_URL=https://muse.shopping
 ```bash
 curl -X POST http://localhost:3000/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"hannah@muse.shopping","password":"MuseAdmin2024!"}'
+  -d '{"email":"hannah@muse.shopping","password":"[removed: set via ADMIN_PASSWORD, stored in 1Password]"}'
 ```
 
 ### Test Feedback Submission (Local)

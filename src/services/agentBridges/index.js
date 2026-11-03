@@ -20,6 +20,7 @@
 const logger = require('../../utils/logger');
 const { NotFoundError, ValidationError } = require('../../utils/errors');
 const { UcpBridge } = require('./ucpBridge');
+const { tagProduct, matchesFilters } = require('./itemTagger');
 const registry = require('./partners.json');
 
 const SEARCH_TIMEOUT_MS = 6000;
@@ -67,8 +68,10 @@ function withTimeout(promise, ms, label) {
  * @param {string[]} [opts.partners] - partner keys; defaults to every supported partner in `category`
  * @param {string} [opts.category]
  * @param {number} [opts.limitPerPartner]
+ * @param {Object} [opts.filters] - tag filters, see itemTagger.matchesFilters
+ * Every product comes back with Muse's own `tags` (category, colors, materials, ...).
  */
-async function search(query, { partners = null, category = null, limitPerPartner = 4, factories = BRIDGE_FACTORIES } = {}) {
+async function search(query, { partners = null, category = null, limitPerPartner = 4, filters = null, factories = BRIDGE_FACTORIES } = {}) {
   const q = String(query || '').trim();
   if (!q) throw new ValidationError('A search query is required');
 
@@ -90,7 +93,10 @@ async function search(query, { partners = null, category = null, limitPerPartner
   settled.forEach((result, i) => {
     const partner = targets[i];
     if (result.status === 'fulfilled') {
-      products.push(...result.value.products);
+      for (const product of result.value.products) {
+        const tagged = { ...product, tags: tagProduct(product) };
+        if (!filters || matchesFilters(tagged, filters)) products.push(tagged);
+      }
     } else {
       logger.warn(`Bridge search failed for ${partner.key}: ${result.reason?.message}`);
       errors.push({ partnerKey: partner.key, message: result.reason?.message || 'failed' });

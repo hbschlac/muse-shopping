@@ -51,6 +51,23 @@ app.get('/.well-known/http-message-signatures-directory', (req, res) => {
   require('../src/services/agentSigning').directoryHandler(req, res);
 });
 
+// Know Your Agent profile for card networks and partner stores (docs/KYA.md).
+app.get(['/kya.md', '/.well-known/kya'], (req, res) => {
+  const fs = require('fs');
+  try {
+    const body = fs.readFileSync(path.join(__dirname, '../docs/KYA.md'), 'utf8');
+    res.set('Cache-Control', 'public, max-age=3600');
+    res.type('text/markdown; charset=utf-8').send(body);
+  } catch (err) {
+    res.status(404).type('text/plain').send('Not found');
+  }
+});
+
+// Visa Acceptance (ICC) sandbox check. Mounted on its own so it works on
+// Preview deploys even when the full route tree can't load (Preview lacks
+// production-only env such as ENCRYPTION_KEY). Returns 404 in production.
+app.use('/api/v1/visa-acceptance', require('../src/routes/visaAcceptanceRoutes'));
+
 // Try to load the full API routes, but don't fail if it doesn't work
 let routesLoaded = false;
 try {

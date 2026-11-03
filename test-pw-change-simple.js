@@ -32,7 +32,7 @@ async function test() {
     headers: { 'Content-Type': 'application/json' }
   }, {
     email: 'hannah@muse.shopping',
-    password: 'MuseAdmin2024!'
+    password: process.env.ADMIN_PASSWORD
   });
 
   if (!login.data.success) {
@@ -102,7 +102,7 @@ async function test() {
     }
   }, {
     full_name: fullName,
-    password: 'MuseAdmin2024!'
+    password: process.env.ADMIN_PASSWORD
   });
 
   if (!reset.data.success) {
