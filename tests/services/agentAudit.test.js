@@ -44,6 +44,36 @@ beforeEach(() => {
   });
 });
 
+describe('ensureSchema', () => {
+  test('creates the table on first use, once per process, and retries after a failure', async () => {
+    let Fresh;
+    jest.isolateModules(() => { Fresh = require('../../src/services/agentAudit'); });
+    const ddlCalls = [];
+    let failNext = true;
+    pool.connect.mockImplementation(async () => {
+      const client = fakeClient();
+      const base = client.query;
+      client.query = jest.fn(async (sql, params) => {
+        if (sql.includes('CREATE TABLE IF NOT EXISTS agent_events')) {
+          ddlCalls.push(sql);
+          if (failNext) { failNext = false; throw new Error('db asleep'); }
+          return { rows: [] };
+        }
+        return base(sql, params);
+      });
+      return client;
+    });
+
+    await expect(Fresh.recordAgentEvent({ actor: 'muse-agent', action: 'a' }, { required: true }))
+      .rejects.toThrow(/db asleep/);
+    await Fresh.recordAgentEvent({ actor: 'muse-agent', action: 'b' });
+    await Fresh.recordAgentEvent({ actor: 'muse-agent', action: 'c' });
+
+    expect(ddlCalls).toHaveLength(2); // failed once, then succeeded once
+    expect(table.map((r) => r.action)).toEqual(['b', 'c']);
+  });
+});
+
 describe('redact', () => {
   test('removes card data, tokens, cryptograms and secrets at any depth', () => {
     const out = AgentAudit.redact({

@@ -15,22 +15,25 @@
 --
 -- user_id is a plain integer, not a foreign key, so deleting a user account
 -- doesn't cascade into (and get blocked by) the append-only log.
+--
+-- Keep in sync with src/services/agentAudit/schema.js, which applies this on
+-- first use because production migrations are run by hand.
 
 CREATE TABLE IF NOT EXISTS agent_events (
   id BIGSERIAL PRIMARY KEY,
   occurred_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   user_id INTEGER,
-  cart_session_id VARCHAR(100),       -- one shopping session (cart checkout)
-  checkout_intent_id VARCHAR(100),    -- the approved purchase intent, once there is one
-  actor VARCHAR(100) NOT NULL,        -- 'muse-agent', 'shopper', 'system', 'store:<partner key>', 'network:visa'
-  action VARCHAR(100) NOT NULL,       -- e.g. 'product.checked', 'checkout.created', 'payment.completed'
-  decision VARCHAR(30) NOT NULL,      -- 'info', 'allowed', 'blocked', 'approved', 'declined', 'error'
-  reason TEXT,                        -- why the agent decided this, in plain words
-  partner_key VARCHAR(100),           -- store, when the event concerns one
-  rail VARCHAR(50),                   -- 'shop_pay', 'visa_ic', 'stripe_spt', 'handoff', ...
+  cart_session_id VARCHAR(100),
+  checkout_intent_id VARCHAR(100),
+  actor VARCHAR(100) NOT NULL,
+  action VARCHAR(100) NOT NULL,
+  decision VARCHAR(30) NOT NULL,
+  reason TEXT,
+  partner_key VARCHAR(100),
+  rail VARCHAR(50),
   amount_cents INTEGER,
   currency VARCHAR(3),
-  details JSONB NOT NULL DEFAULT '{}'::jsonb,  -- redacted request/response context
+  details JSONB NOT NULL DEFAULT '{}'::jsonb,
   request_id VARCHAR(100),
   prev_hash CHAR(64),
   hash CHAR(64) NOT NULL UNIQUE
@@ -42,18 +45,23 @@ CREATE INDEX IF NOT EXISTS idx_agent_events_intent ON agent_events (checkout_int
 CREATE INDEX IF NOT EXISTS idx_agent_events_decision ON agent_events (decision, occurred_at DESC)
   WHERE decision IN ('blocked', 'declined', 'error');
 
-CREATE OR REPLACE FUNCTION agent_events_append_only() RETURNS trigger AS $$
+CREATE OR REPLACE FUNCTION agent_events_append_only() RETURNS trigger AS $fn$
 BEGIN
   RAISE EXCEPTION 'agent_events is append-only (% not allowed)', TG_OP;
 END;
-$$ LANGUAGE plpgsql;
+$fn$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS agent_events_no_update ON agent_events;
-CREATE TRIGGER agent_events_no_update
-  BEFORE UPDATE OR DELETE ON agent_events
-  FOR EACH ROW EXECUTE FUNCTION agent_events_append_only();
-
-DROP TRIGGER IF EXISTS agent_events_no_truncate ON agent_events;
-CREATE TRIGGER agent_events_no_truncate
-  BEFORE TRUNCATE ON agent_events
-  FOR EACH STATEMENT EXECUTE FUNCTION agent_events_append_only();
+DO $do$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'agent_events_no_update') THEN
+    CREATE TRIGGER agent_events_no_update
+      BEFORE UPDATE OR DELETE ON agent_events
+      FOR EACH ROW EXECUTE FUNCTION agent_events_append_only();
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'agent_events_no_truncate') THEN
+    CREATE TRIGGER agent_events_no_truncate
+      BEFORE TRUNCATE ON agent_events
+      FOR EACH STATEMENT EXECUTE FUNCTION agent_events_append_only();
+  END IF;
+END
+$do$;
