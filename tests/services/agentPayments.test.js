@@ -42,7 +42,20 @@ describe('selectRail', () => {
   });
 });
 
+describe('chooseRail', () => {
+  const { chooseRail } = require('../../src/services/agentPayments/railSelector');
+  it('logs rail.selected with the reason', async () => {
+    const audit = { recordAgentEvent: jest.fn(async () => null) };
+    const choice = await chooseRail(SHOPIFY_HANDLERS, { partnerKey: 'allbirds' }, { env: {}, audit });
+    expect(choice.rail).toBe('handoff');
+    expect(audit.recordAgentEvent).toHaveBeenCalledWith(expect.objectContaining({
+      action: 'rail.selected', rail: 'handoff', partnerKey: 'allbirds', reason: expect.stringMatching(/not switched on/),
+    }));
+  });
+});
+
 describe('Stripe shared payment tokens', () => {
+  const audit = { recordAgentEvent: jest.fn(async () => ({ id: 1 })) };
   function okFetch(body) {
     return jest.fn(async () => ({ ok: true, status: 200, json: async () => body }));
   }
@@ -59,7 +72,7 @@ describe('Stripe shared payment tokens', () => {
     const now = Date.UTC(2026, 10, 3);
     const spt = await issueSharedPaymentToken(
       { paymentMethodId: 'pm_1', sellerProfile: 'profile_s', maxAmount: 13100, ttlSeconds: 99999 },
-      { env: STRIPE_ON, fetchImpl, now },
+      { env: STRIPE_ON, fetchImpl, now, audit },
     );
     expect(spt.id).toBe('spt_123');
     const [url, init] = fetchImpl.mock.calls[0];
@@ -74,7 +87,7 @@ describe('Stripe shared payment tokens', () => {
   it('rejects a missing cap', async () => {
     await expect(issueSharedPaymentToken(
       { paymentMethodId: 'pm_1', sellerProfile: 'profile_s' },
-      { env: STRIPE_ON, fetchImpl: okFetch({}) },
+      { env: STRIPE_ON, fetchImpl: okFetch({}), audit },
     )).rejects.toMatchObject({ code: 'invalid_request' });
   });
 
@@ -84,8 +97,41 @@ describe('Stripe shared payment tokens', () => {
     }));
     await expect(issueSharedPaymentToken(
       { paymentMethodId: 'pm_1', sellerProfile: 'profile_s', maxAmount: 100 },
-      { env: STRIPE_ON, fetchImpl },
+      { env: STRIPE_ON, fetchImpl, audit },
     )).rejects.toMatchObject({ status: 402, code: 'card_declined' });
+  });
+
+  it('logs the issue as required, with only the last four of the token', async () => {
+    audit.recordAgentEvent.mockClear();
+    await issueSharedPaymentToken(
+      { paymentMethodId: 'pm_1', sellerProfile: 'profile_s', maxAmount: 500, context: { partnerKey: 'allbirds', cartSessionId: 'c1' } },
+      { env: STRIPE_ON, fetchImpl: okFetch({ id: 'spt_abcd1234' }), audit },
+    );
+    const [event, opts] = audit.recordAgentEvent.mock.calls[0];
+    expect(opts).toEqual({ required: true });
+    expect(event).toMatchObject({ action: 'credential.issued', rail: 'stripe_spt', partnerKey: 'allbirds', amountCents: 500 });
+    expect(JSON.stringify(event)).not.toContain('spt_abcd1234');
+  });
+
+  it('revokes the token and stops if the log write fails', async () => {
+    const failing = { recordAgentEvent: jest.fn(async () => { throw new Error('db down'); }) };
+    const fetchImpl = jest.fn()
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ id: 'spt_9' }) })
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ id: 'spt_9', status: 'deactivated' }) });
+    await expect(issueSharedPaymentToken(
+      { paymentMethodId: 'pm_1', sellerProfile: 'profile_s', maxAmount: 500 },
+      { env: STRIPE_ON, fetchImpl, audit: failing },
+    )).rejects.toMatchObject({ code: 'audit_failed' });
+    expect(fetchImpl.mock.calls[1][0]).toMatch(/spt_9\/revoke$/);
+  });
+
+  it('refuses to issue without the activity log', async () => {
+    const fetchImpl = okFetch({ id: 'spt_1' });
+    await expect(issueSharedPaymentToken(
+      { paymentMethodId: 'pm_1', sellerProfile: 'profile_s', maxAmount: 500 },
+      { env: STRIPE_ON, fetchImpl, audit: null },
+    )).rejects.toMatchObject({ code: 'audit_unavailable' });
+    expect(fetchImpl).not.toHaveBeenCalled();
   });
 
   it('revokes by id', async () => {

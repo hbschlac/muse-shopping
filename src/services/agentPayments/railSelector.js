@@ -57,4 +57,37 @@ function selectRail(storeHandlers, env = process.env) {
   };
 }
 
-module.exports = { RAILS, enabledRails, selectRail };
+function loadAudit() {
+  try {
+    return require('../agentAudit');
+  } catch (err) {
+    return null;
+  }
+}
+
+/**
+ * selectRail plus the activity-log entry (rail.selected) with its reason.
+ * Logging here is not required: choosing a rail moves no money.
+ * @param {string[]|object} storeHandlers
+ * @param {object} ctx { partnerKey, userId, cartSessionId, checkoutIntentId }
+ */
+async function chooseRail(storeHandlers, ctx = {}, { env = process.env, audit = loadAudit() } = {}) {
+  const choice = selectRail(storeHandlers, env);
+  if (audit && typeof audit.recordAgentEvent === 'function') {
+    await audit.recordAgentEvent({
+      actor: 'muse-agent',
+      action: 'rail.selected',
+      decision: choice.rail === 'handoff' ? 'info' : 'allowed',
+      reason: choice.reason,
+      rail: choice.rail,
+      partnerKey: ctx.partnerKey,
+      userId: ctx.userId,
+      cartSessionId: ctx.cartSessionId,
+      checkoutIntentId: ctx.checkoutIntentId,
+      details: { handler: choice.handler },
+    });
+  }
+  return choice;
+}
+
+module.exports = { RAILS, enabledRails, selectRail, chooseRail };

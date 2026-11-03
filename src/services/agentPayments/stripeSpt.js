@@ -14,6 +14,11 @@
  *   - UCP stores that publish com.stripe.payments (instrument built below), and
  *   - Stripe's Agentic Commerce Suite (ACP and other protocols), once Muse is in it.
  *
+ * Credentials are per cart and live in memory for the request only: an SPT is
+ * never stored in the database or written to logs, and never reused for another
+ * cart. Each issue is recorded in the agent activity log (credential.issued,
+ * required); if that write fails, the token is revoked and the payment stops.
+ *
  * Off unless STRIPE_AGENT_SECRET_KEY is set. Docs:
  * https://docs.stripe.com/agentic-commerce/concepts/shared-payment-tokens
  */
@@ -66,6 +71,7 @@ async function stripeRequest(path, params, { env = process.env, fetchImpl = fetc
  * @param {string} [p.returnUrl] where the shopper lands after 3-D Secure
  */
 async function issueSharedPaymentToken(p, opts = {}) {
+  secretKey(opts.env || process.env); // rail off: stop before anything else
   if (!p || !p.paymentMethodId || !p.sellerProfile) {
     throw new StripeSptError('paymentMethodId and sellerProfile are required', 400, 'invalid_request');
   }
@@ -82,7 +88,44 @@ async function issueSharedPaymentToken(p, opts = {}) {
     'usage_limits[expires_at]': String(now + ttl),
   };
   if (p.returnUrl) params.return_url = p.returnUrl;
-  return stripeRequest('/v1/shared_payment/issued_tokens', params, opts);
+
+  // Fail closed: no activity log, no credential.
+  const audit = opts.audit !== undefined ? opts.audit : loadAudit();
+  if (!audit || typeof audit.recordAgentEvent !== 'function') {
+    throw new StripeSptError('Agent activity log is not available', 503, 'audit_unavailable');
+  }
+
+  const spt = await stripeRequest('/v1/shared_payment/issued_tokens', params, opts);
+  const ctx = p.context || {};
+  try {
+    await audit.recordAgentEvent({
+      actor: 'muse-agent',
+      action: 'credential.issued',
+      decision: 'allowed',
+      reason: `Stripe shared payment token for one store, capped at ${p.maxAmount} ${params['usage_limits[currency]']}`,
+      rail: 'stripe_spt',
+      partnerKey: ctx.partnerKey,
+      userId: ctx.userId,
+      cartSessionId: ctx.cartSessionId,
+      checkoutIntentId: ctx.checkoutIntentId,
+      amountCents: p.maxAmount,
+      currency: params['usage_limits[currency]'],
+      // Only the last four of the token id: the token itself is never logged.
+      details: { last4: String(spt.id || '').slice(-4), expiresAt: Number(params['usage_limits[expires_at]']) },
+    }, { required: true });
+  } catch (err) {
+    await revokeSharedPaymentToken(spt.id, opts).catch(() => {});
+    throw new StripeSptError('Could not record the credential; payment stopped', 503, 'audit_failed');
+  }
+  return spt;
+}
+
+function loadAudit() {
+  try {
+    return require('../agentAudit');
+  } catch (err) {
+    return null;
+  }
 }
 
 async function revokeSharedPaymentToken(sptId, opts = {}) {
