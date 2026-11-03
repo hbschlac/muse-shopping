@@ -116,6 +116,38 @@ function unwrapToolResult(result) {
   return result;
 }
 
+function loadSigning() {
+  try {
+    return require('../agentSigning');
+  } catch (err) {
+    return null;
+  }
+}
+
+/**
+ * Headers for one MCP call. With AGENT_SIGN_UCP_REQUESTS=true and the shared
+ * agent signer deployed, the call is signed per UCP Message Signatures (RFC 9421,
+ * web-bot-auth shape) over the exact body string sent. If signing fails, the call
+ * goes out unsigned, which is how every call works today.
+ */
+async function requestHeaders(endpoint, bodyText, idempotencyKey, env = process.env, signing = loadSigning()) {
+  const headers = {
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+    'UCP-Agent': `profile="${getProfileUrl()}"`,
+  };
+  if (idempotencyKey) headers['Idempotency-Key'] = idempotencyKey;
+  if (env.AGENT_SIGN_UCP_REQUESTS !== 'true') return headers;
+  if (!signing || typeof signing.signUcpRequest !== 'function') return headers;
+  try {
+    const signed = await signing.signUcpRequest({ method: 'POST', url: endpoint, body: bodyText, headers });
+    return { ...headers, ...signed };
+  } catch (err) {
+    logger.warn('UCP request signing failed; sending unsigned', { code: err.code });
+    return headers;
+  }
+}
+
 /**
  * Call one UCP tool on a store's MCP endpoint.
  * @param {string} endpoint - MCP endpoint from discover()
@@ -134,11 +166,9 @@ async function callTool(endpoint, tool, args = {}, { timeoutMs, idempotencyKey }
     params: { name: tool, arguments: { ...args, meta } },
   };
 
-  const res = await fetchWithTimeout(endpoint, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-    body: JSON.stringify(body),
-  }, timeoutMs);
+  const bodyText = JSON.stringify(body);
+  const headers = await requestHeaders(endpoint, bodyText, idempotencyKey);
+  const res = await fetchWithTimeout(endpoint, { method: 'POST', headers, body: bodyText }, timeoutMs);
 
   let payload;
   try {
@@ -172,4 +202,5 @@ module.exports = {
   unwrapToolResult,
   normalizeDomain,
   clearManifestCache,
+  requestHeaders,
 };

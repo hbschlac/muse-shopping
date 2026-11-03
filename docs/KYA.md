@@ -134,7 +134,8 @@ MuseShopping-Agent/1.0 (+https://www.muse.shopping/.well-known/ucp)
   `[PLACEHOLDER: key ID(s) and thumbprint once generated]`
 - **UCP signed tier:** the UCP profile has its own `keys` array for UCP request signatures. It is
   **empty today**, so Muse calls stores unsigned. UCP accepts Ed25519 keys (published as `EdDSA`),
-  so Muse plans to publish the same Ed25519 public key there rather than run a second key.
+  so Muse plans to publish the same Ed25519 public key there rather than run a second key. The profile reads its keys from the same KMS signer, and UCP calls are signed by that signer
+  (web-bot-auth shape, covering the body digest) once `AGENT_SIGN_UCP_REQUESTS` is switched on.
 - **Key custody:** the private key is created and held in Google Cloud KMS and cannot be exported.
   Production signs through KMS using Vercel's OIDC identity, so the key never sits in the repo, in
   environment variables, or in this document, and no language model can reach it.

@@ -164,3 +164,32 @@ describe('UCP profile keys from the shared signer', () => {
     expect((await buildAgentProfileFromSigner(null)).keys[0].x).toBe('ENV');
   });
 });
+
+describe('UCP request signing', () => {
+  jest.mock('../../src/utils/logger', () => ({ warn: jest.fn(), info: jest.fn(), error: jest.fn(), debug: jest.fn() }));
+  const { requestHeaders } = require('../../src/services/agentBridges/ucpMcpClient');
+  const URL = 'https://agolde.myshopify.com/api/ucp/mcp';
+
+  it('sends UCP-Agent and stays unsigned unless switched on', async () => {
+    const signing = { signUcpRequest: jest.fn() };
+    const h = await requestHeaders(URL, '{}', 'idem-1', {}, signing);
+    expect(h['UCP-Agent']).toMatch(/^profile="https:\/\//);
+    expect(h['Idempotency-Key']).toBe('idem-1');
+    expect(h.Signature).toBeUndefined();
+    expect(signing.signUcpRequest).not.toHaveBeenCalled();
+  });
+
+  it('signs the exact body with the shared signer when switched on', async () => {
+    const signing = { signUcpRequest: jest.fn(async () => ({ Signature: 'sig1=:x:', 'Signature-Input': 'sig1=()', 'Content-Digest': 'sha-256=:y:' })) };
+    const h = await requestHeaders(URL, '{"a":1}', null, { AGENT_SIGN_UCP_REQUESTS: 'true' }, signing);
+    expect(signing.signUcpRequest).toHaveBeenCalledWith(expect.objectContaining({ method: 'POST', url: URL, body: '{"a":1}' }));
+    expect(h.Signature).toBe('sig1=:x:');
+    expect(h['Content-Digest']).toBe('sha-256=:y:');
+  });
+
+  it('falls back to unsigned if the signer fails', async () => {
+    const signing = { signUcpRequest: jest.fn(async () => { throw Object.assign(new Error('x'), { code: 'NOT_CONFIGURED' }); }) };
+    const h = await requestHeaders(URL, '{}', null, { AGENT_SIGN_UCP_REQUESTS: 'true' }, signing);
+    expect(h.Signature).toBeUndefined();
+  });
+});
