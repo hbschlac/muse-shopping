@@ -38,9 +38,9 @@ merchant of record for every order.
 |---|---|
 | Product | Muse Shopping, www.muse.shopping |
 | Legal entity | None yet. Muse is an independent side project run by its founder; no company has been formed. This section will be updated when one is. |
-| Founder / accountable owner | `[PLACEHOLDER: name]` |
-| Security contact | `[PLACEHOLDER: e.g. security@muse.shopping]` |
-| Partnerships / agent program contact | `[PLACEHOLDER: e.g. partners@muse.shopping]` |
+| Founder / accountable owner | Hannah, founder |
+| Security contact | hannah@muse.shopping |
+| Partnerships / agent program contact | hannah@muse.shopping |
 | Legal contact | legal@muse.shopping (listed in the Muse Terms of Service; `[PLACEHOLDER: confirm]`) |
 | Operating region | United States (`[PLACEHOLDER: confirm]`) |
 | Hosting | Vercel (application), Neon (Postgres database) |
@@ -165,13 +165,23 @@ it gets from any direct shopper.
 **Card-network agent tokens (Planned, not committed).** If Muse ever completes a purchase for the
 shopper, it would use only agent-scoped credentials issued for Muse (Visa Intelligent Commerce
 tokens, Mastercard Agent Pay tokens, or a store-approved handler such as Shop Pay or a Stripe shared
-payment token), with a passkey or equivalent approval by the shopper for each purchase, and spending
-rules the shopper sets. The current plan is Visa Intelligent Commerce first, called through Visa's
-MCP server: one passkey approval per checkout, one payment mandate per store capped at that store's
-quoted total and expiring after about 30 minutes, then payment credentials retrieved per store and
-transaction events confirmed back to Visa. Mastercard Agent Pay and American Express would follow
-behind the same interface. None of this is built. Muse would update this document and the profile's
-`payment_handlers` before turning any of it on.
+payment token), with a passkey or equivalent approval by the shopper for each cart, and spending
+rules the shopper sets. The current plan:
+
+- **Visa first, through Visa Acceptance.** Muse would join Visa Intelligent Commerce Connect under
+  Visa Acceptance as an enabler, with IDs issued by a Visa Acceptance account manager, not as its
+  own token requestor. Calls go through Visa's MCP server: one payment mandate per store, capped at
+  that store's quoted total and expiring after about 30 minutes; payment credentials retrieved per
+  store; transaction events confirmed back to Visa.
+- **Card entry in hosted fields.** Card details would be typed into Visa Acceptance Microform hosted
+  fields, so the card number is encrypted in the shopper's browser and Muse holds only tokens. Visa
+  says this can qualify for PCI SAQ A; that is not yet confirmed for Intelligent Commerce.
+- **Shopify stores:** Shop Pay identity-linked tokens.
+- **Mastercard Agent Pay and American Express** would follow behind the same interface.
+
+A Visa Acceptance sandbox client exists and runs only on preview deployments; nothing in this
+list runs in production. Muse would update this document and the profile's `payment_handlers`
+before turning any of it on.
 
 **Muse's older in-app checkout (not the agent).** Muse still has an earlier checkout for stores it
 works with directly, where the card is tokenized by Stripe and Muse stores only the Stripe
@@ -184,9 +194,10 @@ payment-method ID. It does not use the agent identity above and does not touch p
   no background buying.
 - No order can be placed without the shopper finishing checkout on the store's own page. That page is
   the approval step today.
-- Before Muse ever pays for a shopper (section 6), it would require an explicit approval for each
-  purchase on a channel the agent cannot control (a passkey), with extra confirmation for final-sale
-  items, a new ship-to address, a new store, or a purchase near the shopper's limit.
+- Before Muse ever pays for a shopper (section 6), it would require one explicit confirm step per
+  cart on a channel the agent cannot control. Visa passkeys are bound to a device and a card, so
+  that is one passkey tap for each card used in the cart. Final-sale items, a new ship-to address,
+  a new store, or a purchase near the shopper's limit get extra confirmation. (Planned.)
 
 ## 8. Data handling
 
@@ -237,12 +248,13 @@ Secrets live in Vercel environment variables, not in the code.
 2. Check the `User-Agent` and the `meta["ucp-agent"].profile` value on incoming calls.
 3. Once signing is live: verify the RFC 9421 signature against the key in the profile or the Web Bot
    Auth key directory, or through the Visa TAP directory at your CDN.
-4. To block, rate-limit or report Muse, write to `[PLACEHOLDER: partners/security contact]`. Muse
+4. To block, rate-limit or report Muse, write to hannah@muse.shopping. Muse
    will remove a store from its partner list on request.
 
 ## 11. Change log
 
 | Date | Change |
 |---|---|
+| 2026-11-03 | Planned payment path: ICC via Visa Acceptance as enabler, Microform hosted fields, Shop Pay tokens; one confirm step per cart. |
 | 2026-11-03 | Operator: no legal entity yet (side project). Signing key: Ed25519 in Cloud KMS. Planned Visa Intelligent Commerce flow named. |
 | 2026-11-02 | First version. UCP bridges and agent profile live; cart handoff and Muse MCP server in review; signing keys, Web Bot Auth and TAP registration planned. |
