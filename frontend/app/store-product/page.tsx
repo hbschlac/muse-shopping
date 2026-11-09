@@ -3,11 +3,15 @@
 /**
  * Product page for a partner store (Shopify and other UCP stores).
  * Price, sizes and stock come live from the store on every load.
+ *
+ * Watches: the heart saves the item and watches its price; on a sold-out
+ * size (or a sold-out item) Notify me takes the place of Add to cart and
+ * watches that size and color. See src/services/watches.
  */
 
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ShoppingBag } from 'lucide-react';
+import { Bell, BellRing, Heart, ShoppingBag } from 'lucide-react';
 import BottomNav from '@/components/BottomNav';
 import PageHeader from '@/components/PageHeader';
 import { addBridgeItemToCart } from '@/lib/api/cart';
@@ -17,6 +21,7 @@ import {
   type BridgeProduct,
   type BridgeVariant,
 } from '@/lib/api/bridges';
+import { createWatch, listWatches, removeWatch, type ItemWatch } from '@/lib/api/watches';
 
 function optionNames(variants: BridgeVariant[]): string[] {
   const names: string[] = [];
@@ -24,6 +29,19 @@ function optionNames(variants: BridgeVariant[]): string[] {
     if (!names.includes(n) && n.toLowerCase() !== 'title') names.push(n);
   }));
   return names;
+}
+
+// The option holding the size or color, whatever the store calls it.
+function optionValue(selected: Record<string, string>, pattern: RegExp): string | null {
+  const key = Object.keys(selected).find(k => pattern.test(k));
+  return key ? selected[key] : null;
+}
+const SIZE_RE = /size/i;
+const COLOR_RE = /colou?r/i;
+
+function watchErrorMessage(err: any): string {
+  if (err?.status === 401) return 'Sign in to get alerts.';
+  return err?.message || 'Could not save that. Try again.';
 }
 
 function StoreProduct() {
@@ -39,6 +57,15 @@ function StoreProduct() {
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
   const [checkedAt, setCheckedAt] = useState<Date | null>(null);
+  const [watches, setWatches] = useState<ItemWatch[]>([]);
+  const [watchBusy, setWatchBusy] = useState(false);
+  const [watchNote, setWatchNote] = useState<string | null>(null);
+
+  // The shopper's watches on this item. Signed out or offline: none.
+  useEffect(() => {
+    if (!store || !id) return;
+    listWatches({ store, item: id }).then(setWatches).catch(() => setWatches([]));
+  }, [store, id]);
 
   useEffect(() => {
     if (!store || !id) {
@@ -83,6 +110,70 @@ function StoreProduct() {
       names.every(n => n === name || !selected[n] || v.options[n] === selected[n])
     );
 
+  const priceWatch = watches.find(w => w.kind === 'price') || null;
+  // A size watch on this exact variant, or on the whole item when it has no
+  // size to pick.
+  const sizeWatch = watches.find(w => w.kind === 'size' && w.variantId === (variant?.id ?? null)) || null;
+
+  const toggleSave = async () => {
+    if (!product || watchBusy) return;
+    try {
+      setWatchBusy(true);
+      setWatchNote(null);
+      if (priceWatch) {
+        await removeWatch(priceWatch.id);
+        setWatches(ws => ws.filter(w => w.id !== priceWatch.id));
+      } else {
+        const p = variant?.price || product.price;
+        const w = await createWatch({
+          storeKey: product.partnerKey,
+          itemId: product.id,
+          kind: 'price',
+          title: product.title,
+          imageUrl: product.imageUrl,
+          priceCents: p?.cents ?? null,
+          currency: p?.currency ?? null,
+        });
+        setWatches(ws => [w, ...ws.filter(x => x.id !== w.id)]);
+        setWatchNote("Saved. We'll tell you if the price drops.");
+      }
+    } catch (err: any) {
+      setWatchNote(watchErrorMessage(err));
+    } finally {
+      setWatchBusy(false);
+    }
+  };
+
+  const toggleNotify = async () => {
+    if (!product || watchBusy) return;
+    try {
+      setWatchBusy(true);
+      setWatchNote(null);
+      if (sizeWatch) {
+        await removeWatch(sizeWatch.id);
+        setWatches(ws => ws.filter(w => w.id !== sizeWatch.id));
+      } else {
+        const w = await createWatch({
+          storeKey: product.partnerKey,
+          itemId: product.id,
+          kind: 'size',
+          variantId: variant?.id ?? null,
+          size: optionValue(selected, SIZE_RE),
+          color: optionValue(selected, COLOR_RE),
+          title: product.title,
+          imageUrl: variant?.imageUrl || product.imageUrl,
+          priceCents: (variant?.price || product.price)?.cents ?? null,
+          currency: (variant?.price || product.price)?.currency ?? null,
+        });
+        setWatches(ws => [w, ...ws.filter(x => x.id !== w.id)]);
+      }
+    } catch (err: any) {
+      setWatchNote(watchErrorMessage(err));
+    } finally {
+      setWatchBusy(false);
+    }
+  };
+
   const addToCart = async () => {
     if (!product || !variant) return;
     try {
@@ -108,6 +199,12 @@ function StoreProduct() {
   const price = variant?.price || product.price;
   const soldOut = product.available === false || variant?.available === false;
   const image = variant?.imageUrl || product.imageUrl;
+  // What Notify me is for, in the shopper's words: "size M in Navy", "size M", or "it".
+  const pickedSize = optionValue(selected, SIZE_RE);
+  const pickedColor = optionValue(selected, COLOR_RE);
+  const watchLabel = variant && pickedSize
+    ? `size ${pickedSize}${pickedColor ? ` in ${pickedColor}` : ''}`
+    : variant && pickedColor ? pickedColor : 'it';
 
   return (
     <div className="pb-40">
@@ -122,8 +219,21 @@ function StoreProduct() {
 
       <div className="px-4 pt-4 space-y-4">
         <div>
-          <p className="text-xs font-medium text-gray-600">{product.brand}</p>
-          <h1 className="text-xl font-semibold text-gray-900 mt-1">{product.title}</h1>
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-gray-600">{product.brand}</p>
+              <h1 className="text-xl font-semibold text-gray-900 mt-1">{product.title}</h1>
+            </div>
+            <button
+              onClick={toggleSave}
+              disabled={watchBusy}
+              className="shrink-0 w-11 h-11 rounded-full bg-white border border-gray-200 flex items-center justify-center"
+              aria-pressed={!!priceWatch}
+              aria-label={priceWatch ? 'Saved. Tap to stop price alerts' : 'Save and get price drop alerts'}
+            >
+              <Heart className={`w-5 h-5 ${priceWatch ? 'text-red-500 fill-red-500' : 'text-gray-700'}`} />
+            </button>
+          </div>
           <div className="flex items-baseline gap-2 mt-2">
             <span className="text-lg font-semibold text-gray-900">
               {!variant && product.maxPrice && product.price && product.maxPrice.cents !== product.price.cents
@@ -168,6 +278,7 @@ function StoreProduct() {
         })}
 
         {product.description && <p className="text-sm text-gray-700 leading-relaxed">{product.description}</p>}
+        {watchNote && <p className="text-sm text-gray-700" role="status">{watchNote}</p>}
         {error && <p className="text-sm text-[var(--color-coral)]">{error}</p>}
       </div>
 
@@ -179,13 +290,30 @@ function StoreProduct() {
           >
             Added. View cart
           </button>
+        ) : soldOut ? (
+          // Sold out: Notify me takes the place of Add to cart.
+          <button
+            onClick={toggleNotify}
+            disabled={watchBusy}
+            aria-pressed={!!sizeWatch}
+            className={`w-full min-h-12 px-3 py-2 text-sm font-semibold rounded-[12px] flex items-center justify-center gap-2 disabled:opacity-50 ${
+              sizeWatch
+                ? 'bg-white text-gray-900 border border-gray-900'
+                : 'bg-gray-900 text-white'
+            }`}
+          >
+            {sizeWatch ? <BellRing className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
+            {sizeWatch
+              ? `Watching for ${watchLabel === 'it' ? 'a restock' : watchLabel} · Tap to stop`
+              : `Notify me when ${watchLabel} is back`}
+          </button>
         ) : (
           <button
             onClick={addToCart}
-            disabled={!variant || soldOut || adding}
+            disabled={!variant || adding}
             className="w-full h-12 bg-gradient-to-br from-[var(--color-peach)] to-[var(--color-blue)] text-white font-semibold rounded-[12px] disabled:opacity-50"
           >
-            {soldOut ? 'Sold out' : !variant ? 'Choose a size' : adding ? 'Adding…' : `Add to cart · ${formatMoney(price)}`}
+            {!variant ? 'Choose a size' : adding ? 'Adding…' : `Add to cart · ${formatMoney(price)}`}
           </button>
         )}
       </div>
