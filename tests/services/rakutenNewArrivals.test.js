@@ -93,6 +93,6 @@ describe('poll endpoint auth', () => {
     const r = res();
     await NewsfeedController.pollNewArrivals({ headers: { authorization: 'Bearer right-secret' } }, r, jest.fn());
     expect(r.status).not.toHaveBeenCalled();
-    expect(r.json).toHaveBeenCalledWith({ success: true, data: { rakuten: expect.any(Array) } });
+    expect(r.json).toHaveBeenCalledWith({ success: true, data: { rakuten: expect.any(Array), cj: expect.any(Array) } });
   });
 });

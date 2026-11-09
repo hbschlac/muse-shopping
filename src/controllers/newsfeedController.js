@@ -2,6 +2,7 @@ const NewsfeedService = require('../services/newsfeedService');
 const crypto = require('crypto');
 const NewArrivalsService = require('../services/newArrivalsService');
 const Rakuten = require('../services/newArrivalSources/rakuten');
+const Cj = require('../services/newArrivalSources/cj');
 
 function bearerMatches(header, secret) {
   if (!secret) return false;
@@ -18,7 +19,7 @@ class NewsfeedController {
   /**
    * POST /api/v1/newsfeed/new-arrivals/poll
    * Called on a schedule (GitHub Actions). Pulls the latest items from every
-   * cloud source (Rakuten) and saves them; new ones fire the alert.
+   * cloud source (Rakuten, CJ) and saves them; new ones fire the alert.
    * Auth: Authorization: Bearer <NEW_ARRIVALS_POLL_SECRET>
    */
   static async pollNewArrivals(req, res, next) {
@@ -26,8 +27,8 @@ class NewsfeedController {
       if (!bearerMatches(req.headers.authorization, process.env.NEW_ARRIVALS_POLL_SECRET)) {
         return res.status(401).json({ success: false, error: 'unauthorized' });
       }
-      const rakuten = await Rakuten.pollRakuten();
-      res.json({ success: true, data: { rakuten } });
+      const [rakuten, cj] = await Promise.all([Rakuten.pollRakuten(), Cj.pollCj()]);
+      res.json({ success: true, data: { rakuten, cj } });
     } catch (error) {
       next(error);
     }
