@@ -49,6 +49,41 @@ jobs:
           git fetch --no-tags origin "$HEAD"
           node scripts/repair/check-repair-paths.js "$BASE" "$HEAD"
 
+  # Required check: the focused tests plus a live dry run of the repaired
+  # store's script. Runs the PR's code, so it gets no secrets and no token
+  # permissions. Ordinary PRs pass straight through.
+  tests:
+    name: repair-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions: {}
+    steps:
+      - name: Not a repair PR
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'extractor-repair') }}
+        run: echo "Not a self-repair PR; nothing to test."
+      - uses: actions/checkout@v4
+        if: ${{ contains(github.event.pull_request.labels.*.name, 'extractor-repair') }}
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        if: ${{ contains(github.event.pull_request.labels.*.name, 'extractor-repair') }}
+        with:
+          node-version: 20
+      - name: Focused tests and live dry run
+        if: ${{ contains(github.event.pull_request.labels.*.name, 'extractor-repair') }}
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          store=$(echo "$HEAD_REF" | sed -nE 's#^repair/([a-z0-9][a-z0-9-]*)-run-[0-9]+$#\1#p')
+          [ -n "$store" ] || { echo "repair PR branch must be repair/<store>-run-<id>"; exit 1; }
+          npm install --ignore-scripts --no-audit --no-fund > /dev/null
+          npx jest --testEnvironment=node --runInBand tests/listingWatch tests/repair
+          if [ -f "extractors/scripts/$store.js" ]; then
+            node scripts/repair/dry-run.js "$store" "$store"
+          else
+            echo "Store script removed (an undo); the store goes back to the shared script."
+          fi
+
   # If a repair PR stops qualifying, switch auto-merge off so it waits for hannah.
   disarm:
     needs: paths
