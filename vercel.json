@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "ignoreCommand": "node scripts/repair/vercel-ignore-build.js",
   "builds": [
     {
       "src": "frontend/package.json",
