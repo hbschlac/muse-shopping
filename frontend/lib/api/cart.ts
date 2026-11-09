@@ -124,3 +124,73 @@ export async function saveShippingAddress(address: ShipTo): Promise<ShipTo> {
   const response: any = await api.put('/cart/shipping-address', address, { requiresAuth: true });
   return response.data || response;
 }
+
+// One-step agent checkout: one review, one confirm, Muse pays each store.
+
+export type CheckoutRail = 'shop_pay' | 'visa_ic' | 'stripe_spt' | 'google_pay' | 'handoff' | string;
+
+export interface AgentCheckoutStore {
+  partnerKey: string;
+  storeName: string;
+  rail: CheckoutRail;
+  railReason?: string;
+  itemCount?: number;
+  ceilingCents: number | null;
+  currency: string;
+  continueUrl: string | null;
+  status?: 'pending' | 'paid' | 'failed' | 'blocked' | 'handoff';
+  orderId?: string | null;
+  error?: string | null;
+}
+
+export interface AgentCheckoutReview {
+  intentId: string;
+  cartSessionId: string;
+  expiresAt: string;
+  totalCents: number;
+  currency: string;
+  stores: AgentCheckoutStore[];
+  errors: { partnerKey: string; storeName: string; message: string }[];
+  shipTo: ShipTo | null;
+  summaryHash: string;
+}
+
+export interface AgentCheckoutResult {
+  intentId: string;
+  status: 'draft' | 'paying' | 'done' | 'cancelled' | 'expired';
+  expiresAt: string;
+  totalCents: number;
+  currency: string;
+  stores: AgentCheckoutStore[];
+}
+
+/** Build every partner store's checkout and save what the shopper is about to approve. */
+export async function prepareAgentCheckout(): Promise<AgentCheckoutReview> {
+  const response: any = await api.post('/cart/agent-checkout', {}, { requiresAuth: true });
+  return response.data || response;
+}
+
+/**
+ * The shopper's one confirm for the whole cart. summaryHash must be the one from the
+ * review they were shown; the server refuses anything else.
+ */
+export async function confirmAgentCheckout(
+  intentId: string,
+  approval: { summaryHash: string; method?: string }
+): Promise<AgentCheckoutResult> {
+  const response: any = await api.post(
+    `/cart/agent-checkout/${encodeURIComponent(intentId)}/confirm`,
+    approval,
+    { requiresAuth: true }
+  );
+  return response.data || response;
+}
+
+export async function cancelAgentCheckout(intentId: string): Promise<AgentCheckoutResult> {
+  const response: any = await api.post(
+    `/cart/agent-checkout/${encodeURIComponent(intentId)}/cancel`,
+    {},
+    { requiresAuth: true }
+  );
+  return response.data || response;
+}

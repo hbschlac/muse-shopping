@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Trash2, Plus, Minus, ShoppingBag } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { AGENT_CHECKOUT_ENABLED } from '@/lib/features';
 import BottomNav from '@/components/BottomNav';
 import PageHeader from '@/components/PageHeader';
 import {
@@ -381,6 +382,18 @@ export default function CartPage() {
           </div>
         ))}
       </div>
+
+      {AGENT_CHECKOUT_ENABLED && cartStores.filter(isBridgeStore).length > 0 && (
+        <div className="px-4 pt-6">
+          <button
+            onClick={() => router.push('/cart/review')}
+            className="w-full h-12 bg-gradient-to-br from-[var(--color-peach)] to-[var(--color-blue)] text-white font-semibold rounded-[12px]"
+          >
+            Review and pay all stores
+          </button>
+          <p className="text-xs text-gray-600 text-center mt-2">One confirm for every store. Muse pays each one.</p>
+        </div>
+      )}
 
       {cartStores.some(isBridgeStore) && (
         <div className="px-4 pt-6">
