@@ -11,7 +11,7 @@ name: Repair store script
 #   attempt  Claude (hannah's plan) proposes an edit to ONE per-store script;
 #            a no-secrets job tests it. Retried once with the test errors.
 #   publish  applies the tested patch (no code runs here) and opens a PR with
-#            the GitHub App token, so the PR's checks run. Auto-merge is armed
+#            REPAIR_GITHUB_TOKEN, so the PR's checks run. Auto-merge is armed
 #            only when repair-path-check agrees it is one store's script.
 #   report   any failure ends as an issue for hannah, never as a bad merge.
 #
@@ -150,23 +150,19 @@ jobs:
       contents: write
       pull-requests: write
       issues: write
+    # REPAIR_GITHUB_TOKEN: a fine-grained token hannah creates for this repo
+    # only (contents, pull requests, issues: read and write). PRs opened with
+    # it start their checks; PRs opened with the built-in token don't, so
+    # without it the PR still opens but waits for hannah. (A token, not a
+    # private key: CLAUDE.md keeps private keys out of GitHub secrets.)
     env:
-      HAS_APP_ID: ${{ secrets.REPAIR_APP_ID != '' }}
+      HAS_REPAIR_TOKEN: ${{ secrets.REPAIR_GITHUB_TOKEN != '' }}
     outputs:
       pr: ${{ steps.pr.outputs.url }}
     steps:
-      # The App token makes the PR's checks run (PRs opened with the built-in
-      # token don't trigger workflows). Without the App, the PR still opens
-      # but waits for hannah.
-      - id: app
-        if: env.HAS_APP_ID == 'true'
-        uses: actions/create-github-app-token@v1
-        with:
-          app-id: ${{ secrets.REPAIR_APP_ID }}
-          private-key: ${{ secrets.REPAIR_APP_PRIVATE_KEY }}
       - uses: actions/checkout@v4
         with:
-          token: ${{ steps.app.outputs.token || github.token }}
+          token: ${{ secrets.REPAIR_GITHUB_TOKEN || github.token }}
           fetch-depth: 50
       - name: Pick the passing patch
         id: pick
@@ -213,12 +209,12 @@ jobs:
       - name: Open the PR
         id: pr
         env:
-          GH_TOKEN: ${{ steps.app.outputs.token || github.token }}
+          GH_TOKEN: ${{ secrets.REPAIR_GITHUB_TOKEN || github.token }}
           TITLE: ${{ steps.commit.outputs.title }}
           BRANCH: ${{ steps.commit.outputs.branch }}
           REASON: ${{ needs.gate.outputs.reason }}
           ERROR: ${{ needs.gate.outputs.error }}
-          HAS_APP: ${{ steps.app.outputs.token != '' }}
+          HAS_APP: ${{ env.HAS_REPAIR_TOKEN }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           gh label create extractor-repair --color FBCA04 --description "Self-repair of a store script" --force >/dev/null 2>&1 || true
@@ -231,7 +227,7 @@ jobs:
             echo "- This never redeploys www.muse.shopping: Vercel skips commits that only touch store scripts."
             if [ "$HAS_APP" != "true" ]; then
               echo
-              echo "The repair GitHub App isn't set up yet, so checks won't start on their own and this waits for you."
+              echo "The repair token isn't set up yet, so checks won't start on their own and this waits for you."
             fi
           } > body.md
           url=$(gh pr create --base main --head "$BRANCH" --title "$TITLE" --body-file body.md --label extractor-repair)
