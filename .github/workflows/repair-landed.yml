@@ -1,0 +1,41 @@
+name: Repair landed
+
+# After a store-script repair merges, take the store off the no-AI fallback so
+# its next refresh runs the repaired per-store script. The new script version
+# re-baselines quietly on the server, so the switch sends no alerts.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'extractors/scripts/**'
+
+permissions:
+  contents: read
+
+jobs:
+  clear-override:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+      - name: Clear the fallback override for repaired stores
+        env:
+          NEW_ARRIVALS_POLL_SECRET: ${{ secrets.NEW_ARRIVALS_POLL_SECRET }}
+          MUSE_API_BASE: https://www.muse.shopping/api/v1
+        run: |
+          if ! git log -1 --format=%s | grep -q '\[extractor-repair\]'; then
+            echo "Not a repair commit."; exit 0
+          fi
+          if [ -z "$NEW_ARRIVALS_POLL_SECRET" ]; then echo "No job secret; skipping."; exit 0; fi
+          for f in $(git diff --name-only HEAD^ HEAD -- 'extractors/scripts/*.js'); do
+            store=$(basename "$f" .js)
+            echo "$store" | grep -Eq '^[a-z0-9][a-z0-9-]{0,63}$' || continue
+            code=$(curl -s -o /dev/null -w '%{http_code}' -X DELETE \
+              -H "Authorization: Bearer $NEW_ARRIVALS_POLL_SECRET" \
+              "$MUSE_API_BASE/listings/overrides/$store")
+            echo "$store: override cleared (HTTP $code)"
+          done

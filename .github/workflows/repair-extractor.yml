@@ -1,0 +1,274 @@
+name: Repair store script
+
+# Self-repair for a store script that broke 2 runs in a row (and, when the
+# store has one, after the free fallback also failed). Dispatched by
+# refresh-listings.yml. Design: https://claude.ai/artifact/KZCuvzhasvwGdFnuGFLb2B
+#
+#   gate     limits and routing; no AI. Issue for block pages, TJ Maxx, a store
+#            repaired 3x this week, or a missing token. Undo for a repair
+#            that broke right after it landed.
+#   capture  saves the store's pages and the current script's error. No secrets.
+#   attempt  Claude (hannah's plan) proposes an edit to ONE per-store script;
+#            a no-secrets job tests it. Retried once with the test errors.
+#   publish  applies the tested patch (no code runs here) and opens a PR with
+#            REPAIR_GITHUB_TOKEN, so the PR's checks run. Auto-merge is armed
+#            only when repair-path-check agrees it is one store's script.
+#   report   any failure ends as an issue for hannah, never as a bad merge.
+#
+# Prompt injection: store pages are untrusted. The AI has no shell, no network
+# and no write token; its only output is a patch, which is cut to the allowed
+# paths before anything runs it, and scripts only ever run in jobs with no
+# secrets.
+
+on:
+  workflow_dispatch:
+    inputs:
+      store_key:
+        description: Store key from partners.json
+        required: true
+      reason:
+        description: "'on fallback' or 'fallback broken'"
+        required: false
+        default: ''
+      run_id:
+        description: Refresh run that found it broken
+        required: false
+        default: ''
+      error:
+        description: Optional error text (otherwise read from /listings/status)
+        required: false
+        default: ''
+
+permissions: {}
+
+# One repair at a time across all stores keeps the daily cap exact.
+concurrency:
+  group: repair-extractor
+  cancel-in-progress: false
+
+env:
+  STORE_KEY: ${{ inputs.store_key }}
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions:
+      contents: read
+      issues: read
+      pull-requests: read
+    outputs:
+      action: ${{ steps.gate.outputs.action }}
+      reason: ${{ steps.gate.outputs.reason }}
+      error: ${{ steps.status.outputs.error }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 50
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Validate store key
+        run: |
+          echo "$STORE_KEY" | grep -Eq '^[a-z0-9][a-z0-9-]{0,63}$' || { echo "bad store key"; exit 1; }
+          node -e 'const p=require("./src/services/agentBridges/partners.json"); if(!p.partners.some(x=>x.key===process.env.STORE_KEY)) { console.error("unknown store"); process.exit(1) }'
+      - name: Read store status
+        id: status
+        env:
+          NEW_ARRIVALS_POLL_SECRET: ${{ secrets.NEW_ARRIVALS_POLL_SECRET }}
+        run: node scripts/repair/status.js "$STORE_KEY"
+      - name: Was the store's own script just changed by a repair?
+        id: recent
+        run: |
+          f="extractors/scripts/$STORE_KEY.js"
+          recent=false
+          if [ -f "$f" ]; then
+            subject=$(git log -1 --format=%s -- "$f")
+            when=$(git log -1 --format=%ct -- "$f")
+            if echo "$subject" | grep -q '\[extractor-repair\]' && [ $(( $(date +%s) - when )) -lt 86400 ]; then recent=true; fi
+          fi
+          echo "recent=$recent" >> "$GITHUB_OUTPUT"
+      - name: Decide
+        id: gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPAIR_ERROR: ${{ inputs.error || steps.status.outputs.error }}
+          RECENT_REPAIR: ${{ steps.recent.outputs.recent }}
+          HAS_CLAUDE_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN != '' }}
+        run: node scripts/repair/gate.js
+
+  capture:
+    needs: gate
+    if: needs.gate.outputs.action == 'repair'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node scripts/repair/capture.js "$STORE_KEY" repair-context
+      - uses: actions/upload-artifact@v4
+        with:
+          name: repair-context
+          path: repair-context
+          retention-days: 7
+
+  attempt1:
+    needs: [gate, capture]
+    uses: ./.github/workflows/repair-attempt.yml
+    with:
+      store_key: ${{ inputs.store_key }}
+      error: ${{ needs.gate.outputs.error }}
+      reason: ${{ inputs.reason }}
+      attempt: 1
+    secrets:
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+
+  attempt2:
+    needs: [gate, capture, attempt1]
+    if: always() && needs.capture.result == 'success' && needs.attempt1.outputs.passed != 'true'
+    uses: ./.github/workflows/repair-attempt.yml
+    with:
+      store_key: ${{ inputs.store_key }}
+      error: ${{ needs.gate.outputs.error }}
+      reason: ${{ inputs.reason }}
+      attempt: 2
+    secrets:
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+
+  publish:
+    needs: [gate, attempt1, attempt2]
+    if: always() && (needs.attempt1.outputs.passed == 'true' || needs.attempt2.outputs.passed == 'true' || needs.gate.outputs.action == 'revert')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    # REPAIR_GITHUB_TOKEN: a fine-grained token hannah creates for this repo
+    # only (contents, pull requests, issues: read and write). PRs opened with
+    # it start their checks; PRs opened with the built-in token don't, so
+    # without it the PR still opens but waits for hannah. (A token, not a
+    # private key: CLAUDE.md keeps private keys out of GitHub secrets.)
+    env:
+      HAS_REPAIR_TOKEN: ${{ secrets.REPAIR_GITHUB_TOKEN != '' }}
+    outputs:
+      pr: ${{ steps.pr.outputs.url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.REPAIR_GITHUB_TOKEN || github.token }}
+          fetch-depth: 50
+      - name: Pick the passing patch
+        id: pick
+        env:
+          A1_PASSED: ${{ needs.attempt1.outputs.passed }}
+        run: echo "artifact=repair-patch-$([ "$A1_PASSED" = 'true' ] && echo 1 || echo 2)" >> "$GITHUB_OUTPUT"
+      - uses: actions/download-artifact@v4
+        if: needs.gate.outputs.action == 'repair'
+        with:
+          name: ${{ steps.pick.outputs.artifact }}
+          path: ${{ runner.temp }}/patch
+      - name: Commit on a repair branch (no code from the patch runs here)
+        id: commit
+        env:
+          ACTION: ${{ needs.gate.outputs.action }}
+          RUN: ${{ github.run_id }}
+          PATCH_DIR: ${{ runner.temp }}/patch
+        run: |
+          git config user.name "muse-repair[bot]"
+          git config user.email "muse-repair@users.noreply.github.com"
+          branch="repair/$STORE_KEY-run-$RUN"
+          git checkout -b "$branch"
+          f="extractors/scripts/$STORE_KEY.js"
+          if [ "$ACTION" = "revert" ]; then
+            last=$(git log -1 --format=%H -- "$f")
+            git checkout "$last^" -- "$f" 2>/dev/null || git rm -q "$f"
+            title="Repair $STORE_KEY: undo the last repair, it broke on its first runs"
+          else
+            git apply --index --whitespace=nowarn "$PATCH_DIR/repair.patch"
+            title="Repair $STORE_KEY: rewrite the store script"
+          fi
+          # Belt and braces: the same rule the path check enforces.
+          node -e '
+            const { classifyRepair, parseNameStatus } = require("./scripts/repair/pathRules");
+            const { execFileSync } = require("child_process");
+            const ch = parseNameStatus(execFileSync("git", ["diff", "--cached", "--name-status", "-M"], { encoding: "utf8" }));
+            const bad = ch.filter(c => !c.path.startsWith("extractors/scripts/") && !c.path.startsWith("extractors/fixtures/"));
+            if (bad.length) { console.error("refusing: " + bad.map(c => c.path).join(", ")); process.exit(1); }
+          '
+          git commit -q -m "$title [extractor-repair]"
+          git push -q origin "$branch"
+          echo "branch=$branch" >> "$GITHUB_OUTPUT"
+          echo "title=$title" >> "$GITHUB_OUTPUT"
+      - name: Open the PR
+        id: pr
+        env:
+          GH_TOKEN: ${{ secrets.REPAIR_GITHUB_TOKEN || github.token }}
+          TITLE: ${{ steps.commit.outputs.title }}
+          BRANCH: ${{ steps.commit.outputs.branch }}
+          REASON: ${{ needs.gate.outputs.reason }}
+          ERROR: ${{ needs.gate.outputs.error }}
+          HAS_APP: ${{ env.HAS_REPAIR_TOKEN }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh label create extractor-repair --color FBCA04 --description "Self-repair of a store script" --force >/dev/null 2>&1 || true
+          {
+            echo "Automatic repair of the \`$STORE_KEY\` store script."
+            echo
+            echo "- Why: ${ERROR:-$REASON}"
+            echo "- Run with the tests and the live dry run: $RUN_URL"
+            echo "- Only \`extractors/scripts/$STORE_KEY.js\` and its saved test page may change. The \`repair-path-check\` check enforces that."
+            echo "- This never redeploys www.muse.shopping: Vercel skips commits that only touch store scripts."
+            if [ "$HAS_APP" != "true" ]; then
+              echo
+              echo "The repair token isn't set up yet, so checks won't start on their own and this waits for you."
+            fi
+          } > body.md
+          url=$(gh pr create --base main --head "$BRANCH" --title "$TITLE" --body-file body.md --label extractor-repair)
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          # Auto-merge waits for required checks; repair-path-check disarms it
+          # if the PR ever grows past one store's script.
+          if [ "$HAS_APP" = "true" ]; then
+            gh pr merge "$url" --auto --squash || echo "Auto-merge not available (repo setting or branch protection off); waits for hannah."
+          fi
+
+  report:
+    needs: [gate, attempt1, attempt2, publish]
+    if: always() && (needs.gate.outputs.action == 'issue' || (needs.gate.outputs.action == 'repair' && needs.publish.result != 'success') || (needs.gate.outputs.action == 'revert' && needs.publish.result != 'success'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions:
+      issues: write
+    steps:
+      - name: Open or update an issue for hannah
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          ACTION: ${{ needs.gate.outputs.action }}
+          REASON: ${{ needs.gate.outputs.reason }}
+          ERROR: ${{ needs.gate.outputs.error }}
+          A1: ${{ needs.attempt1.outputs.summary }}
+          A2: ${{ needs.attempt2.outputs.summary }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh label create extractor-repair -R "$REPO" --color FBCA04 --description "Self-repair of a store script" --force >/dev/null 2>&1 || true
+          if [ "$ACTION" = "issue" ]; then
+            title="Repair $STORE_KEY: needs you ($REASON)"
+            what="No AI ran. $REASON."
+          else
+            title="Repair $STORE_KEY: AI repair failed twice"
+            what="Attempt 1: ${A1:-no result}. Attempt 2: ${A2:-no result}."
+          fi
+          body=$(printf '%s\n\n- Store: `%s`\n- Last error: %s\n- Run: %s\n\nThe store keeps its last good data until this is fixed.' "$what" "$STORE_KEY" "${ERROR:-unknown}" "$RUN_URL")
+          existing=$(gh issue list -R "$REPO" --label extractor-repair --state open --search "\"Repair $STORE_KEY:\" in:title" --json number --jq '.[0].number')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" -R "$REPO" --body "$body"
+          else
+            gh issue create -R "$REPO" --title "$title" --label extractor-repair --body "$body"
+          fi
