@@ -56,11 +56,16 @@ app.use(cors({
 app.use(globalLimiter);
 
 // Body parsing
+// One store's listing refresh can exceed the 100kb default; only that route gets more.
+app.use('/api/v1/listings/ingest', express.json({ limit: '4mb' }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Input sanitization (protect against XSS)
-app.use(sanitizeInput);
+// Skipped for the listing ingest: it is secret-protected, checked field by field
+// by src/services/listingWatch/contract.js, and the sanitizer would rewrite real
+// store URLs (it strips "content=" and "condition=" from query strings).
+app.use((req, res, next) => (req.path === '/api/v1/listings/ingest' ? next() : sanitizeInput(req, res, next)));
 
 // Serve static assets (public)
 app.use(express.static(path.join(__dirname, '../public')));
