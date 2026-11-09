@@ -11,8 +11,9 @@
  *   listing_changes         what changed; the push alerts work reads and
  *                           dispatches these (it owns dispatched_at)
  *   listing_runs            one row per store per run: healthy, broken or held
- *   listing_store_overrides a different script for a store (set by the repair
- *                           work, e.g. the no-AI fallback)
+ *   listing_store_overrides a different script for a store: the no-AI fallback
+ *                           after two broken runs, plus the daily trial of the
+ *                           store's own script while it is on the fallback
  */
 
 const pool = require('../../db/pool');
@@ -78,6 +79,8 @@ const SCHEMA_SQL = `
     reason TEXT,
     set_at TIMESTAMPTZ NOT NULL DEFAULT now()
   );
+  ALTER TABLE listing_store_overrides ADD COLUMN IF NOT EXISTS last_trial_at TIMESTAMPTZ;
+  ALTER TABLE listing_store_overrides ADD COLUMN IF NOT EXISTS last_trial_error TEXT;
 `;
 
 let schemaReady = null;
@@ -97,7 +100,7 @@ async function loadState(storeKey) {
   const [variants, seen, runs] = await Promise.all([
     pool.query('SELECT item_id, variant_id, price_cents, available FROM listing_variants WHERE store_key = $1', [storeKey]),
     pool.query('SELECT item_id FROM listing_seen_items WHERE store_key = $1', [storeKey]),
-    pool.query(`SELECT run_id, status, listing_count, script_version FROM listing_runs
+    pool.query(`SELECT run_id, status, listing_count, script_name, script_version FROM listing_runs
                 WHERE store_key = $1 ORDER BY ran_at DESC LIMIT 10`, [storeKey]),
   ]);
   const lastSaved = runs.rows.find(r => r.status === 'ok' || r.status === 'baseline');
@@ -108,6 +111,7 @@ async function loadState(storeKey) {
     lastGoodCount: lastSaved ? lastSaved.listing_count : null,
     lastStatus: runs.rows[0] ? runs.rows[0].status : null,
     runIds: new Set(runs.rows.map(r => r.run_id)),
+    recentRuns: runs.rows.map(r => ({ status: r.status, scriptName: r.script_name })),
   };
 }
 
@@ -193,8 +197,46 @@ async function saveRun(storeKey, { listings, variantRows, missingWatchedIds, wat
 
 async function getOverrides() {
   await ensureSchema();
-  const { rows } = await pool.query('SELECT store_key, script, reason FROM listing_store_overrides');
+  const { rows } = await pool.query(`
+    SELECT store_key, script, reason, set_at, last_trial_at, last_trial_error
+    FROM listing_store_overrides`);
   return new Map(rows.map(r => [r.store_key, r]));
+}
+
+async function setOverride(storeKey, script, reason) {
+  await ensureSchema();
+  await pool.query(`
+    INSERT INTO listing_store_overrides (store_key, script, reason) VALUES ($1, $2, $3)
+    ON CONFLICT (store_key) DO UPDATE SET script = EXCLUDED.script, reason = EXCLUDED.reason,
+      set_at = now(), last_trial_at = NULL, last_trial_error = NULL
+  `, [storeKey, script, reason]);
+}
+
+/** @returns {Promise<boolean>} whether an override was removed */
+async function deleteOverride(storeKey) {
+  await ensureSchema();
+  const { rowCount } = await pool.query('DELETE FROM listing_store_overrides WHERE store_key = $1', [storeKey]);
+  return rowCount > 0;
+}
+
+/** Note a failed daily trial of the store's own script (a healthy one deletes the override). */
+async function recordTrial(storeKey, error) {
+  await ensureSchema();
+  await pool.query(`
+    UPDATE listing_store_overrides SET last_trial_at = now(), last_trial_error = $2 WHERE store_key = $1
+  `, [storeKey, error ? String(error).slice(0, 500) : null]);
+}
+
+/** Last saved product URL for each watched item, so a fallback can open the page. */
+async function getWatchedUrls(storeKeys) {
+  await ensureSchema();
+  if (!storeKeys.length) return new Map();
+  const { rows } = await pool.query(`
+    SELECT DISTINCT ON (store_key, item_id) store_key, item_id, url
+    FROM listing_variants WHERE store_key = ANY($1::text[]) AND url IS NOT NULL
+    ORDER BY store_key, item_id, last_seen_at DESC
+  `, [storeKeys]);
+  return new Map(rows.map(r => [`${r.store_key}\u0000${r.item_id}`, r.url]));
 }
 
 /**
@@ -206,9 +248,10 @@ async function getStatus() {
   const { rows } = await pool.query(`
     WITH ranked AS (
       SELECT store_key, status, reason, run_id, script_name, script_version, ran_at,
-             ROW_NUMBER() OVER (PARTITION BY store_key ORDER BY ran_at DESC) AS rn
+             ROW_NUMBER() OVER (PARTITION BY store_key ORDER BY ran_at DESC) AS rn,
+             FIRST_VALUE(script_name) OVER (PARTITION BY store_key ORDER BY ran_at DESC) AS current_script
       FROM listing_runs WHERE ran_at > now() - interval '7 days'
-    )
+    ), runs AS (
     SELECT store_key,
            MAX(ran_at) AS last_run_at,
            MAX(ran_at) FILTER (WHERE status IN ('ok','baseline')) AS last_ok_at,
@@ -217,10 +260,21 @@ async function getStatus() {
            (array_agg(run_id ORDER BY ran_at DESC))[1] AS last_run_id,
            (array_agg(script_name ORDER BY ran_at DESC))[1] AS script_name,
            (array_agg(script_version ORDER BY ran_at DESC))[1] AS script_version,
-           COALESCE(MIN(rn) FILTER (WHERE status <> 'broken'), COUNT(*) + 1) - 1 AS consecutive_broken
-    FROM ranked GROUP BY store_key ORDER BY store_key
+           -- broken runs in a row by the script that ran last; runs by an
+           -- earlier script do not count against a new one
+           COALESCE(MIN(rn) FILTER (WHERE status <> 'broken' OR script_name IS DISTINCT FROM current_script),
+                    COUNT(*) + 1) - 1 AS consecutive_broken
+    FROM ranked GROUP BY store_key
+    )
+    SELECT runs.*, o.script AS override_script, o.set_at AS override_set_at,
+           o.last_trial_at, o.last_trial_error
+    FROM runs LEFT JOIN listing_store_overrides o USING (store_key)
+    ORDER BY store_key
   `);
   return rows.map(r => ({ ...r, consecutive_broken: Number(r.consecutive_broken) }));
 }
 
-module.exports = { ensureSchema, loadState, recordRun, saveRun, getOverrides, getStatus, SCHEMA_SQL };
+module.exports = {
+  ensureSchema, loadState, recordRun, saveRun, getOverrides, setOverride, deleteOverride, recordTrial,
+  getWatchedUrls, getStatus, SCHEMA_SQL,
+};

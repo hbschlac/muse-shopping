@@ -18,14 +18,25 @@ https://claude.ai/artifact/KZCuvzhasvwGdFnuGFLb2B
    `POST /api/v1/listings/ingest`, which checks it again, compares it with the
    last run, and records new items, price changes and sizes back in stock.
 
-A store broken two runs in a row is handed to `repair-extractor.yml`.
+## When a script breaks
+
+1. Broken two runs in a row: the store switches to the no-AI fallback,
+   `scripts/embedded-product-data.js` (a row in `listing_store_overrides`).
+2. Once a day, a store on the fallback gets a trial run of its own script. A
+   healthy trial takes it off the fallback. A broken one hands the store to
+   `repair-extractor.yml` with reason `on fallback`. The fallback breaking twice
+   hands it over with reason `fallback broken`.
+3. A repair writes the store's own script, `scripts/<storeKey>.js`, which then
+   runs instead of the shared default. Only a change to a single store's script
+   may merge on its own. After it lands, `DELETE /api/v1/listings/overrides/<storeKey>`
+   takes the store off the fallback.
 
 ## Writing a script
 
 ```js
 module.exports = {
   async run({ task, tools }) {
-    // task: { storeKey, domain, endpoint, watchedItemIds, searchQueries }
+    // task: { storeKey, domain, endpoint, watchedItemIds, watchedItems: [{ itemId, url }], searchQueries }
     return { listings: [/* see src/services/listingWatch/contract.js */] };
   },
 };
@@ -37,7 +48,7 @@ module.exports = {
 |------|--------------|
 | `tools.ucp.lookup(ids)` | Shopify Catalog `lookup_catalog`, 10 ids per call |
 | `tools.ucp.search(query, { limit })` | Shopify Catalog `search_catalog` |
-| `tools.http.getText(url)` | GET a page on this store's own domain, https only |
+| `tools.http.getText(url)` | GET a page on this store's own domain, https only; follows up to 3 redirects that stay on the store |
 | `tools.html.jsonLdProducts(html)` | schema.org Product objects in a page |
 | `tools.log(...)` | goes to the job log, not the output |
 

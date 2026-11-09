@@ -106,10 +106,13 @@ jobs:
           RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
         run: |
           node scripts/refresh-listings.js post results.json repairs.json
-          echo "repairs=$(node -e 'console.log(JSON.stringify(require("./repairs.json").map(r => r.storeKey)))')" >> "$GITHUB_OUTPUT"
+          echo "repairs=$(node -e 'console.log(JSON.stringify(require("./repairs.json")))')" >> "$GITHUB_OUTPUT"
 
-  # A store broken two runs in a row gets an AI repair attempt. The repair
-  # workflow opens a PR; only a fix that touches just that store's script and
+  # A store broken two runs in a row moves to the no-AI fallback script. Once
+  # a day its own script gets a trial run; if that is still broken (reason "on
+  # fallback"), or the fallback itself breaks twice ("fallback broken"), the
+  # store is handed to the AI repair. The repair writes the store's own script,
+  # extractors/scripts/<storeKey>.js; only a fix that touches just that file and
   # its test page and passes its tests may merge on its own.
   repair:
     needs: post
@@ -130,6 +133,10 @@ jobs:
             echo "Repair workflow not installed yet; stores needing repair: $REPAIRS"
             exit 0
           fi
-          for key in $(echo "$REPAIRS" | jq -r '.[]'); do
-            gh workflow run repair-extractor.yml -R "$REPO" -f store_key="$key" -f run_id="$RUN_ID" || true
+          echo "$REPAIRS" | jq -c '.[]' | while read -r r; do
+            gh workflow run repair-extractor.yml -R "$REPO" \
+              -f store_key="$(echo "$r" | jq -r .storeKey)" \
+              -f reason="$(echo "$r" | jq -r .reason)" \
+              -f error="$(echo "$r" | jq -r '.error // ""' | head -c 500)" \
+              -f run_id="$RUN_ID" || true
           done

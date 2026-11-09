@@ -14,8 +14,9 @@ const logger = require('../../utils/logger');
 const { listPartners } = require('../agentBridges');
 const { followersByStoreKey } = require('./followedStores');
 const store = require('./store');
+const { DEFAULT_SCRIPT, FALLBACK_SCRIPT } = require('./scripts');
 
-const DEFAULT_SCRIPT = 'shopify-catalog';
+const TRIAL_EVERY_MS = 24 * 60 * 60 * 1000;
 // Searches that tend to surface a store's newest women's items. New items are
 // ids Muse has not seen before, so a broad query is fine.
 const NEW_DROP_QUERIES = ['new arrivals women', 'new women', 'just in'];
@@ -32,12 +33,23 @@ async function loadWatches() {
   return [];
 }
 
+/** A store on the fallback for a day gets one trial of its own script a day. */
+function trialDue(override, now) {
+  if (!override || override.script !== FALLBACK_SCRIPT) return false;
+  const since = Math.max(new Date(override.set_at || 0).getTime(), new Date(override.last_trial_at || 0).getTime());
+  return now - since >= TRIAL_EVERY_MS;
+}
+
 /**
  * @param {Object} [opts]
  * @param {string[]} [opts.extraStores] - store keys to include even with no watches or follows (testing)
- * @returns {Promise<Array<{storeKey, domain, endpoint, script, watchedItemIds, searchQueries}>>}
+ * @returns {Promise<Array<{storeKey, domain, endpoint, script, watchedItemIds, watchedItems, searchQueries, trial?}>>}
+ *   watchedItems: [{ itemId, url }] with the last saved product URL (null if
+ *   never saved), so the fallback can open product pages and keep the same id.
+ *   A task with trial: true runs the store's own script while it is on the
+ *   fallback; it comes right after that store's normal task.
  */
-async function buildPlan({ extraStores = [], deps = {} } = {}) {
+async function buildPlan({ extraStores = [], deps = {}, now = Date.now() } = {}) {
   const partners = (deps.listPartners || listPartners)({ protocol: 'ucp-mcp' });
   const byKey = new Map(partners.map(p => [p.key, p]));
   const [watches, followers, overrides] = await Promise.all([
@@ -73,7 +85,18 @@ async function buildPlan({ extraStores = [], deps = {} } = {}) {
     const t = taskFor(key);
     if (t) t.searchQueries = NEW_DROP_QUERIES;
   }
-  return [...tasks.values()];
+
+  const list = [...tasks.values()];
+  const urls = await (deps.getWatchedUrls || store.getWatchedUrls)(
+    list.filter(t => t.watchedItemIds.length).map(t => t.storeKey),
+  ).catch(() => new Map());
+  const out = [];
+  for (const t of list) {
+    t.watchedItems = t.watchedItemIds.map(itemId => ({ itemId, url: urls.get(`${t.storeKey}\u0000${itemId}`) || null }));
+    out.push(t);
+    if (trialDue(overrides.get(t.storeKey), now)) out.push({ ...t, script: DEFAULT_SCRIPT, trial: true });
+  }
+  return out;
 }
 
-module.exports = { buildPlan, NEW_DROP_QUERIES, DEFAULT_SCRIPT };
+module.exports = { buildPlan, trialDue, NEW_DROP_QUERIES, DEFAULT_SCRIPT };

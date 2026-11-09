@@ -1,6 +1,7 @@
 const path = require('path');
 const { createTools, jsonLdProducts } = require('../../extractors/tools');
-const { runTask, scriptPath } = require('../../extractors/run-one');
+const fs = require('fs');
+const { runTask, resolveScript, scriptPath, SCRIPTS_DIR } = require('../../extractors/run-one');
 const shopifyCatalog = require('../../extractors/scripts/shopify-catalog');
 const { validateOutput } = require('../../src/services/listingWatch/contract');
 
@@ -76,6 +77,27 @@ describe('store script tools', () => {
     await expect(tools.ucp.search('x')).rejects.toThrow(/Internal error/);
   });
 
+  test('getText follows redirects that stay on the store', async () => {
+    const fetchImpl = fakeFetch(() => 'page');
+    const hops = { 'https://www.allbirds.com/x': 'https://allbirds.com/x', 'https://allbirds.com/x': '/y' };
+    const fn = async (url, init) => {
+      if (hops[url]) return { ok: false, status: 301, headers: { get: () => hops[url] }, text: async () => '' };
+      return fetchImpl(url, init);
+    };
+    const tools = createTools(task, { fetchImpl: fn, pauseMs: 0 });
+    await expect(tools.http.getText('https://www.allbirds.com/x')).resolves.toBe('page');
+    expect(fetchImpl.calls[0].url).toBe('https://allbirds.com/y');
+    expect(tools.requestsUsed).toBe(3);
+  });
+
+  test('getText refuses a redirect to another site, and redirect loops', async () => {
+    const to = loc => async () => ({ ok: false, status: 302, headers: { get: () => loc }, text: async () => '' });
+    const off = createTools(task, { fetchImpl: to('https://evil.example/'), pauseMs: 0 });
+    await expect(off.http.getText('https://www.allbirds.com/x')).rejects.toThrow(/blocked: evil.example is not this store \(redirected/);
+    const loop = createTools(task, { fetchImpl: to('https://www.allbirds.com/x'), pauseMs: 0 });
+    await expect(loop.http.getText('https://www.allbirds.com/x')).rejects.toThrow(/more than 3 redirects/);
+  });
+
   test('json-ld products are found in pages and @graph blocks', () => {
     const html = `<script type="application/ld+json">{"@type":"Product","name":"A"}</script>
       <script type="application/ld+json">{"@graph":[{"@type":"ProductGroup","name":"B"},{"@type":"Organization"}]}</script>
@@ -110,6 +132,24 @@ describe('shopify-catalog script', () => {
 });
 
 describe('runner', () => {
+  const ownScript = `${SCRIPTS_DIR}/zz-test-store.js`;
+  afterEach(() => { if (fs.existsSync(ownScript)) fs.unlinkSync(ownScript); });
+
+  test('a store\'s own script replaces the default, but not an override', () => {
+    const t = { storeKey: 'zz-test-store', script: 'shopify-catalog' };
+    expect(resolveScript(t)).toBe('shopify-catalog');
+    fs.writeFileSync(ownScript, 'module.exports = { run: async () => ({ listings: [] }) };');
+    expect(resolveScript(t)).toBe('zz-test-store');
+    expect(resolveScript({ ...t, script: 'embedded-product-data' })).toBe('embedded-product-data');
+    expect(resolveScript({ storeKey: '../x', script: 'shopify-catalog' })).toBe('shopify-catalog');
+  });
+
+  test('the result names the script that ran, and marks a trial', async () => {
+    fs.writeFileSync(ownScript, 'module.exports = { run: async () => ({ listings: [] }) };');
+    const r = await runTask({ ...task, storeKey: 'zz-test-store', trial: true });
+    expect(r).toMatchObject({ scriptName: 'zz-test-store', trial: true, ok: true });
+  });
+
   test('rejects script names that could escape the scripts folder', () => {
     expect(() => scriptPath('../../src/config/database')).toThrow(/bad script name/);
     expect(scriptPath('shopify-catalog')).toBe(path.join(__dirname, '../../extractors/scripts/shopify-catalog.js'));

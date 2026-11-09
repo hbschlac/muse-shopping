@@ -2,8 +2,6 @@
 -- detected changes for alerts, run history, and per-store script overrides.
 -- Same DDL as src/services/listingWatch/store.js, which also creates these on first use.
 -- Design: https://claude.ai/artifact/KZCuvzhasvwGdFnuGFLb2B
-◇ injected env (0) from .env // tip: ◈ encrypted .env [www.dotenvx.com]
-◇ injected env (0) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
 CREATE TABLE IF NOT EXISTS listing_variants (
   store_key TEXT NOT NULL,
   item_id TEXT NOT NULL,
