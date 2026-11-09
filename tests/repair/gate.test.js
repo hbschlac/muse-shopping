@@ -15,7 +15,7 @@ test('rejects store keys that could reach a shell', () => {
 
 test('block pages and TJ Maxx go to hannah, not AI', () => {
   expect(decide({ storeKey: 'allbirds', error: 'HTTP 403 Forbidden', prs: [], now }).action).toBe('issue');
-  expect(decide({ storeKey: 'allbirds', error: 'captcha page', prs: [], now }).action).toBe('issue');
+  expect(decide({ storeKey: 'allbirds', error: 'bot check: https://x returned a bot check page', prs: [], now }).action).toBe('issue');
   expect(decide({ storeKey: 'tjmaxx', prs: [], now }).action).toBe('issue');
 });
 
@@ -44,4 +44,8 @@ test('ignores PRs that are not repairs', () => {
   expect(decide({ storeKey: 'allbirds', prs, now }).action).toBe('repair');
   expect(storeOfBranch('repair/allbirds-run-123')).toBe('allbirds');
   expect(storeOfBranch('main')).toBeNull();
+});
+
+test('an off-store request by a buggy script is a script bug, so AI may repair it', () => {
+  expect(decide({ storeKey: 'allbirds', error: 'blocked: evil.com is not this store', prs: [], now }).action).toBe('repair');
 });

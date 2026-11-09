@@ -28,7 +28,7 @@ function decide({ storeKey, error, prs, now = Date.now(), hasToken = true }) {
   if (CLOUD_BLOCKED.has(storeKey)) {
     return { action: 'issue', reason: `${storeKey} blocks cloud servers, so it can only be fixed from the Mac` };
   }
-  if (/\b(blocked|captcha|access denied|forbidden|403|429|rate.?limit)\b/i.test(error || '')) {
+  if (/\b(bot check|captcha|access denied|forbidden|403|429|rate.?limit)\b/i.test(error || '')) {
     return { action: 'issue', reason: 'the store returned a block page, not a layout change; AI would not help' };
   }
 
