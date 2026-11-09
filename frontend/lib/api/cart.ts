@@ -127,6 +127,10 @@ export async function saveShippingAddress(address: ShipTo): Promise<ShipTo> {
 
 // One-step agent checkout: one review, one confirm, Muse pays each store.
 
+type Wrapped<T> = T | { data: T };
+const unwrap = <T,>(r: Wrapped<T>): T =>
+  r && typeof r === 'object' && 'data' in r ? (r as { data: T }).data : (r as T);
+
 export type CheckoutRail = 'shop_pay' | 'visa_ic' | 'stripe_spt' | 'google_pay' | 'handoff' | string;
 
 export interface AgentCheckoutStore {
@@ -166,8 +170,8 @@ export interface AgentCheckoutResult {
 
 /** Build every partner store's checkout and save what the shopper is about to approve. */
 export async function prepareAgentCheckout(): Promise<AgentCheckoutReview> {
-  const response: any = await api.post('/cart/agent-checkout', {}, { requiresAuth: true });
-  return response.data || response;
+  const response = (await api.post('/cart/agent-checkout', {}, { requiresAuth: true })) as Wrapped<AgentCheckoutReview>;
+  return unwrap(response);
 }
 
 /**
@@ -178,19 +182,19 @@ export async function confirmAgentCheckout(
   intentId: string,
   approval: { summaryHash: string; method?: string }
 ): Promise<AgentCheckoutResult> {
-  const response: any = await api.post(
+  const response = (await api.post(
     `/cart/agent-checkout/${encodeURIComponent(intentId)}/confirm`,
     approval,
     { requiresAuth: true }
-  );
-  return response.data || response;
+  )) as Wrapped<AgentCheckoutResult>;
+  return unwrap(response);
 }
 
 export async function cancelAgentCheckout(intentId: string): Promise<AgentCheckoutResult> {
-  const response: any = await api.post(
+  const response = (await api.post(
     `/cart/agent-checkout/${encodeURIComponent(intentId)}/cancel`,
     {},
     { requiresAuth: true }
-  );
-  return response.data || response;
+  )) as Wrapped<AgentCheckoutResult>;
+  return unwrap(response);
 }

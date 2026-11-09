@@ -31,6 +31,9 @@ const money = (cents: number | null | undefined, currency = 'USD') =>
     ? '—'
     : new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(cents / 100);
 
+const errorText = (err: unknown, fallback: string) =>
+  err instanceof Error && err.message ? err.message : fallback;
+
 const museCanPay = (s: AgentCheckoutStore) => s.rail !== 'handoff';
 
 function useCountdown(expiresAt?: string) {
@@ -63,8 +66,8 @@ export default function CartReviewPage() {
       setResult(null);
       confirmed.current = false;
       setReview(await prepareAgentCheckout());
-    } catch (err: any) {
-      setError(err.message || 'Could not build your checkout. Try again.');
+    } catch (err) {
+      setError(errorText(err, 'Could not build your checkout. Try again.'));
     } finally {
       setLoading(false);
     }
@@ -85,9 +88,9 @@ export default function CartReviewPage() {
       setConfirming(true);
       setError(null);
       setResult(await confirmAgentCheckout(review.intentId, { summaryHash: review.summaryHash, method: 'confirm' }));
-    } catch (err: any) {
+    } catch (err) {
       confirmed.current = false;
-      setError(err.message || 'Checkout did not go through. Nothing was charged.');
+      setError(errorText(err, 'Checkout did not go through. Nothing was charged.'));
     } finally {
       setConfirming(false);
     }
