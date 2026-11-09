@@ -6,6 +6,7 @@ import Link from 'next/link';
 import BottomNav from '@/components/BottomNav';
 import PageHeader from '@/components/PageHeader';
 import { getFavorites, removeFromFavorites } from '@/lib/api/products';
+import WatchingList from '@/components/WatchingList';
 
 interface FavoriteItem {
   id: number;
@@ -80,6 +81,7 @@ export default function SavesPage() {
     return (
       <div className="min-h-screen bg-[var(--color-ecru)] pb-24">
         <PageHeader title="Saves" />
+        <WatchingList />
         <div className="flex flex-col items-center justify-center px-4 py-24">
           <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mb-6 shadow-sm">
             <Heart className="w-12 h-12 text-gray-400" />
@@ -103,6 +105,7 @@ export default function SavesPage() {
   return (
     <div className="min-h-screen bg-[var(--color-ecru)] pb-24">
       <PageHeader title="Saves" />
+      <WatchingList />
 
       {/* Filter Bar */}
       {categories.length > 1 && (
