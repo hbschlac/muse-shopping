@@ -159,6 +159,7 @@ router.use('/freepeople', freepeopleInventoryRoutes);
 router.use('/freepeople-integration', freepeopleIntegrationRoutes);
 router.use('/dynamite', dynamiteInventoryRoutes);
 router.use('/dynamite-integration', dynamiteIntegrationRoutes);
+router.use('/notifications', require('./notificationRoutes')); // push alerts, settings, alert history
 
 // Data deletion callback (Meta/Facebook compliance)
 router.use('/', dataDeletionRoutes);

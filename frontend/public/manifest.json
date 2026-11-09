@@ -1,8 +1,10 @@
 {
+  "id": "/home",
   "name": "Muse - Personalized Fashion Shopping",
   "short_name": "Muse",
   "description": "Shop all your favorite stores in one place. Personalized. Fast.",
-  "start_url": "/",
+  "start_url": "/home",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#FAFAF8",
   "theme_color": "#F4A785",

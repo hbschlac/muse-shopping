@@ -1,0 +1,29 @@
+name: Dispatch alerts
+
+# Every 15 minutes: send push alerts for new listing changes, release alerts
+# held during quiet hours, and send daily digests that are due.
+# Listing refresh also triggers dispatch right after it saves changes; this is
+# the backstop and the clock for quiet hours and digests.
+# Needs the repo secret NEW_ARRIVALS_POLL_SECRET (same value as in Vercel).
+on:
+  schedule:
+    - cron: '7,22,37,52 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Dispatch
+        env:
+          SECRET: ${{ secrets.NEW_ARRIVALS_POLL_SECRET }}
+        run: |
+          if [ -z "$SECRET" ]; then
+            echo "NEW_ARRIVALS_POLL_SECRET is not set; skipping."
+            exit 0
+          fi
+          curl -fsS -X POST -H "Authorization: Bearer $SECRET" \
+            https://www.muse.shopping/api/v1/notifications/dispatch

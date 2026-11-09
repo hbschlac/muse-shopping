@@ -68,6 +68,7 @@
     "puppeteer-extra-plugin-stealth": "^2.11.2",
     "stripe": "^20.3.0",
     "validator": "^13.15.26",
+    "web-push": "^3.6.7",
     "winston": "^3.19.0"
   },
   "devDependencies": {
