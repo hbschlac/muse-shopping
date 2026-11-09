@@ -1,0 +1,135 @@
+name: Refresh listings
+
+# Every 15 minutes: ask Muse which stores to check, run each store's script,
+# and send the results back. Muse records new items, price changes and sizes
+# back in stock. Design: https://claude.ai/artifact/KZCuvzhasvwGdFnuGFLb2B
+#
+# Three jobs on purpose. Store scripts are code an AI repair may have rewritten,
+# so they run in the middle job, which has no secrets and a token with no
+# permissions. Only the first and last jobs see NEW_ARRIVALS_POLL_SECRET, and
+# they never run store code.
+#
+# 15 minutes is Shopify's limit for keeping prices and stock (Catalog rules).
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: refresh-listings
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions:
+      contents: read
+    outputs:
+      has_work: ${{ steps.plan.outputs.has_work }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - id: plan
+        env:
+          NEW_ARRIVALS_POLL_SECRET: ${{ secrets.NEW_ARRIVALS_POLL_SECRET }}
+        run: |
+          if [ -z "$NEW_ARRIVALS_POLL_SECRET" ]; then
+            echo "NEW_ARRIVALS_POLL_SECRET is not set; skipping."
+            echo "has_work=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          node scripts/refresh-listings.js plan plan.json
+          if [ "$(node -e 'console.log(require("./plan.json").length)')" = "0" ]; then
+            echo "has_work=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_work=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.plan.outputs.has_work == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: plan
+          path: plan.json
+          retention-days: 1
+
+  extract:
+    needs: plan
+    if: needs.plan.outputs.has_work == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # No secrets in this job, and the token can do nothing.
+    permissions: {}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/download-artifact@v4
+        with:
+          name: plan
+      - run: node scripts/refresh-listings.js extract plan.json results.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: results
+          path: results.json
+          retention-days: 1
+
+  post:
+    needs: extract
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      repairs: ${{ steps.post.outputs.repairs }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/download-artifact@v4
+        with:
+          name: results
+      - id: post
+        env:
+          NEW_ARRIVALS_POLL_SECRET: ${{ secrets.NEW_ARRIVALS_POLL_SECRET }}
+          RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          node scripts/refresh-listings.js post results.json repairs.json
+          echo "repairs=$(node -e 'console.log(JSON.stringify(require("./repairs.json").map(r => r.storeKey)))')" >> "$GITHUB_OUTPUT"
+
+  # A store broken two runs in a row gets an AI repair attempt. The repair
+  # workflow opens a PR; only a fix that touches just that store's script and
+  # its test page and passes its tests may merge on its own.
+  repair:
+    needs: post
+    if: needs.post.outputs.repairs != '' && needs.post.outputs.repairs != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions:
+      actions: write
+    continue-on-error: true
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          REPAIRS: ${{ needs.post.outputs.repairs }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          if ! gh workflow view repair-extractor.yml -R "$REPO" > /dev/null 2>&1; then
+            echo "Repair workflow not installed yet; stores needing repair: $REPAIRS"
+            exit 0
+          fi
+          for key in $(echo "$REPAIRS" | jq -r '.[]'); do
+            gh workflow run repair-extractor.yml -R "$REPO" -f store_key="$key" -f run_id="$RUN_ID" || true
+          done
