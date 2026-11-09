@@ -9,9 +9,11 @@
 const SCRIPT_DIR = 'extractors/scripts/';
 const FIXTURE_DIR = 'extractors/fixtures/';
 
-// The free fallback is shared by every store that falls back to it, so a
-// change to it is never "one store's script".
-const SHARED_SCRIPTS = new Set(['embedded-product-data']);
+// Shared scripts serve many stores, so a change to one is never "one store's
+// script" and always waits for hannah. A repair instead writes a per-store
+// script named after the store key (extractors/scripts/<storeKey>.js), which
+// run-one.js prefers over the shared default.
+const SHARED_SCRIPTS = new Set(['embedded-product-data', 'shopify-catalog']);
 
 function normalize(p) {
   return String(p || '').trim().replace(/\\/g, '/').replace(/^\.\//, '');
@@ -31,25 +33,18 @@ function shouldSkipVercelBuild(files) {
   return list.length > 0 && list.every(isSiteIrrelevant);
 }
 
-// sources.json is owned by the listing refresh thread. Accept either an array
-// of stores or { stores: [...] }, with the script named by `script`.
-function storesByScript(sources) {
-  const stores = Array.isArray(sources) ? sources : (sources && sources.stores) || [];
-  const map = new Map();
-  for (const s of stores) {
-    if (!s || !s.script) continue;
-    const script = String(s.script).replace(/\.js$/, '');
-    const key = s.key || s.store_key || s.store;
-    if (!map.has(script)) map.set(script, []);
-    map.get(script).push(key);
-  }
-  return map;
+// Known store keys, from src/services/agentBridges/partners.json (read from
+// the base commit by the caller, so a PR can't add itself a store).
+function storeKeys(partners) {
+  const list = Array.isArray(partners) ? partners : (partners && partners.partners) || [];
+  return new Set(list.map((p) => p && p.key).filter(Boolean));
 }
 
 // changes: [{ status: 'M'|'A'|'D'|'R...', path }] as from `git diff --name-status`.
 // Returns { autoMerge, store, script, reasons }. autoMerge is true only when the
-// change is one existing, single-store script plus that store's fixtures.
-function classifyRepair(changes, sources) {
+// change is one per-store script (named after a known store key, added or
+// modified) plus that store's saved test pages.
+function classifyRepair(changes, partners) {
   const reasons = [];
   const list = (changes || []).map((c) => ({
     status: String(c.status || '').charAt(0).toUpperCase(),
@@ -80,19 +75,18 @@ function classifyRepair(changes, sources) {
     } else {
       script = rest.slice(0, -3);
     }
-    if (s.status !== 'M') reasons.push(`script must be modified, not added, deleted or renamed (${s.status})`);
+    if (s.status !== 'M' && s.status !== 'A') {
+      reasons.push(`script must be added or modified, not deleted or renamed (${s.status})`);
+    }
   }
 
   if (script) {
     if (SHARED_SCRIPTS.has(script)) {
-      reasons.push(`${script} is the shared fallback`);
+      reasons.push(`${script} is shared by many stores`);
+    } else if (!storeKeys(partners).has(script)) {
+      reasons.push(`${script} is not a known store key, so it is not a per-store script`);
     } else {
-      const users = storesByScript(sources).get(script) || [];
-      if (users.length !== 1) {
-        reasons.push(`${script} is used by ${users.length} stores in sources.json, not exactly 1`);
-      } else {
-        store = users[0];
-      }
+      store = script;
     }
   }
 
@@ -127,7 +121,7 @@ module.exports = {
   SHARED_SCRIPTS,
   isSiteIrrelevant,
   shouldSkipVercelBuild,
-  storesByScript,
+  storeKeys,
   classifyRepair,
   parseNameStatus,
 };
