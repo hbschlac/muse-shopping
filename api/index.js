@@ -31,6 +31,8 @@ app.use(cors({
 }));
 
 // Body parsing
+// One store's listing refresh can exceed the 100kb default; only that route gets more.
+app.use('/api/v1/listings/ingest', express.json({ limit: '4mb' }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
