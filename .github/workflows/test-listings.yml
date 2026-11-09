@@ -1,0 +1,38 @@
+name: Listing refresh tests
+
+# Focused tests for the listing refresh and the store scripts. The full jest
+# suite needs a database and API keys; these do not.
+on:
+  pull_request:
+    paths:
+      - 'extractors/**'
+      - 'src/services/listingWatch/**'
+      - 'src/routes/listingRoutes.js'
+      - 'scripts/refresh-listings.js'
+      - 'tests/listingWatch/**'
+      - '.github/workflows/refresh-listings.yml'
+      - '.github/workflows/test-listings.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'extractors/**'
+      - 'src/services/listingWatch/**'
+      - 'tests/listingWatch/**'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      # No lockfile in this repo, so install rather than ci.
+      - run: npm install --ignore-scripts --no-audit --no-fund
+      - run: npx jest --testEnvironment=node --runInBand tests/listingWatch tests/services/agentSigning.test.js
