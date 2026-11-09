@@ -19,6 +19,13 @@ export const metadata: Metadata = {
     ],
     apple: '/apple-touch-icon.png',
   },
+  // Needed for iPhone home-screen install, which is what allows push alerts (iOS 16.4+).
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    title: 'Muse',
+    statusBarStyle: 'default',
+  },
 };
 
 export default function RootLayout({
