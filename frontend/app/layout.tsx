@@ -26,13 +26,6 @@ export const metadata: Metadata = {
     title: 'Muse',
     statusBarStyle: 'default',
   },
-  // Needed for iPhone home-screen install, which is what allows push alerts (iOS 16.4+).
-  manifest: '/manifest.json',
-  appleWebApp: {
-    capable: true,
-    title: 'Muse',
-    statusBarStyle: 'default',
-  },
 };
 
 export default function RootLayout({
