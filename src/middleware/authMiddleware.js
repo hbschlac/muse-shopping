@@ -118,6 +118,7 @@ const requireAdmin = async (req, res, next) => {
 
     // Attach role to request for further checks
     req.userRole = user.role;
+    req.userEmail = user.email;
     req.isAdmin = isAdminByFlag || isAdminByRole;
 
     next();
