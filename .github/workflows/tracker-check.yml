@@ -1,0 +1,21 @@
+name: Tracker check
+
+# Muse loads no ad, analytics or social trackers and no third-party fonts.
+# This blocks a change that would add one without the visitor's consent.
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  trackers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: No third-party trackers or requests
+        run: node scripts/check-trackers.js
