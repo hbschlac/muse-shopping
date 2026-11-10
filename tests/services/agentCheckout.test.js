@@ -113,7 +113,7 @@ describe('prepare', () => {
 
 describe('confirm', () => {
   async function preparedWithRail(pay) {
-    AgentCheckout.registerRail('test_rail', { pay });
+    AgentCheckout.registerRail('test_rail', { pay, enforcesCeiling: true });
     // No selector is installed yet, so point the store at the test rail directly.
     const review = await AgentCheckout.prepare(7, {});
     storeRows.forEach((r) => { r.rail = 'test_rail'; r.status = 'pending'; });
@@ -231,7 +231,7 @@ describe('cancel', () => {
 
 describe('passkey approval', () => {
   async function prepared(pay) {
-    AgentCheckout.registerRail('test_rail', { pay });
+    AgentCheckout.registerRail('test_rail', { pay, enforcesCeiling: true });
     const review = await AgentCheckout.prepare(7, {});
     storeRows.forEach((r) => { r.rail = 'test_rail'; r.status = 'pending'; });
     return review;
@@ -302,4 +302,9 @@ test('a store price above the Muse cart price is cited on the review entry', asy
   const created = events.find((e) => e.action === 'intent.created');
   const cited = created.rules.find((r) => r.rule === 'checkout.price_changes_shown@v1');
   expect(cited.values.increases).toEqual([{ store: 'allbirds', variantId: 'v_runner_9', cartPriceCents: 9800, storePriceCents: 10800 }]);
+});
+
+test('a payment method that does not cap the charge before paying cannot be installed', () => {
+  expect(() => AgentCheckout.registerRail('loose_rail', { pay: jest.fn() })).toThrow(/cap the charge/);
+  expect(AgentCheckout._internal.rails.has('loose_rail')).toBe(false);
 });

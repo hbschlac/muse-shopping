@@ -25,7 +25,7 @@
  *     decline threshold, SPT max_amount), and Muse blocks a store whose final
  *     total comes back higher.
  *
- * Rails plug in with registerRail(name, { pay }). None is registered yet, so
+ * Rails plug in with registerRail(name, { pay, enforcesCeiling: true }). None is registered yet, so
  * today every store hands off: the confirm step is safe to ship before any
  * partner approves Muse. pay() receives { intent, store, ctx } and returns
  * { status: 'paid', orderId, totalCents } or throws.
@@ -48,8 +48,17 @@ const SCHEMA_LOCK_KEY = 4172027;
 const rails = new Map();
 
 /** Register a payment rail (shop_pay, visa_ic, stripe_spt, ...). */
+/**
+ * A rail must enforce the approved ceiling itself, before money moves (e.g. the
+ * amount cap in a Visa purchase instruction, or the checkout total limit for
+ * Shop Pay), and say so with enforcesCeiling: true. Muse's own check after the
+ * store answers is only a backstop. hannah's rule, Nov 10 2026.
+ */
 function registerRail(name, impl) {
   if (!impl || typeof impl.pay !== 'function') throw new Error(`Rail ${name} needs a pay() function`);
+  if (impl.enforcesCeiling !== true) {
+    throw new Error(`Rail ${name} must cap the charge at the approved amount before paying (enforcesCeiling: true)`);
+  }
   rails.set(name, impl);
 }
 
