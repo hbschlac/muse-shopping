@@ -17,7 +17,6 @@ const META_REDIRECT_URI = process.env.META_REDIRECT_URI || 'http://localhost:300
 // Instagram Basic Display API Scopes
 const INSTAGRAM_SCOPES = [
   'instagram_basic',
-  'instagram_content_publish',
   'pages_show_list',
   'pages_read_engagement',
 ];
@@ -401,12 +400,11 @@ class MetaAuthService {
    * @returns {Promise<boolean>} Success status
    */
   static async disconnectAccount(userId, provider) {
-    const result = await pool.query(
-      'DELETE FROM social_connections WHERE user_id = $1 AND provider = $2 RETURNING id',
-      [userId, provider]
-    );
+    // Also deletes saved follows and style data once no Meta account is left.
+    const { deleteInstagramData } = require('./privacyDeletion');
+    const deleted = await deleteInstagramData(userId, [provider]);
 
-    if (result.rows.length === 0) {
+    if (!deleted.social_connections) {
       throw new ValidationError(`No ${provider} connection found for this user`);
     }
 

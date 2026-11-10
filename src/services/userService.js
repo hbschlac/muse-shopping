@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const { deleteAccount } = require('./privacyDeletion');
 const pool = require('../db/pool');
 const { NotFoundError } = require('../utils/errors');
 
@@ -221,7 +222,8 @@ class UserService {
       throw new NotFoundError('User');
     }
 
-    await User.delete(userId);
+    // Also clears tables with no foreign key to users (push, alerts).
+    await deleteAccount(userId, 'user_request');
   }
 }
 

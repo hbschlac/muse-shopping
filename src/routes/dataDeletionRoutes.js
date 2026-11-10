@@ -9,6 +9,7 @@ const router = express.Router();
 const crypto = require('crypto');
 const pool = require('../db/pool');
 const logger = require('../utils/logger');
+const { findUserIdByMetaId, deleteInstagramData } = require('../services/privacyDeletion');
 
 /**
  * POST /data-deletion-callback
@@ -57,18 +58,13 @@ router.post('/data-deletion-callback', async (req, res) => {
 
     // Generate unique confirmation code
     const confirmationCode = crypto.randomBytes(16).toString('hex');
-    const confirmationUrl = `${process.env.APP_URL}/deletion-status?id=${confirmationCode}`;
+    const siteUrl = (process.env.APP_URL || 'https://www.muse.shopping').replace(/\/+$/, '');
+    const confirmationUrl = `${siteUrl}/api/v1/deletion-status?id=${confirmationCode}`;
 
-    // Find user by Meta user ID
-    const userResult = await pool.query(
-      `SELECT u.id, u.email
-       FROM users u
-       JOIN social_connections sc ON u.id = sc.user_id
-       WHERE sc.platform = 'instagram' AND sc.platform_user_id = $1`,
-      [user_id]
-    );
+    // Find the Muse user behind this Meta user id
+    const userId = await findUserIdByMetaId(user_id);
 
-    if (userResult.rows.length === 0) {
+    if (!userId) {
       logger.warn(`Data deletion request for unknown Meta user: ${user_id}`);
 
       // Still return success - user might have already been deleted
@@ -78,33 +74,33 @@ router.post('/data-deletion-callback', async (req, res) => {
       });
     }
 
-    const user = userResult.rows[0];
+    // Delete right away; nothing waits for a person.
+    const deleted = await deleteInstagramData(userId);
 
-    // Log the deletion request
+    // Record it so the status page can show it was done
     await pool.query(
       `INSERT INTO audit_logs (
         user_id, action, resource_type, description,
         metadata, severity, status
       ) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
       [
-        user.id,
+        userId,
         'data_deletion_request',
         'user_data',
-        'Meta/Facebook data deletion request received',
+        'Meta data deletion request received and completed',
         JSON.stringify({
           meta_user_id: user_id,
           confirmation_code: confirmationCode,
-          algorithm
+          algorithm,
+          completed_at: new Date().toISOString(),
+          deleted
         }),
-        'warning',
-        'pending'
+        'info',
+        'completed'
       ]
     );
 
-    // Delete Instagram-related data
-    await deleteInstagramData(user.id, user_id, confirmationCode);
-
-    logger.info(`Instagram data deleted for user ${user.id} (Meta ID: ${user_id})`);
+    logger.info(`Instagram data deleted for user ${userId} (Meta ID: ${user_id})`);
 
     // Return confirmation URL
     res.json({
@@ -198,63 +194,6 @@ router.get('/deletion-status', async (req, res) => {
 });
 
 /**
- * Delete all Instagram-related data for a user
- */
-async function deleteInstagramData(userId, metaUserId, confirmationCode) {
-  const client = await pool.connect();
-
-  try {
-    await client.query('BEGIN');
-
-    // Delete Instagram style insights
-    await client.query(
-      'DELETE FROM instagram_style_insights WHERE user_id = $1',
-      [userId]
-    );
-
-    // Delete user Instagram follows
-    await client.query(
-      'DELETE FROM user_instagram_follows WHERE user_id = $1',
-      [userId]
-    );
-
-    // Delete social connection
-    await client.query(
-      `DELETE FROM social_connections
-       WHERE user_id = $1 AND platform = 'instagram'`,
-      [userId]
-    );
-
-    // Log completion
-    await client.query(
-      `UPDATE audit_logs
-       SET status = 'completed',
-           metadata = metadata || $1::jsonb
-       WHERE action = 'data_deletion_request'
-         AND metadata->>'confirmation_code' = $2`,
-      [
-        JSON.stringify({
-          completed_at: new Date().toISOString(),
-          tables_cleared: ['instagram_style_insights', 'user_instagram_follows', 'social_connections']
-        }),
-        confirmationCode
-      ]
-    );
-
-    await client.query('COMMIT');
-
-    logger.info(`Instagram data deletion completed for user ${userId}`);
-
-  } catch (error) {
-    await client.query('ROLLBACK');
-    logger.error('Error deleting Instagram data:', error);
-    throw error;
-  } finally {
-    client.release();
-  }
-}
-
-/**
  * Parse and verify Meta's signed request
  * https://developers.facebook.com/docs/games/gamesonfacebook/login#parsingsr
  */
@@ -269,11 +208,14 @@ function parseSignedRequest(signedRequest, appSecret) {
     return null;
   }
 
-  // Decode signature
-  const sig = base64UrlDecode(encodedSig);
-
-  // Decode payload
-  const data = JSON.parse(base64UrlDecode(payload));
+  let sig;
+  let data;
+  try {
+    sig = Buffer.from(base64UrlToBase64(encodedSig), 'base64');
+    data = JSON.parse(base64UrlDecode(payload));
+  } catch {
+    return null;
+  }
 
   // Check algorithm
   if (!data.algorithm || data.algorithm.toUpperCase() !== 'HMAC-SHA256') {
@@ -287,7 +229,7 @@ function parseSignedRequest(signedRequest, appSecret) {
     .update(payload)
     .digest();
 
-  if (!crypto.timingSafeEqual(Buffer.from(sig), expectedSig)) {
+  if (sig.length !== expectedSig.length || !crypto.timingSafeEqual(sig, expectedSig)) {
     logger.error('Invalid signature');
     return null;
   }
@@ -299,6 +241,10 @@ function parseSignedRequest(signedRequest, appSecret) {
  * Base64 URL decode
  */
 function base64UrlDecode(str) {
+  return Buffer.from(base64UrlToBase64(str), 'base64').toString('utf8');
+}
+
+function base64UrlToBase64(str) {
   // Convert base64url to base64
   let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
 
@@ -307,7 +253,8 @@ function base64UrlDecode(str) {
     base64 += '=';
   }
 
-  return Buffer.from(base64, 'base64').toString('utf8');
+  return base64;
 }
 
 module.exports = router;
+module.exports.parseSignedRequest = parseSignedRequest;
