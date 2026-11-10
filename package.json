@@ -48,6 +48,7 @@
     "@google-cloud/storage": "^7.16.0",
     "@googleapis/gmail": "^22.0.2",
     "@googleapis/oauth2": "^10.0.1",
+    "@simplewebauthn/server": "13.3.3",
     "axios": "^1.13.4",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",

@@ -315,6 +315,21 @@ async function confirm(userId, intentId, confirmation = {}) {
     throw new ValidationError('The cart changed since you reviewed it. Review it again.');
   }
 
+  // The shopper's passkey tap, bound to this exact review, before anything is claimed or paid.
+  let approvedBy = { method: 'confirm' };
+  if (passkeyRequired()) {
+    try {
+      const pk = await passkeys().verifyCartApproval(userId, intent.id, intent.summary_hash, confirmation.passkey);
+      approvedBy = { method: 'passkey', credentialId: pk.credentialId, userVerified: pk.userVerified };
+    } catch (err) {
+      await recordAgentEvent({
+        actor: 'shopper', action: 'intent.declined', decision: 'blocked',
+        reason: `Passkey check failed: ${err.message}`, ...ctx,
+      });
+      throw err;
+    }
+  }
+
   // Only one confirm can win, even with a double tap.
   const claimed = await pool.query(
     "UPDATE checkout_intents SET status = 'paying', approved_at = NOW() WHERE id = $1 AND status = 'draft' RETURNING id",
@@ -328,7 +343,7 @@ async function confirm(userId, intentId, confirmation = {}) {
       actor: 'shopper', action: 'intent.approved', decision: 'approved',
       reason: `Shopper confirmed ${stores.length} store(s) in one step`,
       ...ctx, amountCents: intent.total_cents, currency: intent.currency,
-      details: { summaryHash: intent.summary_hash, method: confirmation.method || 'confirm' },
+      details: { summaryHash: intent.summary_hash, ...approvedBy },
     }, { required: true });
   } catch (err) {
     await pool.query("UPDATE checkout_intents SET status = 'draft', approved_at = NULL WHERE id = $1", [intent.id]).catch(() => {});
@@ -355,6 +370,27 @@ async function confirm(userId, intentId, confirmation = {}) {
   return getIntent(userId, intentId);
 }
 
+/** Passkey approval is required unless AGENT_CHECKOUT_PASSKEY=off (local testing only). */
+function passkeyRequired() {
+  return process.env.AGENT_CHECKOUT_PASSKEY !== 'off';
+}
+function passkeys() {
+  return require('../passkeys');
+}
+
+/**
+ * WebAuthn options for the shopper's passkey tap on this cart. The challenge
+ * is bound to the intent and the review the shopper saw.
+ */
+async function approvalOptions(userId, intentId) {
+  const { intent } = await loadIntent(userId, intentId);
+  if (intent.status !== 'draft') throw new ConflictError(`This checkout is already ${intent.status}`);
+  if (new Date(intent.expires_at).getTime() < Date.now()) throw new ConflictError('This checkout expired. Review the cart again.');
+  const hasKey = await passkeys().hasPasskey(userId);
+  if (!hasKey) return { needsPasskey: true };
+  return { needsPasskey: false, options: await passkeys().cartApprovalOptions(userId, intent.id, intent.summary_hash) };
+}
+
 /** The shopper backed out of the review screen. */
 async function cancel(userId, intentId) {
   const { intent } = await loadIntent(userId, intentId);
@@ -373,6 +409,7 @@ async function cancel(userId, intentId) {
 module.exports = {
   prepare,
   confirm,
+  approvalOptions,
   cancel,
   getIntent,
   registerRail,

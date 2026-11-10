@@ -11,9 +11,20 @@ import BottomNav from '@/components/BottomNav';
 import PageHeader from '@/components/PageHeader';
 import { AGENT_CHECKOUT_ENABLED } from '@/lib/features';
 import {
+  startAuthentication,
+  startRegistration,
+  browserSupportsWebAuthn,
+  type PublicKeyCredentialCreationOptionsJSON,
+  type PublicKeyCredentialRequestOptionsJSON,
+} from '@simplewebauthn/browser';
+import {
   prepareAgentCheckout,
   confirmAgentCheckout,
   cancelAgentCheckout,
+  getAgentCheckoutApprovalOptions,
+  getPasskeyRegistrationOptions,
+  requestPasskeySetupCode,
+  verifyPasskeyRegistration,
   type AgentCheckoutReview,
   type AgentCheckoutResult,
   type AgentCheckoutStore,
@@ -54,7 +65,11 @@ export default function CartReviewPage() {
   const [result, setResult] = useState<AgentCheckoutResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [confirming, setConfirming] = useState(false);
+  const [step, setStep] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // First-time Face ID setup: a code emailed to the shopper comes first.
+  const [setupSentTo, setSetupSentTo] = useState<string | null>(null);
+  const [setupCode, setSetupCode] = useState('');
   const confirmed = useRef(false);
   const left = useCountdown(result ? undefined : review?.expiresAt);
   const expired = left === 0;
@@ -81,18 +96,69 @@ export default function CartReviewPage() {
     load();
   }, [load, router]);
 
+  const cancelledText = (err: unknown, fallback: string) =>
+    err instanceof Error && (err.name === 'NotAllowedError' || err.name === 'AbortError')
+      ? 'Face ID was cancelled. Nothing was charged.'
+      : errorText(err, fallback);
+
+  // Approve this exact cart with one Face ID tap, then Muse pays.
+  const approveAndPay = async (intentId: string, summaryHash: string) => {
+    const approval = await getAgentCheckoutApprovalOptions(intentId);
+    if (approval.needsPasskey) throw new Error('Face ID isn\'t set up yet. Tap Confirm again.');
+    setStep('Confirm with Face ID…');
+    const passkey = await startAuthentication({ optionsJSON: approval.options as PublicKeyCredentialRequestOptionsJSON });
+    setStep('Paying each store…');
+    setResult(await confirmAgentCheckout(intentId, { summaryHash, passkey }));
+  };
+
+  // Confirm = one passkey tap (Face ID / Touch ID) bound to this exact review, then Muse pays.
+  // The first time, Muse emails a setup code before Face ID can be added.
   const confirm = async () => {
     if (!review || confirmed.current) return;
     confirmed.current = true; // one tap only, even before React re-renders
     try {
       setConfirming(true);
       setError(null);
-      setResult(await confirmAgentCheckout(review.intentId, { summaryHash: review.summaryHash, method: 'confirm' }));
+      if (!browserSupportsWebAuthn()) {
+        throw new Error('This browser can\'t use Face ID or Touch ID. Check out at each store instead.');
+      }
+      const approval = await getAgentCheckoutApprovalOptions(review.intentId);
+      if (approval.needsPasskey) {
+        setStep('Emailing you a setup code…');
+        const sent = await requestPasskeySetupCode();
+        setSetupSentTo(sent.sentTo);
+        confirmed.current = false;
+        return;
+      }
+      await approveAndPay(review.intentId, review.summaryHash);
     } catch (err) {
       confirmed.current = false;
-      setError(errorText(err, 'Checkout did not go through. Nothing was charged.'));
+      setError(cancelledText(err, 'Checkout did not go through. Nothing was charged.'));
     } finally {
       setConfirming(false);
+      setStep(null);
+    }
+  };
+
+  // After the emailed code: add Face ID, then approve and pay in the same flow.
+  const finishSetup = async () => {
+    if (!review || confirmed.current) return;
+    confirmed.current = true;
+    try {
+      setConfirming(true);
+      setError(null);
+      setStep('Setting up Face ID for Muse…');
+      const regOptions = (await getPasskeyRegistrationOptions(setupCode.trim())) as PublicKeyCredentialCreationOptionsJSON;
+      await verifyPasskeyRegistration(await startRegistration({ optionsJSON: regOptions }), 'Muse checkout');
+      setSetupSentTo(null);
+      setSetupCode('');
+      await approveAndPay(review.intentId, review.summaryHash);
+    } catch (err) {
+      confirmed.current = false;
+      setError(cancelledText(err, 'Face ID setup didn\'t work. Nothing was charged.'));
+    } finally {
+      setConfirming(false);
+      setStep(null);
     }
   };
 
@@ -176,17 +242,49 @@ export default function CartReviewPage() {
                   <button onClick={load} className="w-full h-12 bg-gray-900 text-white font-semibold rounded-[12px]">
                     Prices may have changed. Review again
                   </button>
+                ) : setupSentTo ? (
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      finishSetup();
+                    }}
+                    className="space-y-2"
+                  >
+                    <label htmlFor="setup-code" className="block text-sm text-gray-900">
+                      To set up Face ID, enter the 6-digit code we emailed to {setupSentTo}.
+                    </label>
+                    <input
+                      id="setup-code"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      maxLength={6}
+                      value={setupCode}
+                      onChange={(e) => setSetupCode(e.target.value.replace(/\D/g, ''))}
+                      className="w-full h-12 rounded-[12px] border border-gray-300 px-4 text-center text-lg tracking-[0.4em]"
+                      aria-describedby="setup-code-help"
+                    />
+                    <button
+                      type="submit"
+                      disabled={confirming || setupCode.length !== 6}
+                      className="w-full h-12 bg-gradient-to-br from-[var(--color-peach)] to-[var(--color-blue)] text-white font-semibold rounded-[12px] disabled:opacity-60"
+                    >
+                      {confirming ? step || 'Working…' : 'Set up Face ID and confirm'}
+                    </button>
+                    <p id="setup-code-help" className="text-xs text-gray-600 text-center">
+                      This happens once. After that, each cart takes one Face ID tap.
+                    </p>
+                  </form>
                 ) : (
                   <button
                     onClick={confirm}
                     disabled={confirming}
                     className="w-full h-12 bg-gradient-to-br from-[var(--color-peach)] to-[var(--color-blue)] text-white font-semibold rounded-[12px] disabled:opacity-60"
                   >
-                    {confirming ? 'Paying each store…' : `Confirm and pay ${money(payableTotal, currency)}`}
+                    {confirming ? step || 'Working…' : `Confirm with Face ID · ${money(payableTotal, currency)}`}
                   </button>
                 )}
                 <p className="text-xs text-gray-600 text-center mt-2">
-                  One confirm covers every store above. No store is charged more than the amount shown.
+                  One Face ID or Touch ID tap approves every store above, for this cart only. No store is charged more than the amount shown.
                 </p>
               </>
             ) : (

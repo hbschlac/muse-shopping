@@ -29,6 +29,7 @@ router.put('/shipping-address', CartController.saveShippingAddress);
 // (off unless AGENT_CHECKOUT_ENABLED=true; stores hand off until a rail exists)
 router.post('/agent-checkout', CartController.prepareAgentCheckout);
 router.get('/agent-checkout/:intentId', CartController.getAgentCheckout);
+router.post('/agent-checkout/:intentId/approval-options', CartController.agentCheckoutApprovalOptions);
 router.post('/agent-checkout/:intentId/confirm', CartController.confirmAgentCheckout);
 router.post('/agent-checkout/:intentId/cancel', CartController.cancelAgentCheckout);
 

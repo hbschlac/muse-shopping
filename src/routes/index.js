@@ -15,6 +15,7 @@ const cartRoutes = require('./cartRoutes');
 const checkoutRoutes = require('./checkoutRoutes');
 const agentBridgeRoutes = require('./agentBridgeRoutes');
 const watchRoutes = require('./watchRoutes');
+const passkeyRoutes = require('./passkeyRoutes');
 const listingRoutes = require('./listingRoutes');
 const visaAcceptanceRoutes = require('./visaAcceptanceRoutes');
 const museMcpRoutes = require('./museMcpRoutes');
@@ -117,6 +118,7 @@ router.use('/cart', cartRoutes);
 router.use('/checkout', checkoutRoutes);
 router.use('/bridges', agentBridgeRoutes);
 router.use('/watches', watchRoutes);
+router.use('/passkeys', passkeyRoutes);
 router.use('/listings', listingRoutes); // scheduled listing refresh (job secret)
 router.use('/visa-acceptance', visaAcceptanceRoutes);
 router.use('/mcp', museMcpRoutes);
