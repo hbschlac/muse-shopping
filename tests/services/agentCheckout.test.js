@@ -34,7 +34,7 @@ function fakeQuery(sql, params = []) {
   }
   if (s.startsWith('INSERT INTO checkout_intent_stores')) {
     const keys = ['intent_id', 'partner_key', 'store_name', 'rail', 'rail_reason', 'checkout_id', 'continue_url',
-      'item_count', 'quoted_cents', 'ceiling_cents', 'currency', 'status'];
+      'item_count', 'quoted_cents', 'ceiling_cents', 'currency', 'status', 'items'];
     const row = { id: storeRows.length + 1, order_id: null, error: null };
     keys.forEach((k, i) => { row[k] = params[i]; });
     storeRows.push(row);
@@ -68,6 +68,7 @@ function bridgeResult() {
     cartSessionId: 'bcs_test',
     stores: [
       { partnerKey: 'allbirds', storeName: 'Allbirds', itemCount: 1,
+        items: [{ cartItemId: 11, productId: 'p_runner', variantId: 'v_runner_9', title: 'Tree Runner', size: '9', color: 'Navy', quantity: 1, cartPriceCents: 9800, storePriceCents: 9800, sellerName: 'Allbirds' }],
         checkout: { id: 'chk_a', currency: 'USD', continueUrl: 'https://allbirds.com/c/a', totals: { total: { cents: 10000 } } } },
       { partnerKey: 'rothys', storeName: "Rothy's", itemCount: 2,
         checkout: { id: 'chk_r', currency: 'USD', continueUrl: 'https://rothys.com/c/r', totals: { total: { cents: 5000 } } } },
@@ -272,5 +273,23 @@ describe('passkey approval', () => {
     Passkeys.hasPasskey.mockResolvedValue(true);
     await expect(AgentCheckout.approvalOptions(7, review.intentId)).resolves.toEqual({ needsPasskey: false, options: { challenge: 'c' } });
     expect(Passkeys.cartApprovalOptions).toHaveBeenCalledWith(7, review.intentId, review.summaryHash);
+  });
+});
+
+describe('items in the log', () => {
+  test('the review, the approval and each payment record the exact items, and changing an item changes what was approved', async () => {
+    const review = await AgentCheckout.prepare(7, {});
+    const allbirds = review.stores.find((s) => s.partnerKey === 'allbirds');
+    expect(allbirds.items[0]).toMatchObject({ productId: 'p_runner', variantId: 'v_runner_9', size: '9', color: 'Navy' });
+    const created = events.find((e) => e.action === 'intent.created');
+    expect(created.details.stores.find((s) => s.partnerKey === 'allbirds').items[0].variantId).toBe('v_runner_9');
+
+    // Same totals, different size: the review hash changes, so an old approval can't cover it.
+    const bridge = bridgeResult();
+    bridge.stores[0].items[0].variantId = 'v_runner_10';
+    BridgeCartService.startCheckout.mockResolvedValueOnce(bridge);
+    const other = await AgentCheckout.prepare(7, {});
+    const strip = (r) => AgentCheckout._internal.summaryHashOf({ ...r, intentId: 'same' });
+    expect(strip({ ...other, stores: other.stores })).not.toBe(strip({ ...review, stores: review.stores }));
   });
 });

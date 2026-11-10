@@ -133,12 +133,30 @@ const unwrap = <T,>(r: Wrapped<T>): T =>
 
 export type CheckoutRail = 'shop_pay' | 'visa_ic' | 'stripe_spt' | 'google_pay' | 'handoff' | string;
 
+/** One item exactly as the shopper approves it (also what the agent activity log records). */
+export interface AgentCheckoutItem {
+  cartItemId?: number | null;
+  productId?: string | null;
+  variantId?: string | null;
+  title?: string | null;
+  variantTitle?: string | null;
+  size?: string | null;
+  color?: string | null;
+  quantity: number;
+  cartPriceCents?: number | null;
+  storePriceCents?: number | null;
+  marketplace?: string | null;
+  sellerName?: string | null;
+  fulfilledBy?: string | null;
+}
+
 export interface AgentCheckoutStore {
   partnerKey: string;
   storeName: string;
   rail: CheckoutRail;
   railReason?: string;
   itemCount?: number;
+  items?: AgentCheckoutItem[];
   ceilingCents: number | null;
   currency: string;
   continueUrl: string | null;

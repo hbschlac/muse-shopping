@@ -121,8 +121,11 @@ async function pickRail(partnerKey, ctx) {
 
 /** Stable hash of exactly what the review screen shows. */
 function summaryHashOf(summary) {
+  // The items are part of what the shopper approves, so a swapped size or seller changes the hash.
+  const itemKey = (i) => [i.productId, i.variantId, i.quantity, i.cartPriceCents, i.storePriceCents, i.sellerId, i.offerId];
   const stores = summary.stores
-    .map((s) => [s.partnerKey, s.rail, s.ceilingCents, s.currency, s.itemCount])
+    .map((s) => [s.partnerKey, s.rail, s.ceilingCents, s.currency, s.itemCount,
+      (s.items || []).map(itemKey).sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)))])
     .sort((a, b) => String(a[0]).localeCompare(String(b[0])));
   return crypto.createHash('sha256')
     .update(JSON.stringify({ id: summary.intentId, total: summary.totalCents, currency: summary.currency, stores }))
@@ -155,6 +158,7 @@ async function prepare(userId, { email = null, shippingAddress = null, partnerKe
       rail: quoted == null ? 'handoff' : choice.rail,
       railReason: quoted == null ? 'store did not return a total' : choice.reason,
       itemCount: s.itemCount,
+      items: Array.isArray(s.items) ? s.items : [],
       checkoutId: s.checkout.id || null,
       continueUrl: s.checkout.continueUrl || null,
       quotedCents: quoted,
@@ -178,10 +182,11 @@ async function prepare(userId, { email = null, shippingAddress = null, partnerKe
     await pool.query(
       `INSERT INTO checkout_intent_stores
          (intent_id, partner_key, store_name, rail, rail_reason, checkout_id, continue_url,
-          item_count, quoted_cents, ceiling_cents, currency, status)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+          item_count, quoted_cents, ceiling_cents, currency, status, items)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
       [intentId, s.partnerKey, s.storeName, s.rail, s.railReason, s.checkoutId, s.continueUrl,
-        s.itemCount, s.quotedCents, s.ceilingCents, s.currency, s.rail === 'handoff' ? 'handoff' : 'pending'],
+        s.itemCount, s.quotedCents, s.ceilingCents, s.currency, s.rail === 'handoff' ? 'handoff' : 'pending',
+        JSON.stringify(s.items)],
     );
   }
 
@@ -192,7 +197,7 @@ async function prepare(userId, { email = null, shippingAddress = null, partnerKe
     details: {
       expiresAt: expiresAt.toISOString(),
       summaryHash,
-      stores: stores.map((s) => ({ partnerKey: s.partnerKey, rail: s.rail, railReason: s.railReason, ceilingCents: s.ceilingCents })),
+      stores: stores.map((s) => ({ partnerKey: s.partnerKey, rail: s.rail, railReason: s.railReason, ceilingCents: s.ceilingCents, items: s.items })),
     },
     rules: [
       ...stores.map((s) => cite('rail.store_total', s.quotedCents == null ? 'fail' : 'pass', { store: s.partnerKey, quotedCents: s.quotedCents })),
@@ -217,9 +222,15 @@ async function loadIntent(userId, intentId) {
   return { intent, stores };
 }
 
+function itemsOf(row) {
+  const v = row.items;
+  if (Array.isArray(v)) return v;
+  try { return JSON.parse(v || '[]'); } catch (err) { return []; }
+}
+
 function publicStore(row) {
   return {
-    partnerKey: row.partner_key, storeName: row.store_name, rail: row.rail, status: row.status,
+    partnerKey: row.partner_key, storeName: row.store_name, rail: row.rail, status: row.status, items: itemsOf(row),
     ceilingCents: row.ceiling_cents, currency: row.currency, orderId: row.order_id,
     continueUrl: row.status === 'paid' ? null : row.continue_url, error: row.error,
   };
@@ -257,7 +268,7 @@ async function payStore(intent, row, confirmation) {
   await recordAgentEvent({
     actor: ACTOR, action: 'payment.submitted', decision: 'allowed',
     reason: `Paying ${row.store_name} up to the approved ${row.ceiling_cents}`,
-    ...base, amountCents: row.ceiling_cents, details: { checkoutId: row.checkout_id },
+    ...base, amountCents: row.ceiling_cents, details: { checkoutId: row.checkout_id, items: itemsOf(row) },
     rules: [
       cite('checkout.shopper_approval', 'pass'),
       cite('payment.logged_first', 'pass'),
@@ -305,7 +316,7 @@ async function payStore(intent, row, confirmation) {
     actor: `store:${row.partner_key}`, action: 'payment.completed', decision: 'approved',
     reason: `Order placed at ${row.store_name}`, ...base,
     amountCents: Number.isInteger(result?.totalCents) ? result.totalCents : row.ceiling_cents,
-    details: { orderId: result?.orderId || null },
+    details: { orderId: result?.orderId || null, items: itemsOf(row) },
     rules: [cite('payment.ceiling', Number.isInteger(result?.totalCents) ? 'pass' : 'not_applicable', {
       approvedCents: row.ceiling_cents, chargedCents: Number.isInteger(result?.totalCents) ? result.totalCents : null,
     })],
@@ -369,7 +380,10 @@ async function confirm(userId, intentId, confirmation = {}) {
       actor: 'shopper', action: 'intent.approved', decision: 'approved',
       reason: `Shopper confirmed ${stores.length} store(s) in one step`,
       ...ctx, amountCents: intent.total_cents, currency: intent.currency,
-      details: { summaryHash: intent.summary_hash, ...approvedBy },
+      details: {
+        summaryHash: intent.summary_hash, ...approvedBy,
+        stores: stores.map((s) => ({ partnerKey: s.partner_key, rail: s.rail, ceilingCents: s.ceiling_cents, items: itemsOf(s) })),
+      },
       rules: [
         cite('checkout.not_expired', 'pass', { expiresAt: new Date(intent.expires_at).toISOString() }),
         cite('checkout.review_matches', 'pass', { summaryHash: intent.summary_hash }),

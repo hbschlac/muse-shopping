@@ -54,6 +54,47 @@ function optionValue(options, names) {
   return key ? options[key] : null;
 }
 
+/**
+ * Who sells an item. On a marketplace (Walmart, Amazon, ...) the store Muse
+ * checks out at is not always the seller, so each item records the
+ * marketplace, the seller, who ships it, and the listing (offer) id when the
+ * store's catalog gives them. Single-brand stores sell their own items.
+ */
+function sellerInfo(partner, product = {}, variant = {}) {
+  const seller = variant.seller || product.seller || null;
+  return {
+    marketplace: partner.marketplace ? (partner.name || partner.key) : null,
+    sellerId: seller ? String(seller.id ?? seller.sellerId ?? '') || null : null,
+    sellerName: seller ? (seller.name || seller.displayName || null) : (partner.marketplace ? null : partner.name || null),
+    fulfilledBy: variant.fulfilledBy || product.fulfilledBy || (seller && seller.fulfilledBy) || null,
+    offerId: variant.offerId || product.offerId || null,
+    gtin: variant.gtin || variant.upc || variant.barcode || product.gtin || null,
+  };
+}
+
+/** The item fields the agent activity log records for every cart, checkout, approval and payment entry. */
+function itemRecord(line, storeLine = null) {
+  const b = line.bridge || {};
+  return {
+    cartItemId: line.id ?? null,
+    productId: b.productId ?? null,
+    variantId: b.variantId ?? null,
+    title: line.product_name ?? null,
+    variantTitle: b.variantTitle ?? null,
+    size: line.size ?? null,
+    color: line.color ?? null,
+    quantity: line.quantity,
+    cartPriceCents: line.price_cents ?? null,
+    storePriceCents: storeLine && Number.isInteger(storeLine.priceCents) ? storeLine.priceCents : null,
+    marketplace: b.marketplace ?? null,
+    sellerId: b.sellerId ?? null,
+    sellerName: b.sellerName ?? null,
+    fulfilledBy: b.fulfilledBy ?? null,
+    offerId: b.offerId ?? null,
+    gtin: b.gtin ?? null,
+  };
+}
+
 function clean(value, max) {
   const v = String(value ?? '').trim();
   return v ? v.slice(0, max) : null;
@@ -177,7 +218,12 @@ class BridgeCartService {
       userId, partnerKey,
       amountCents: price?.cents ?? null,
       currency: price?.currency || 'USD',
-      details: { productId: product.id, variantId: variant.id, available: variant.available, compareAtCents: product.compareAtPrice?.cents ?? null },
+      details: {
+        productId: product.id, variantId: variant.id, title: product.title, variantTitle: variant.title || null,
+        size: optionValue(variant.options, ['size']), color: optionValue(variant.options, ['color', 'colour']),
+        available: variant.available, compareAtCents: product.compareAtPrice?.cents ?? null,
+        ...sellerInfo(partner, product, variant),
+      },
     });
 
     if (variant.available === false) {
@@ -211,6 +257,7 @@ class BridgeCartService {
           productId: product.id,
           variantId: variant.id,
           variantTitle: variant.title || null,
+          ...sellerInfo(partner, product, variant),
         },
       },
     });
@@ -220,7 +267,12 @@ class BridgeCartService {
       reason: `Added ${quantity} x ${product.title} from ${partner.name}`,
       userId, partnerKey,
       amountCents: price.cents * quantity, currency: price.currency || 'USD',
-      details: { cartItemId: added?.id ?? null, productId: product.id, variantId: variant.id, quantity },
+      details: {
+        cartItemId: added?.id ?? null, productId: product.id, variantId: variant.id, quantity,
+        title: product.title, variantTitle: variant.title || null, unitPriceCents: price.cents,
+        size: optionValue(variant.options, ['size']), color: optionValue(variant.options, ['color', 'colour']),
+        ...sellerInfo(partner, product, variant),
+      },
     });
     return added;
   }
@@ -232,7 +284,7 @@ class BridgeCartService {
   static async getBridgeLines(userId) {
     const result = await pool.query(
       `SELECT ci.id, ci.store_id, ci.product_name, ci.product_sku, ci.quantity,
-              ci.price_cents, ci.metadata, s.name AS store_name
+              ci.price_cents, ci.size, ci.color, ci.metadata, s.name AS store_name
        FROM cart_items ci
        JOIN stores s ON s.id = ci.store_id
        WHERE ci.user_id = $1
@@ -319,12 +371,14 @@ class BridgeCartService {
 
       const checkout = outcome.value;
       const total = checkout.totals?.total?.cents ?? null;
+      const storeLines = new Map((checkout.lineItems || []).map(li => [String(li.variantId), li]));
+      const items = lines.map(l => itemRecord(l, storeLines.get(String(l.bridge.variantId))));
       await logEvent({
         action: 'checkout.created', decision: 'info',
         reason: `Built checkout at ${lines[0].store_name} for ${lines.length} line(s)`,
         userId, cartSessionId, partnerKey: key,
         amountCents: total, currency: checkout.currency || 'USD',
-        details: { checkoutId: checkout.id, status: checkout.status, lineCount: lines.length },
+        details: { checkoutId: checkout.id, status: checkout.status, lineCount: lines.length, items },
       });
       if (address) {
         await logEvent({
@@ -352,6 +406,7 @@ class BridgeCartService {
         storeId: lines[0].store_id,
         storeName: lines[0].store_name,
         itemCount: lines.reduce((n, l) => n + l.quantity, 0),
+        items,
         checkout,
       });
     }
