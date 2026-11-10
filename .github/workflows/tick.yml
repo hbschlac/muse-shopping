@@ -1,0 +1,41 @@
+name: Tick
+
+# GitHub starts scheduled workflows late on quiet repos (we measured about
+# every 8 hours for "every 15 minutes"). A free outside timer (cron-job.org)
+# starts this workflow every 5 minutes instead, and it starts the jobs that are
+# due. Setup and the token it uses: docs/SCHEDULE.md.
+#
+# Each job keeps its own GitHub schedule as a backup. Running a job twice is
+# harmless: refresh runs queue (concurrency group) and ingest skips a run id it
+# has already seen.
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: write
+
+concurrency:
+  group: tick
+  cancel-in-progress: false
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          m=$((10#$(date -u +%M)))
+          due=()
+          # every 10 minutes: Rakuten new arrivals
+          [ $((m % 10)) -lt 5 ] && due+=(poll-new-arrivals.yml)
+          # every 15 minutes: listing refresh (Shopify allows 15-minute-old prices)
+          [ $((m % 15)) -lt 5 ] && due+=(refresh-listings.yml)
+          # every 15 minutes, 5 minutes after the refresh: alerts backstop
+          [ $((m % 15)) -ge 5 ] && [ $((m % 15)) -lt 10 ] && due+=(dispatch-alerts.yml)
+          echo "minute $m: ${due[*]:-nothing due}"
+          for wf in "${due[@]}"; do
+            gh workflow run "$wf" -R "$REPO" --ref main || echo "could not start $wf"
+          done
