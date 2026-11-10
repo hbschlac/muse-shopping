@@ -19,6 +19,7 @@ const DEFAULT_PREFS = Object.freeze({
     cashback: 'off',
   }),
   muted: Object.freeze([]),
+  quiet_enabled: true,
   quiet_start: '22:00',
   quiet_end: '08:00',
   digest_time: '19:00',
@@ -70,6 +71,7 @@ function normalizePrefs(row) {
   return {
     types,
     muted: Array.isArray(r.muted) ? r.muted.filter(m => m && m.store_key) : [],
+    quiet_enabled: r.quiet_enabled !== false,
     quiet_start: toMinutes(r.quiet_start) != null ? r.quiet_start : DEFAULT_PREFS.quiet_start,
     quiet_end: toMinutes(r.quiet_end) != null ? r.quiet_end : DEFAULT_PREFS.quiet_end,
     digest_time: toMinutes(r.digest_time) != null ? r.digest_time : DEFAULT_PREFS.digest_time,
@@ -117,6 +119,10 @@ function validatePrefsPatch(body) {
       patch[f] = b[f];
     }
   }
+  if (b.quiet_enabled !== undefined) {
+    if (typeof b.quiet_enabled !== 'boolean') return { error: 'quiet_enabled must be true or false' };
+    patch.quiet_enabled = b.quiet_enabled;
+  }
   if (b.timezone !== undefined) {
     if (typeof b.timezone !== 'string' || !isValidTimezone(b.timezone)) return { error: 'unknown timezone' };
     patch.timezone = b.timezone;
@@ -152,6 +158,7 @@ function startOfLocalDay(now, tz) {
 }
 
 function inQuietHours(now, prefs) {
+  if (prefs.quiet_enabled === false) return false;
   const start = toMinutes(prefs.quiet_start);
   const end = toMinutes(prefs.quiet_end);
   if (start == null || end == null || start === end) return false;

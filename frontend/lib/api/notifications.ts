@@ -17,6 +17,7 @@ export interface MutedSource {
 export interface NotificationPrefs {
   types: Record<AlertType, AlertMode>;
   muted: MutedSource[];
+  quiet_enabled: boolean;
   quiet_start: string;
   quiet_end: string;
   digest_time: string;

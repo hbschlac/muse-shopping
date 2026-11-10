@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS notification_prefs (
   user_id INTEGER PRIMARY KEY,
   types JSONB NOT NULL DEFAULT '{}'::jsonb,
   muted JSONB NOT NULL DEFAULT '[]'::jsonb,
+  quiet_enabled BOOLEAN NOT NULL DEFAULT true,
   quiet_start TEXT NOT NULL DEFAULT '22:00',
   quiet_end TEXT NOT NULL DEFAULT '08:00',
   digest_time TEXT NOT NULL DEFAULT '19:00',

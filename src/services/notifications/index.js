@@ -30,14 +30,15 @@ async function updatePrefs(userId, body) {
   };
   await pool.query(
     `INSERT INTO notification_prefs
-       (user_id, types, muted, quiet_start, quiet_end, digest_time, timezone, daily_cap, price_drop_pct, updated_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, now())
+       (user_id, types, muted, quiet_start, quiet_end, digest_time, timezone, daily_cap, price_drop_pct, quiet_enabled, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, now())
      ON CONFLICT (user_id) DO UPDATE SET
        types = EXCLUDED.types, muted = EXCLUDED.muted, quiet_start = EXCLUDED.quiet_start,
        quiet_end = EXCLUDED.quiet_end, digest_time = EXCLUDED.digest_time, timezone = EXCLUDED.timezone,
-       daily_cap = EXCLUDED.daily_cap, price_drop_pct = EXCLUDED.price_drop_pct, updated_at = now()`,
+       daily_cap = EXCLUDED.daily_cap, price_drop_pct = EXCLUDED.price_drop_pct,
+       quiet_enabled = EXCLUDED.quiet_enabled, updated_at = now()`,
     [userId, JSON.stringify(next.types), JSON.stringify(next.muted), next.quiet_start, next.quiet_end,
-      next.digest_time, next.timezone, next.daily_cap, next.price_drop_pct],
+      next.digest_time, next.timezone, next.daily_cap, next.price_drop_pct, next.quiet_enabled !== false],
   );
   return policy.normalizePrefs(next);
 }

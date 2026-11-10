@@ -35,6 +35,8 @@ const SCHEMA_SQL = `
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
   );
 
+  ALTER TABLE notification_prefs ADD COLUMN IF NOT EXISTS quiet_enabled BOOLEAN NOT NULL DEFAULT true;
+
   CREATE TABLE IF NOT EXISTS alert_log (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,

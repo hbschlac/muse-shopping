@@ -36,7 +36,6 @@ const MODES: { mode: AlertMode; label: string }[] = [
   { mode: 'off', label: 'Off' },
 ];
 
-const THRESHOLDS = [10, 15, 20, 25, 30, 40, 50];
 const CAPS = [1, 2, 3, 5, 8, 10, 15, 20];
 
 function Card({ children }: { children: React.ReactNode }) {
@@ -227,6 +226,20 @@ export default function NotificationsPage() {
 
                 <SectionTitle>When and how often</SectionTitle>
                 <Card>
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                    <span className="text-base text-gray-900">Quiet hours</span>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={prefs.quiet_enabled}
+                      aria-label="Quiet hours"
+                      onClick={() => save({ quiet_enabled: !prefs.quiet_enabled })}
+                      className={`relative h-7 w-12 rounded-full transition-colors ${prefs.quiet_enabled ? 'bg-gray-900' : 'bg-gray-300'}`}
+                    >
+                      <span className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-all ${prefs.quiet_enabled ? 'left-[22px]' : 'left-0.5'}`} />
+                    </button>
+                  </div>
+                  {prefs.quiet_enabled && (<>
                   <label className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
                     <span className="text-base text-gray-900">Quiet from</span>
                     <input type="time" value={prefs.quiet_start} onChange={e => e.target.value && save({ quiet_start: e.target.value })} className="text-base text-gray-900 bg-transparent" />
@@ -235,6 +248,7 @@ export default function NotificationsPage() {
                     <span className="text-base text-gray-900">Quiet until</span>
                     <input type="time" value={prefs.quiet_end} onChange={e => e.target.value && save({ quiet_end: e.target.value })} className="text-base text-gray-900 bg-transparent" />
                   </label>
+                  </>)}
                   <label className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
                     <span className="text-base text-gray-900">Daily digest at</span>
                     <input type="time" value={prefs.digest_time} onChange={e => e.target.value && save({ digest_time: e.target.value })} className="text-base text-gray-900 bg-transparent" />
@@ -247,12 +261,28 @@ export default function NotificationsPage() {
                   </label>
                   <label className="flex items-center justify-between px-4 py-3">
                     <span className="text-base text-gray-900">Price drops of at least</span>
-                    <select value={prefs.price_drop_pct} onChange={e => save({ price_drop_pct: Number(e.target.value) })} className="text-base text-gray-900 bg-transparent">
-                      {[...new Set([...THRESHOLDS, prefs.price_drop_pct])].sort((a, b) => a - b).map(n => <option key={n} value={n}>{n}%</option>)}
-                    </select>
+                    <span className="flex items-center gap-1">
+                      <input
+                        key={prefs.price_drop_pct}
+                        type="number"
+                        inputMode="numeric"
+                        min={1}
+                        max={90}
+                        defaultValue={prefs.price_drop_pct}
+                        aria-label="Price drop percent"
+                        onBlur={e => {
+                          const n = Math.round(Number(e.target.value));
+                          if (!Number.isFinite(n) || n < 1 || n > 90) { e.target.value = String(prefs.price_drop_pct); return; }
+                          if (n !== prefs.price_drop_pct) save({ price_drop_pct: n });
+                        }}
+                        onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+                        className="w-14 text-right text-base text-gray-900 bg-transparent"
+                      />
+                      <span className="text-base text-gray-900">%</span>
+                    </span>
                   </label>
                 </Card>
-                <p className="text-xs text-gray-500 mt-2 px-1">Alerts during quiet hours wait until they end. Pushes past the daily limit go to the digest. Times are {prefs.timezone === 'America/Los_Angeles' ? 'Pacific' : prefs.timezone}.</p>
+                <p className="text-xs text-gray-500 mt-2 px-1">{prefs.quiet_enabled ? 'Alerts during quiet hours wait until they end. ' : ''}Pushes past the daily limit go to the digest. Price drops can be any amount from 1% to 90%. Times are {prefs.timezone === 'America/Los_Angeles' ? 'Pacific' : prefs.timezone}.</p>
 
                 {prefs.muted.length > 0 && (
                   <>
