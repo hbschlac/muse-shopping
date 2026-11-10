@@ -80,6 +80,17 @@ describe('CJ product feed', () => {
     expect(recordSeenItems).toHaveBeenCalledWith('tjmaxx', expect.any(Array), 'cj');
   });
 
+  it('keeps paging when a full page is mostly filtered out', async () => {
+    const men = Array.from({ length: 100 }, (_, i) => ({ id: `M${i}`, title: 'Shirt', gender: 'male', link: 'https://x', price: { amount: '9' } }));
+    const fetchImpl = jest.fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ data: { shoppingProducts: { resultList: men } } }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ data: { shoppingProducts: { resultList: [RESULTS[0]] } } }) });
+    const results = await Cj.pollCj({ env, fetchImpl });
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+    expect(JSON.parse(fetchImpl.mock.calls[1][1].body).variables.offset).toBe(100);
+    expect(results).toEqual([{ storeSlug: 'tjmaxx', seen: 1, added: 1, alerted: [] }]);
+  });
+
   it('reports a GraphQL error per store without throwing', async () => {
     const fetchImpl = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ errors: [{ message: 'not approved' }] }) });
     await expect(Cj.pollCj({ env, fetchImpl })).resolves.toEqual([

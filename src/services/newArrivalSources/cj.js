@@ -101,7 +101,9 @@ async function searchAdvertiser(advertiserId, { offset = 0, keywords = ['women']
   if (!res.ok) throw new Error(`CJ product search failed for ${advertiserId}: ${res.status}`);
   const body = await res.json();
   if (body.errors?.length) throw new Error(`CJ product search error for ${advertiserId}: ${body.errors[0].message}`);
-  return parseProducts(body.data?.shoppingProducts?.resultList);
+  const resultList = body.data?.shoppingProducts?.resultList || [];
+  // rawCount drives paging: a page full of men's items still means more pages.
+  return { items: parseProducts(resultList), rawCount: resultList.length };
 }
 
 /**
@@ -116,8 +118,8 @@ async function pollCj({ pages = 3, fetchImpl = global.fetch, env = process.env }
       const items = [];
       for (let page = 0; page < pages; page++) {
         const batch = await searchAdvertiser(advertiserId, { offset: page * PAGE_SIZE, fetchImpl, env });
-        items.push(...batch);
-        if (batch.length < PAGE_SIZE / 2) break;
+        items.push(...batch.items);
+        if (batch.rawCount < PAGE_SIZE) break;
       }
       const saved = await recordSeenItems(storeSlug, items, 'cj');
       results.push({ storeSlug, ...saved });
