@@ -28,8 +28,8 @@ let events;
 function fakeQuery(sql, params = []) {
   const s = sql.replace(/\s+/g, ' ').trim();
   if (s.startsWith('INSERT INTO checkout_intents ')) {
-    const [id, user_id, cart_session_id, total_cents, currency, summary_hash, expires_at] = params;
-    intents.set(id, { id, user_id, cart_session_id, status: 'draft', total_cents, currency, summary_hash, expires_at });
+    const [id, user_id, cart_session_id, total_cents, currency, summary_hash, expires_at, ship_to, ship_to_hash] = params;
+    intents.set(id, { id, user_id, cart_session_id, status: 'draft', total_cents, currency, summary_hash, expires_at, ship_to, ship_to_hash });
     return { rows: [] };
   }
   if (s.startsWith('INSERT INTO checkout_intent_stores')) {
@@ -74,7 +74,7 @@ function bridgeResult() {
         checkout: { id: 'chk_r', currency: 'USD', continueUrl: 'https://rothys.com/c/r', totals: { total: { cents: 5000 } } } },
     ],
     errors: [],
-    shipTo: { city: 'Oakland' },
+    shipTo: { name: 'Hannah', address1: '1 Test St', city: 'Oakland', state: 'CA', zip: '94600', country: 'US' },
   };
 }
 
@@ -113,7 +113,7 @@ describe('prepare', () => {
 
 describe('confirm', () => {
   async function preparedWithRail(pay) {
-    AgentCheckout.registerRail('test_rail', { pay, enforcesCeiling: true });
+    AgentCheckout.registerRail('test_rail', { pay, enforcesCeiling: true, enforcesShipTo: true });
     // No selector is installed yet, so point the store at the test rail directly.
     const review = await AgentCheckout.prepare(7, {});
     storeRows.forEach((r) => { r.rail = 'test_rail'; r.status = 'pending'; });
@@ -231,7 +231,7 @@ describe('cancel', () => {
 
 describe('passkey approval', () => {
   async function prepared(pay) {
-    AgentCheckout.registerRail('test_rail', { pay, enforcesCeiling: true });
+    AgentCheckout.registerRail('test_rail', { pay, enforcesCeiling: true, enforcesShipTo: true });
     const review = await AgentCheckout.prepare(7, {});
     storeRows.forEach((r) => { r.rail = 'test_rail'; r.status = 'pending'; });
     return review;
@@ -306,5 +306,62 @@ test('a store price above the Muse cart price is cited on the review entry', asy
 
 test('a payment method that does not cap the charge before paying cannot be installed', () => {
   expect(() => AgentCheckout.registerRail('loose_rail', { pay: jest.fn() })).toThrow(/cap the charge/);
+  expect(() => AgentCheckout.registerRail('loose_rail', { pay: jest.fn(), enforcesCeiling: true })).toThrow(/ship-to/);
   expect(AgentCheckout._internal.rails.has('loose_rail')).toBe(false);
+});
+
+
+describe('ship-to lock', () => {
+  const pay = jest.fn(async ({ store }) => ({ status: 'paid', orderId: `o_${store.partnerKey}`, totalCents: store.ceilingCents }));
+
+  async function prepared(payFn = pay) {
+    AgentCheckout.registerRail('test_rail', { pay: payFn, enforcesCeiling: true, enforcesShipTo: true });
+    const review = await AgentCheckout.prepare(7, {});
+    storeRows.forEach((r) => { r.rail = 'test_rail'; r.status = 'pending'; });
+    return review;
+  }
+
+  test('a different address gives a different approval hash', async () => {
+    const a = await AgentCheckout.prepare(7, {});
+    const { shipToHashOf, _internal } = AgentCheckout;
+    const base = { intentId: 'ci_x', totalCents: 1, currency: 'USD', stores: [] };
+    const home = shipToHashOf(bridgeResult().shipTo);
+    const other = shipToHashOf({ ...bridgeResult().shipTo, address1: '12 Elm St' });
+    expect(home).not.toBe(other);
+    expect(_internal.summaryHashOf({ ...base, shipToHash: home })).not.toBe(_internal.summaryHashOf({ ...base, shipToHash: other }));
+    // Spacing and case don't count as a different address.
+    expect(shipToHashOf({ ...bridgeResult().shipTo, address1: '  1 TEST  st ' })).toBe(home);
+    expect(intents.get(a.intentId).ship_to_hash).toBe(home);
+    const created = events.find((e) => e.action === 'intent.created');
+    expect(created.details.shipTo).toEqual({ city: 'Oakland', state: 'CA', zip: '94600', country: 'US', shipToHash: home });
+    expect(JSON.stringify(created.details)).not.toContain('1 Test St');
+  });
+
+  test('the rail gets the approved address to check against', async () => {
+    pay.mockClear();
+    const review = await prepared();
+    await AgentCheckout.confirm(7, review.intentId, { summaryHash: review.summaryHash });
+    const { store } = pay.mock.calls[0][0];
+    expect(store.shipToHash).toBe(AgentCheckout.shipToHashOf(bridgeResult().shipTo));
+    expect(store.shipTo.address1).toBe('1 Test St');
+  });
+
+  test('a store that ships elsewhere is blocked and logged', async () => {
+    const elsewhere = AgentCheckout.shipToHashOf({ ...bridgeResult().shipTo, address1: '12 Elm St' });
+    const review = await prepared(jest.fn(async ({ store }) => ({ status: 'paid', orderId: 'o1', totalCents: store.ceilingCents, shipToHash: elsewhere })));
+    const result = await AgentCheckout.confirm(7, review.intentId, { summaryHash: review.summaryHash });
+    expect(result.stores.every((s) => s.status === 'blocked')).toBe(true);
+    const blocked = events.filter((e) => e.action === 'payment.blocked');
+    expect(blocked).toHaveLength(2);
+    expect(blocked[0].rules[0]).toMatchObject({ rule: 'checkout.ship_to_locked@v1', result: 'fail' });
+  });
+
+  test('with no address, nothing is payable by Muse', async () => {
+    BridgeCartService.startCheckout.mockResolvedValue({ ...bridgeResult(), shipTo: null });
+    AgentCheckout.registerRail('test_rail', { pay, enforcesCeiling: true, enforcesShipTo: true });
+    const review = await AgentCheckout.prepare(7, {});
+    expect(review.stores.every((s) => s.rail === 'handoff')).toBe(true);
+    const created = events.find((e) => e.action === 'intent.created');
+    expect(created.rules.find((r) => r.rule.startsWith('checkout.ship_to_locked'))).toMatchObject({ result: 'fail' });
+  });
 });

@@ -13,6 +13,7 @@ const RULES = {
   'checkout.shopper_approval': { version: 1, text: 'Pay only after the shopper approves this exact cart with their passkey (Face ID or Touch ID).' },
   'checkout.one_confirm': { version: 1, text: 'Only one confirm can win. A second tap on the same cart is refused.' },
   'checkout.price_changes_shown': { version: 1, text: 'If a store\'s price is higher than the price in the Muse cart, the review screen shows the old and new price before the shopper approves.' },
+  'checkout.ship_to_locked': { version: 1, text: 'Ship only to the address the shopper saw on the review screen. If a store\'s checkout ships anywhere else, do not pay.' },
   'payment.ceiling': { version: 1, text: 'Never pay a store more than the total the shopper approved for that store.' },
   'payment.logged_first': { version: 1, text: 'Write the payment to this log before paying. If the log write fails, do not pay.' },
   'payment.no_card_storage': { version: 1, text: 'Never store or log a card number. Pay only with a network token and a code made for this one cart.' },
@@ -27,7 +28,7 @@ const RULES = {
 const RETIRED = {};
 
 // Bump when any rule above changes, so a log entry shows the whole rulebook it ran under.
-const RULEBOOK_VERSION = '2026-11-10.1';
+const RULEBOOK_VERSION = '2026-11-10.2';
 
 const RESULTS = new Set(['pass', 'fail', 'not_applicable']);
 

@@ -106,11 +106,22 @@ To change what a rule does, bump its `version`, move the old text to `RETIRED` u
 | `checkout.not_expired` | `intent.created`, `intent.approved`, `intent.expired` |
 | `checkout.shopper_approval` | `intent.approved`, `intent.declined`, `payment.submitted` |
 | `checkout.one_confirm` | `intent.approved` |
+| `checkout.ship_to_locked` | `intent.created`, `payment.submitted`, `payment.blocked`, `handoff.offered` |
 | `payment.ceiling` | `intent.created`, `payment.submitted`, `payment.completed`, `payment.blocked` |
 | `payment.logged_first` | `payment.submitted` |
 | `payment.no_card_storage` | `payment.submitted` |
 | `rail.installed` / `rail.store_total` | `intent.created`, `rail.selected`, `handoff.offered` |
 | `passkey.email_code` / `passkey.one_per_shopper` / `passkey.rate_limit` | `passkey.*` |
+
+## Ship-to lock
+
+The address on the review screen is part of what the shopper approves: its hash is in
+`summaryHash`, and it is stored on the intent (`ship_to`, `ship_to_hash`, migration 094).
+`intent.created` logs only city, state, ZIP and the hash, never the street or name. Every rail
+registers with `enforcesShipTo: true` and gets `store.shipTo` and `store.shipToHash` in `pay()`:
+it must hash the store checkout's address with `shipToHashOf()` and refuse to pay if it differs.
+If a rail returns a different `shipToHash`, Muse marks the store `blocked` and logs it. With no
+address, every store hands off.
 
 ## Reading a trail (fraud review)
 
