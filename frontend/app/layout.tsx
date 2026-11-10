@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     icon: [
       { url: '/favicon.svg?v=3', type: 'image/svg+xml' },
     ],
-    apple: '/apple-touch-icon.png',
+    apple: '/apple-touch-icon.png?v=2',
   },
   // Needed for iPhone home-screen install, which is what allows push alerts (iOS 16.4+).
   manifest: '/manifest.json',

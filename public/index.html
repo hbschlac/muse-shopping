@@ -4,13 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Muse · All your favorite stores in one place</title>
-    <meta name="description" content="Muse brings the stores you already shop into one place: new arrivals, price drops and restocks from every store you follow. Building since January 2026. Sign in coming soon.">
+    <meta name="description" content="Muse brings the stores you already shop into one place: new arrivals, price drops and restocks from every store you follow. Building since January 2026. Now in private beta.">
     <meta property="og:title" content="Muse · All your favorite stores in one place">
-    <meta property="og:description" content="New arrivals, price drops and restocks from every store you follow, in one place. Coming soon.">
+    <meta property="og:description" content="New arrivals, price drops and restocks from every store you follow, in one place. Now in private beta.">
     <meta property="og:url" content="https://www.muse.shopping/">
     <meta name="theme-color" content="#F6F1EB">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=3">
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Muse">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -125,6 +129,37 @@
             line-height: 1;
             margin-top: 4px;
         }
+        .btn-live {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-width: 200px;
+            height: 52px;
+            padding: 0 24px;
+            border-radius: var(--radius);
+            border: 1px solid rgba(31, 31, 31, 0.10);
+            font-weight: 500;
+            color: var(--charcoal);
+            text-decoration: none;
+            background: #fff;
+            box-shadow: var(--shadow-subtle);
+        }
+        .btn-live.primary {
+            background: linear-gradient(135deg, #F4A785 0%, #8EC5FF 100%);
+            color: #fff;
+            border-color: transparent;
+        }
+        .btn-live small {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            line-height: 1;
+            margin-top: 4px;
+            opacity: 0.85;
+        }
         .auth-note {
             margin-top: 16px;
             font-size: 14px;
@@ -198,7 +233,7 @@
             .grid { grid-template-columns: 1fr; }
             .hero { padding: 40px 0 64px; }
             .hero .lede { font-size: 16px; }
-            .btn-soon { width: 100%; }
+            .btn-soon, .btn-live { width: 100%; }
             .wrap { padding: 0 16px; }
         }
     </style>
@@ -207,16 +242,16 @@
     <div class="wrap">
         <main>
             <section class="hero">
-                <span class="chip"><span class="dot" aria-hidden="true"></span>Coming soon</span>
+                <span class="chip"><span class="dot" aria-hidden="true"></span>Private beta</span>
                 <img class="hero-logo" src="/muse-wordmark-landing.png" alt="Muse" width="420" height="148">
                 <h1>All your favorite stores, in one place.</h1>
                 <p class="lede">Muse follows the stores you already shop and shows you what&rsquo;s new, what&rsquo;s back in your size, and what just dropped in price.</p>
 
                 <div class="auth-row">
-                    <button class="btn-soon primary" type="button" disabled aria-disabled="true">Create an account<small>Coming soon</small></button>
-                    <button class="btn-soon" type="button" disabled aria-disabled="true">Sign in<small>Coming soon</small></button>
+                    <a class="btn-live primary" href="/auth/login">Sign in<small>Private beta</small></a>
+                    <button class="btn-soon" type="button" disabled aria-disabled="true">Create an account<small>Invite only</small></button>
                 </div>
-                <p class="auth-note">Accounts open soon. Until then, <a href="/home">take a look around the shop</a>.</p>
+                <p class="auth-note">Muse is in private beta. If you have an invite, sign in. Everyone else can <a href="/home">take a look around the shop</a>.</p>
             </section>
 
             <section class="section" aria-labelledby="what-heading">
