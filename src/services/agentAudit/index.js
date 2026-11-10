@@ -21,6 +21,7 @@
  */
 
 const crypto = require('crypto');
+const { RULEBOOK_VERSION, cite, lookup } = require('./rules');
 const pool = require('../../db/pool');
 const logger = require('../../utils/logger');
 const { SCHEMA_SQL } = require('./schema');
@@ -126,9 +127,23 @@ function buildRow(event) {
     rail: event.rail ?? null,
     amount_cents: Number.isInteger(event.amountCents) ? event.amountCents : null,
     currency: event.currency ?? null,
-    details: limitDetails(redact(event.details || {})),
+    details: limitDetails(redact(withProvenance(event))),
     request_id: event.requestId ?? null,
   };
+}
+
+/**
+ * Every entry says which code and rulebook made it, and, for decisions, which
+ * rules were checked: { ...details, rules: [cite(...)], agent: { code, rulebook } }.
+ */
+function withProvenance(event) {
+  const details = { ...(event.details || {}) };
+  if (Array.isArray(event.rules) && event.rules.length) details.rules = event.rules;
+  details.agent = {
+    code: (process.env.VERCEL_GIT_COMMIT_SHA || process.env.GIT_COMMIT_SHA || 'local').slice(0, 12),
+    rulebook: RULEBOOK_VERSION,
+  };
+  return details;
 }
 
 let schemaReady = null;
@@ -221,6 +236,57 @@ async function listSessionEvents(cartSessionId) {
 }
 
 /**
+ * The full trail for one checkout or shopping session, oldest first, in plain
+ * fields, with each entry's tamper check. For fraud review and support.
+ * @param {{ checkoutIntentId?: string, cartSessionId?: string }} which
+ */
+async function getTrail({ checkoutIntentId = null, cartSessionId = null } = {}) {
+  await ensureSchema();
+  if (!checkoutIntentId && !cartSessionId) throw new Error('getTrail needs checkoutIntentId or cartSessionId');
+  let sessionId = cartSessionId;
+  if (!sessionId && checkoutIntentId) {
+    const r = await pool.query('SELECT cart_session_id FROM agent_events WHERE checkout_intent_id = $1 AND cart_session_id IS NOT NULL LIMIT 1', [checkoutIntentId]);
+    sessionId = r.rows[0] ? r.rows[0].cart_session_id : null;
+  }
+  const rows = (await pool.query(
+    `SELECT * FROM agent_events
+      WHERE ($1::text IS NOT NULL AND cart_session_id = $1) OR ($2::text IS NOT NULL AND checkout_intent_id = $2)
+      ORDER BY id ASC`,
+    [sessionId, checkoutIntentId],
+  )).rows;
+
+  const entries = [];
+  let intact = true;
+  for (const row of rows) {
+    // The row's own hash, and that it follows the row written just before it.
+    const before = (await pool.query('SELECT hash FROM agent_events WHERE id < $1 ORDER BY id DESC LIMIT 1', [row.id])).rows[0];
+    const ok = row.hash === hashRow(row, row.prev_hash || null) && (row.prev_hash || null) === (before ? before.hash : null);
+    if (!ok) intact = false;
+    const details = typeof row.details === 'string' ? JSON.parse(row.details) : (row.details || {});
+    const { rules = [], agent = null, ...rest } = details;
+    entries.push({
+      id: Number(row.id),
+      at: new Date(row.occurred_at).toISOString(),
+      atPacific: new Date(row.occurred_at).toLocaleString('en-US', { timeZone: 'America/Los_Angeles', dateStyle: 'medium', timeStyle: 'medium' }),
+      who: row.actor,
+      action: row.action,
+      decision: row.decision,
+      reason: row.reason,
+      store: row.partner_key,
+      rail: row.rail,
+      amountCents: row.amount_cents == null ? null : Number(row.amount_cents),
+      currency: row.currency,
+      rules: rules.map((c) => ({ ...c, text: c.text || lookup(c.rule) })),
+      code: agent ? agent.code : null,
+      rulebook: agent ? agent.rulebook : null,
+      details: rest,
+      untampered: ok,
+    });
+  }
+  return { cartSessionId: sessionId, checkoutIntentId, intact, count: entries.length, entries };
+}
+
+/**
  * Recompute the hash chain from the start (or from afterId) and report the
  * first row that doesn't match.
  * @returns {Promise<{ok: boolean, checked: number, brokenAt?: number}>}
@@ -250,6 +316,8 @@ async function verifyChain({ afterId = 0, limit = 10000 } = {}) {
 
 module.exports = {
   recordAgentEvent,
+  getTrail,
+  cite,
   listSessionEvents,
   verifyChain,
   ensureSchema,

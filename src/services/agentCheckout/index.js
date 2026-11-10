@@ -35,7 +35,7 @@ const crypto = require('crypto');
 const pool = require('../../db/pool');
 const logger = require('../../utils/logger');
 const { ValidationError, NotFoundError, ConflictError } = require('../../utils/errors');
-const { recordAgentEvent } = require('../agentAudit');
+const { recordAgentEvent, cite } = require('../agentAudit');
 const AgentBridges = require('../agentBridges');
 const BridgeCartService = require('../bridgeCartService');
 const { SCHEMA_SQL } = require('./schema');
@@ -110,6 +110,7 @@ async function pickRail(partnerKey, ctx) {
     await recordAgentEvent({
       actor: ACTOR, action: 'rail.selected', decision: 'info', reason: choice.reason,
       rail: 'handoff', partnerKey, ...ctx, details: { handlers },
+      rules: [cite('rail.installed', 'fail', { storeOffers: handlers.length, museHas: rails.size })],
     });
   }
   if (choice.rail !== 'handoff' && !rails.has(choice.rail)) {
@@ -190,8 +191,15 @@ async function prepare(userId, { email = null, shippingAddress = null, partnerKe
     ...ctx, amountCents: totalCents, currency,
     details: {
       expiresAt: expiresAt.toISOString(),
-      stores: stores.map((s) => ({ partnerKey: s.partnerKey, rail: s.rail, ceilingCents: s.ceilingCents })),
+      summaryHash,
+      stores: stores.map((s) => ({ partnerKey: s.partnerKey, rail: s.rail, railReason: s.railReason, ceilingCents: s.ceilingCents })),
     },
+    rules: [
+      ...stores.map((s) => cite('rail.store_total', s.quotedCents == null ? 'fail' : 'pass', { store: s.partnerKey, quotedCents: s.quotedCents })),
+      ...stores.map((s) => cite('rail.installed', s.rail === 'handoff' ? 'fail' : 'pass', { store: s.partnerKey, rail: s.rail })),
+      cite('payment.ceiling', 'not_applicable', { ceilingsSetTo: 'each store\'s quoted total' }),
+      cite('checkout.not_expired', 'not_applicable', { expiresAt: expiresAt.toISOString() }),
+    ],
   });
 
   return {
@@ -238,7 +246,10 @@ async function payStore(intent, row, confirmation) {
   const rail = rails.get(row.rail);
   if (!rail) {
     await setStore(row, { status: 'handoff', error: 'payment rail not available' });
-    await recordAgentEvent({ actor: ACTOR, action: 'handoff.offered', decision: 'info', reason: 'rail not available at pay time', ...base });
+    await recordAgentEvent({
+      actor: ACTOR, action: 'handoff.offered', decision: 'info', reason: 'rail not available at pay time', ...base,
+      rules: [cite('rail.installed', 'fail', { rail: row.rail })],
+    });
     return row;
   }
 
@@ -247,6 +258,12 @@ async function payStore(intent, row, confirmation) {
     actor: ACTOR, action: 'payment.submitted', decision: 'allowed',
     reason: `Paying ${row.store_name} up to the approved ${row.ceiling_cents}`,
     ...base, amountCents: row.ceiling_cents, details: { checkoutId: row.checkout_id },
+    rules: [
+      cite('checkout.shopper_approval', 'pass'),
+      cite('payment.logged_first', 'pass'),
+      cite('payment.ceiling', 'not_applicable', { approvedCents: row.ceiling_cents, note: 'checked again on the store\'s answer' }),
+      cite('payment.no_card_storage', 'pass'),
+    ],
   }, { required: true });
 
   let result;
@@ -278,6 +295,7 @@ async function payStore(intent, row, confirmation) {
       actor: ACTOR, action: 'payment.blocked', decision: 'blocked',
       reason: `Store total ${result.totalCents} is above the approved ${row.ceiling_cents}`,
       ...base, amountCents: result.totalCents, details: { orderId: result.orderId || null },
+      rules: [cite('payment.ceiling', 'fail', { approvedCents: row.ceiling_cents, chargedCents: result.totalCents })],
     });
     return row;
   }
@@ -288,6 +306,9 @@ async function payStore(intent, row, confirmation) {
     reason: `Order placed at ${row.store_name}`, ...base,
     amountCents: Number.isInteger(result?.totalCents) ? result.totalCents : row.ceiling_cents,
     details: { orderId: result?.orderId || null },
+    rules: [cite('payment.ceiling', Number.isInteger(result?.totalCents) ? 'pass' : 'not_applicable', {
+      approvedCents: row.ceiling_cents, chargedCents: Number.isInteger(result?.totalCents) ? result.totalCents : null,
+    })],
   });
   return row;
 }
@@ -304,13 +325,17 @@ async function confirm(userId, intentId, confirmation = {}) {
   if (intent.status !== 'draft') throw new ConflictError(`This checkout is already ${intent.status}`);
   if (new Date(intent.expires_at).getTime() < Date.now()) {
     await pool.query("UPDATE checkout_intents SET status = 'expired', finished_at = NOW() WHERE id = $1 AND status = 'draft'", [intent.id]);
-    await recordAgentEvent({ actor: 'system', action: 'intent.expired', decision: 'declined', reason: 'Confirmed after the 30-minute window', ...ctx });
+    await recordAgentEvent({
+      actor: 'system', action: 'intent.expired', decision: 'declined', reason: 'Confirmed after the 30-minute window', ...ctx,
+      rules: [cite('checkout.not_expired', 'fail', { expiresAt: new Date(intent.expires_at).toISOString() })],
+    });
     throw new ConflictError('This checkout expired. Review the cart again.');
   }
   if (!confirmation.summaryHash || confirmation.summaryHash !== intent.summary_hash) {
     await recordAgentEvent({
       actor: 'shopper', action: 'intent.declined', decision: 'blocked',
       reason: 'Confirmation did not match the review the shopper was shown', ...ctx,
+      rules: [cite('checkout.review_matches', 'fail')],
     });
     throw new ValidationError('The cart changed since you reviewed it. Review it again.');
   }
@@ -325,6 +350,7 @@ async function confirm(userId, intentId, confirmation = {}) {
       await recordAgentEvent({
         actor: 'shopper', action: 'intent.declined', decision: 'blocked',
         reason: `Passkey check failed: ${err.message}`, ...ctx,
+        rules: [cite('checkout.review_matches', 'pass'), cite('checkout.shopper_approval', 'fail')],
       });
       throw err;
     }
@@ -344,6 +370,12 @@ async function confirm(userId, intentId, confirmation = {}) {
       reason: `Shopper confirmed ${stores.length} store(s) in one step`,
       ...ctx, amountCents: intent.total_cents, currency: intent.currency,
       details: { summaryHash: intent.summary_hash, ...approvedBy },
+      rules: [
+        cite('checkout.not_expired', 'pass', { expiresAt: new Date(intent.expires_at).toISOString() }),
+        cite('checkout.review_matches', 'pass', { summaryHash: intent.summary_hash }),
+        cite('checkout.shopper_approval', approvedBy.method === 'passkey' ? 'pass' : 'not_applicable', { method: approvedBy.method }),
+        cite('checkout.one_confirm', 'pass'),
+      ],
     }, { required: true });
   } catch (err) {
     await pool.query("UPDATE checkout_intents SET status = 'draft', approved_at = NULL WHERE id = $1", [intent.id]).catch(() => {});
@@ -362,6 +394,7 @@ async function confirm(userId, intentId, confirmation = {}) {
       await recordAgentEvent({
         actor: ACTOR, action: 'handoff.offered', decision: 'info',
         reason: `Shopper checks out on ${row.store_name}'s site`, ...ctx, partnerKey: row.partner_key, rail: row.rail,
+        rules: [cite('rail.installed', row.status === 'handoff' ? 'fail' : 'not_applicable', { rail: row.rail, storeStatus: row.status })],
       });
     }
   }

@@ -40,6 +40,17 @@ beforeEach(() => {
     if (/WHERE id > \$1/.test(sql)) return { rows: table.filter((r) => Number(r.id) > params[0]) };
     if (/WHERE cart_session_id = \$1/.test(sql)) return { rows: table.filter((r) => r.cart_session_id === params[0]) };
     if (/WHERE id = \$1/.test(sql)) return { rows: table.filter((r) => Number(r.id) === params[0]) };
+    if (/SELECT cart_session_id FROM agent_events WHERE checkout_intent_id/.test(sql)) {
+      const r = table.find((x) => x.checkout_intent_id === params[0] && x.cart_session_id);
+      return { rows: r ? [{ cart_session_id: r.cart_session_id }] : [] };
+    }
+    if (/WHERE \(\$1::text IS NOT NULL AND cart_session_id/.test(sql)) {
+      return { rows: table.filter((r) => (params[0] && r.cart_session_id === params[0]) || (params[1] && r.checkout_intent_id === params[1])) };
+    }
+    if (/WHERE id < \$1 ORDER BY id DESC LIMIT 1/.test(sql)) {
+      const prev = table.filter((r) => Number(r.id) < Number(params[0])).at(-1);
+      return { rows: prev ? [{ hash: prev.hash }] : [] };
+    }
     return { rows: [] };
   });
 });
@@ -116,7 +127,8 @@ describe('recordAgentEvent', () => {
     });
 
     expect(first.id).toBe('1');
-    expect(table[0].details).toEqual({ checkoutId: 'chk_1', credential: { token: '[redacted]' } });
+    expect(table[0].details).toMatchObject({ checkoutId: 'chk_1', credential: { token: '[redacted]' } });
+    expect(table[0].details.agent).toEqual({ code: expect.any(String), rulebook: expect.any(String) });
     expect(table[0].prev_hash).toBeNull();
     expect(table[1].prev_hash).toBe(first.hash);
     expect(second.hash).toMatch(/^[0-9a-f]{64}$/);
@@ -150,5 +162,51 @@ describe('recordAgentEvent', () => {
     await AgentAudit.recordAgentEvent({ actor: 'muse-agent', action: 'c', cartSessionId: 'cs_1' });
     const events = await AgentAudit.listSessionEvents('cs_1');
     expect(events.map((e) => e.action)).toEqual(['a', 'c']);
+  });
+});
+
+describe('rule citations and the trail', () => {
+  const { cite, RULES } = require('../../src/services/agentAudit/rules');
+
+  test('cite names the rule, its version, the result and the values compared', () => {
+    expect(cite('payment.ceiling', 'fail', { approvedCents: 5000, chargedCents: 5400 })).toEqual({
+      rule: `payment.ceiling@v${RULES['payment.ceiling'].version}`,
+      result: 'fail',
+      text: RULES['payment.ceiling'].text,
+      values: { approvedCents: 5000, chargedCents: 5400 },
+    });
+    expect(() => cite('made.up', 'pass')).toThrow(/Unknown agent rule/);
+    expect(() => cite('payment.ceiling', 'maybe')).toThrow(/pass, fail or not_applicable/);
+  });
+
+  test('every entry records the rules it checked and the code that ran', async () => {
+    process.env.VERCEL_GIT_COMMIT_SHA = 'abc123def4567890';
+    await AgentAudit.recordAgentEvent({
+      actor: 'muse-agent', action: 'payment.blocked', decision: 'blocked', cartSessionId: 'cs_9', checkoutIntentId: 'ci_9',
+      rules: [cite('payment.ceiling', 'fail', { approvedCents: 5000, chargedCents: 5400 })],
+    });
+    delete process.env.VERCEL_GIT_COMMIT_SHA;
+    expect(table[0].details.rules[0]).toMatchObject({ rule: 'payment.ceiling@v1', result: 'fail' });
+    expect(table[0].details.agent.code).toBe('abc123def456');
+  });
+
+  test('getTrail lists one checkout in order, in plain fields, and flags an edited entry', async () => {
+    await AgentAudit.recordAgentEvent({ actor: 'muse-agent', action: 'intent.created', cartSessionId: 'cs_1', checkoutIntentId: 'ci_1', amountCents: 9000 });
+    await AgentAudit.recordAgentEvent({ actor: 'muse-agent', action: 'other.session', cartSessionId: 'cs_2' });
+    await AgentAudit.recordAgentEvent({
+      actor: 'shopper', action: 'intent.approved', decision: 'approved', cartSessionId: 'cs_1', checkoutIntentId: 'ci_1',
+      rules: [cite('checkout.shopper_approval', 'pass')],
+    });
+    let trail = await AgentAudit.getTrail({ checkoutIntentId: 'ci_1' });
+    expect(trail.intact).toBe(true);
+    expect(trail.entries.map((e) => e.action)).toEqual(['intent.created', 'intent.approved']);
+    expect(trail.entries[1].rules[0]).toMatchObject({ rule: 'checkout.shopper_approval@v1', result: 'pass' });
+    expect(trail.entries[0].atPacific).toEqual(expect.any(String));
+
+    table[0].amount_cents = 90; // someone edits the amount directly in the database
+    trail = await AgentAudit.getTrail({ checkoutIntentId: 'ci_1' });
+    expect(trail.intact).toBe(false);
+    expect(trail.entries[0].untampered).toBe(false);
+    expect(trail.entries[1].untampered).toBe(true);
   });
 });

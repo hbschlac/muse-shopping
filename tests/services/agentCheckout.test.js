@@ -4,7 +4,7 @@
  */
 
 jest.mock('../../src/db/pool', () => ({ query: jest.fn(), connect: jest.fn() }));
-jest.mock('../../src/services/agentAudit', () => ({ recordAgentEvent: jest.fn() }));
+jest.mock('../../src/services/agentAudit', () => ({ recordAgentEvent: jest.fn(), cite: jest.requireActual('../../src/services/agentAudit/rules').cite }));
 jest.mock('../../src/services/bridgeCartService', () => ({ startCheckout: jest.fn() }));
 jest.mock('../../src/services/agentBridges', () => ({ getPartner: jest.fn() }));
 jest.mock('../../src/services/passkeys', () => ({
@@ -212,6 +212,9 @@ describe('confirm', () => {
     const result = await AgentCheckout.confirm(7, review.intentId, { summaryHash: review.summaryHash });
     expect(result.stores.every((s) => s.status === 'blocked')).toBe(true);
     expect(actions().filter((a) => a === 'payment.blocked')).toHaveLength(2);
+    const blocked = recordAgentEvent.mock.calls.map(([e]) => e).find((e) => e.action === 'payment.blocked');
+    expect(blocked.rules[0]).toMatchObject({ rule: 'payment.ceiling@v1', result: 'fail' });
+    expect(blocked.rules[0].values.chargedCents).toBe(blocked.rules[0].values.approvedCents + 1);
   });
 });
 
@@ -242,6 +245,14 @@ describe('passkey approval', () => {
     const approved = events.find((e) => e.action === 'intent.approved');
     expect(approved.details).toMatchObject({ method: 'passkey', credentialId: 'cred_1', userVerified: true });
     expect(JSON.stringify(approved)).not.toContain('sig');
+    // Every decision cites the rules it checked, by id and version.
+    expect(approved.rules.map((r) => `${r.rule}:${r.result}`)).toEqual([
+      'checkout.not_expired@v1:pass', 'checkout.review_matches@v1:pass',
+      'checkout.shopper_approval@v1:pass', 'checkout.one_confirm@v1:pass',
+    ]);
+    const submitted = events.filter((e) => e.action === 'payment.submitted');
+    expect(submitted.length).toBeGreaterThan(0);
+    submitted.forEach((e) => expect(e.rules.map((r) => r.rule)).toEqual(expect.arrayContaining(['payment.logged_first@v1', 'payment.no_card_storage@v1'])));
   });
 
   test('a failed passkey check pays nothing and leaves the intent in draft', async () => {

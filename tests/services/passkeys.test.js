@@ -4,7 +4,7 @@
 
 jest.mock('../../src/db/pool', () => ({ query: jest.fn(), connect: jest.fn() }));
 jest.mock('../../src/utils/logger', () => ({ info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() }));
-jest.mock('../../src/services/agentAudit', () => ({ recordAgentEvent: jest.fn() }));
+jest.mock('../../src/services/agentAudit', () => ({ recordAgentEvent: jest.fn(), cite: jest.requireActual('../../src/services/agentAudit/rules').cite }));
 jest.mock('../../src/services/emailService', () => ({ sendTransactionalEmail: jest.fn() }));
 
 const pool = require('../../src/db/pool');
