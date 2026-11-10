@@ -4,6 +4,7 @@
  */
 
 const ShopperDataService = require('../services/shopperDataService');
+const { deleteAccount } = require('../services/privacyDeletion');
 const logger = require('../utils/logger');
 
 class ShopperDataController {
@@ -237,12 +238,12 @@ class ShopperDataController {
     try {
       const userId = req.userId;
 
-      // Mark for deletion (actual deletion happens after grace period)
-      await ShopperDataService.anonymizeUserData(userId, 'user_request');
+      // Deletes the account and personal data now (see services/privacyDeletion)
+      await deleteAccount(userId, 'user_request');
 
       res.status(200).json({
         success: true,
-        message: 'Data deletion request submitted. Your data will be anonymized within 30 days.'
+        message: 'Your account and personal data have been deleted.'
       });
     } catch (error) {
       logger.error('Error in requestDeletion controller:', error);

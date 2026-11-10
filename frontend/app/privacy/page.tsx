@@ -54,7 +54,8 @@ export default function PrivacyPolicyPage() {
               <li>Muse never stores your card number.</li>
               <li>Connecting Instagram or Gmail is optional, and you can disconnect at any time.</li>
               <li>
-                Email <Mail /> to get a copy of your data or have it deleted.
+                Download or delete your data any time in Profile &rsaquo; Privacy. Deleting takes effect right
+                away.
               </li>
             </ul>
           </div>
@@ -229,13 +230,14 @@ export default function PrivacyPolicyPage() {
             <List>
               <li>We keep your account information while your account is open.</li>
               <li>
-                If you delete your account, or email us to ask, we delete or anonymize your information within 30
-                days. We may keep the shopping agent log and order records longer when we need them to handle
-                fraud, disputes or legal duties, and only for that purpose.
+                When you delete your account in Muse, your account and personal data are deleted right away. If
+                you ask by email instead, we do it within 30 days. We keep the shopping agent log and order
+                records, which hold no name, email or card number, when we need them to handle fraud, disputes
+                or legal duties, and only for that purpose.
               </li>
               <li>
-                If you disconnect Instagram or Gmail, Muse stops reading it right away. Email us and we will delete
-                what Muse saved from that account within 30 days.
+                When you remove Instagram or Gmail in Muse, its access and everything Muse saved from it are
+                deleted right away.
               </li>
               <li>Server logs are kept for a short time and then deleted automatically.</li>
             </List>
@@ -254,15 +256,17 @@ export default function PrivacyPolicyPage() {
                 <strong>Correct it:</strong> edit your profile, or email us.
               </li>
               <li>
-                <strong>Delete it:</strong> from Profile &rsaquo; Privacy, or by email.
+                <strong>Delete it:</strong> Delete My Account in Profile &rsaquo; Privacy deletes it right away.
+                You can also ask by email.
               </li>
               <li>
-                <strong>Disconnect Instagram:</strong> remove Muse in Instagram under Settings &rsaquo; Apps and
-                websites. Meta then sends Muse a deletion request, and we delete what Muse saved from Instagram
-                within 30 days.
+                <strong>Disconnect Instagram or Gmail:</strong> press Remove under Connected Accounts in Profile
+                &rsaquo; Privacy, which deletes what Muse saved from it right away. You can also remove Muse in
+                Instagram under Settings &rsaquo; Apps and websites. Meta then tells Muse automatically, and Muse
+                deletes your Instagram data right away.
               </li>
               <li>
-                <strong>Disconnect Gmail:</strong> remove Muse at{' '}
+                <strong>Revoke Gmail access at Google:</strong> remove Muse at{' '}
                 <a
                   href="https://myaccount.google.com/permissions"
                   className="text-[var(--color-coral)] hover:underline"
@@ -271,7 +275,7 @@ export default function PrivacyPolicyPage() {
                 >
                   myaccount.google.com/permissions
                 </a>
-                .
+                . That stops Muse&rsquo;s access at once. To also delete what Muse saved, press Remove in Muse.
               </li>
               <li>
                 <strong>Alerts and email:</strong> turn alerts off in Profile &rsaquo; Notifications or in your

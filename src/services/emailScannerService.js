@@ -541,15 +541,12 @@ class EmailScannerService {
    * @returns {Promise<void>}
    */
   static async disconnectEmail(userId) {
-    const result = await pool.query(
-      `UPDATE email_connections
-       SET is_active = FALSE, updated_at = CURRENT_TIMESTAMP
-       WHERE user_id = $1 AND provider = 'gmail'
-       RETURNING id`,
-      [userId]
-    );
+    // Deletes the stored tokens and everything found in the inbox, not just
+    // a flag, as the privacy policy promises.
+    const { deleteGmailData } = require('./privacyDeletion');
+    const deleted = await deleteGmailData(userId);
 
-    if (result.rows.length === 0) {
+    if (!deleted.email_connections) {
       throw new NotFoundError('Gmail connection');
     }
 
