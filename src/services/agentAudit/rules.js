@@ -12,6 +12,7 @@ const RULES = {
   'checkout.not_expired': { version: 1, text: 'A review expires 30 minutes after it is built. An expired review is never paid.' },
   'checkout.shopper_approval': { version: 1, text: 'Pay only after the shopper approves this exact cart with their passkey (Face ID or Touch ID).' },
   'checkout.one_confirm': { version: 1, text: 'Only one confirm can win. A second tap on the same cart is refused.' },
+  'checkout.price_changes_shown': { version: 1, text: 'If a store\'s price is higher than the price in the Muse cart, the review screen shows the old and new price before the shopper approves.' },
   'payment.ceiling': { version: 1, text: 'Never pay a store more than the total the shopper approved for that store.' },
   'payment.logged_first': { version: 1, text: 'Write the payment to this log before paying. If the log write fails, do not pay.' },
   'payment.no_card_storage': { version: 1, text: 'Never store or log a card number. Pay only with a network token and a code made for this one cart.' },

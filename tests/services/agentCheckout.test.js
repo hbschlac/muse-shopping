@@ -293,3 +293,13 @@ describe('items in the log', () => {
     expect(strip({ ...other, stores: other.stores })).not.toBe(strip({ ...review, stores: review.stores }));
   });
 });
+
+test('a store price above the Muse cart price is cited on the review entry', async () => {
+  const bridge = bridgeResult();
+  bridge.stores[0].items[0].storePriceCents = 10800; // was 9800 in the Muse cart
+  BridgeCartService.startCheckout.mockResolvedValueOnce(bridge);
+  await AgentCheckout.prepare(7, {});
+  const created = events.find((e) => e.action === 'intent.created');
+  const cited = created.rules.find((r) => r.rule === 'checkout.price_changes_shown@v1');
+  expect(cited.values.increases).toEqual([{ store: 'allbirds', variantId: 'v_runner_9', cartPriceCents: 9800, storePriceCents: 10800 }]);
+});

@@ -326,6 +326,7 @@ function StoreRow({ store, done }: { store: AgentCheckoutStore; done: boolean })
           {store.items!.map((item, i) => {
             const each = item.storePriceCents ?? item.cartPriceCents;
             const options = [item.size && `Size ${item.size}`, item.color].filter(Boolean).join(' · ') || item.variantTitle;
+            const went_up = item.cartPriceCents != null && item.storePriceCents != null && item.storePriceCents > item.cartPriceCents;
             const seller = item.marketplace && item.sellerName ? `Sold by ${item.sellerName}${item.fulfilledBy ? `, ships from ${item.fulfilledBy}` : ''}` : null;
             return (
               <li key={item.variantId || item.cartItemId || i} className="flex items-start justify-between gap-3 text-sm">
@@ -335,6 +336,11 @@ function StoreRow({ store, done }: { store: AgentCheckoutStore; done: boolean })
                     {options ? `${options} · ` : ''}Qty {item.quantity}
                   </p>
                   {seller && <p className="text-xs text-gray-600">{seller}</p>}
+                  {went_up && (
+                    <p className="text-xs font-semibold text-[var(--color-coral)]">
+                      Price went up at {store.storeName}: was {money(item.cartPriceCents, store.currency)}, now {money(item.storePriceCents, store.currency)} each
+                    </p>
+                  )}
                 </div>
                 <p className="text-gray-900 shrink-0">{money(each == null ? null : each * item.quantity, store.currency)}</p>
               </li>

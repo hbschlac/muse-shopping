@@ -119,6 +119,19 @@ async function pickRail(partnerKey, ctx) {
   return choice;
 }
 
+/** Items whose store price is above the Muse cart price; the review screen shows each one. */
+function priceIncreases(stores) {
+  const ups = [];
+  for (const s of stores) {
+    for (const i of s.items || []) {
+      if (Number.isInteger(i.cartPriceCents) && Number.isInteger(i.storePriceCents) && i.storePriceCents > i.cartPriceCents) {
+        ups.push({ store: s.partnerKey, variantId: i.variantId, cartPriceCents: i.cartPriceCents, storePriceCents: i.storePriceCents });
+      }
+    }
+  }
+  return ups.length ? [cite('checkout.price_changes_shown', 'pass', { increases: ups })] : [];
+}
+
 /** Stable hash of exactly what the review screen shows. */
 function summaryHashOf(summary) {
   // The items are part of what the shopper approves, so a swapped size or seller changes the hash.
@@ -203,6 +216,7 @@ async function prepare(userId, { email = null, shippingAddress = null, partnerKe
       ...stores.map((s) => cite('rail.store_total', s.quotedCents == null ? 'fail' : 'pass', { store: s.partnerKey, quotedCents: s.quotedCents })),
       ...stores.map((s) => cite('rail.installed', s.rail === 'handoff' ? 'fail' : 'pass', { store: s.partnerKey, rail: s.rail })),
       cite('payment.ceiling', 'not_applicable', { ceilingsSetTo: 'each store\'s quoted total' }),
+      ...priceIncreases(stores),
       cite('checkout.not_expired', 'not_applicable', { expiresAt: expiresAt.toISOString() }),
     ],
   });
