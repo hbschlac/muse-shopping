@@ -4,7 +4,7 @@
  */
 
 jest.mock('../../src/db/pool', () => ({ query: jest.fn(), connect: jest.fn() }));
-jest.mock('../../src/services/agentAudit', () => ({ recordAgentEvent: jest.fn() }));
+jest.mock('../../src/services/agentAudit', () => ({ recordAgentEvent: jest.fn(), cite: jest.requireActual('../../src/services/agentAudit/rules').cite }));
 jest.mock('../../src/services/bridgeCartService', () => ({ startCheckout: jest.fn() }));
 jest.mock('../../src/services/agentBridges', () => ({ getPartner: jest.fn() }));
 jest.mock('../../src/services/passkeys', () => ({
@@ -28,13 +28,13 @@ let events;
 function fakeQuery(sql, params = []) {
   const s = sql.replace(/\s+/g, ' ').trim();
   if (s.startsWith('INSERT INTO checkout_intents ')) {
-    const [id, user_id, cart_session_id, total_cents, currency, summary_hash, expires_at] = params;
-    intents.set(id, { id, user_id, cart_session_id, status: 'draft', total_cents, currency, summary_hash, expires_at });
+    const [id, user_id, cart_session_id, total_cents, currency, summary_hash, expires_at, ship_to, ship_to_hash] = params;
+    intents.set(id, { id, user_id, cart_session_id, status: 'draft', total_cents, currency, summary_hash, expires_at, ship_to, ship_to_hash });
     return { rows: [] };
   }
   if (s.startsWith('INSERT INTO checkout_intent_stores')) {
     const keys = ['intent_id', 'partner_key', 'store_name', 'rail', 'rail_reason', 'checkout_id', 'continue_url',
-      'item_count', 'quoted_cents', 'ceiling_cents', 'currency', 'status'];
+      'item_count', 'quoted_cents', 'ceiling_cents', 'currency', 'status', 'items'];
     const row = { id: storeRows.length + 1, order_id: null, error: null };
     keys.forEach((k, i) => { row[k] = params[i]; });
     storeRows.push(row);
@@ -68,12 +68,13 @@ function bridgeResult() {
     cartSessionId: 'bcs_test',
     stores: [
       { partnerKey: 'allbirds', storeName: 'Allbirds', itemCount: 1,
+        items: [{ cartItemId: 11, productId: 'p_runner', variantId: 'v_runner_9', title: 'Tree Runner', size: '9', color: 'Navy', quantity: 1, cartPriceCents: 9800, storePriceCents: 9800, sellerName: 'Allbirds' }],
         checkout: { id: 'chk_a', currency: 'USD', continueUrl: 'https://allbirds.com/c/a', totals: { total: { cents: 10000 } } } },
       { partnerKey: 'rothys', storeName: "Rothy's", itemCount: 2,
         checkout: { id: 'chk_r', currency: 'USD', continueUrl: 'https://rothys.com/c/r', totals: { total: { cents: 5000 } } } },
     ],
     errors: [],
-    shipTo: { city: 'Oakland' },
+    shipTo: { name: 'Hannah', address1: '1 Test St', city: 'Oakland', state: 'CA', zip: '94600', country: 'US' },
   };
 }
 
@@ -112,7 +113,7 @@ describe('prepare', () => {
 
 describe('confirm', () => {
   async function preparedWithRail(pay) {
-    AgentCheckout.registerRail('test_rail', { pay });
+    AgentCheckout.registerRail('test_rail', { pay, enforcesCeiling: true, enforcesShipTo: true });
     // No selector is installed yet, so point the store at the test rail directly.
     const review = await AgentCheckout.prepare(7, {});
     storeRows.forEach((r) => { r.rail = 'test_rail'; r.status = 'pending'; });
@@ -212,6 +213,9 @@ describe('confirm', () => {
     const result = await AgentCheckout.confirm(7, review.intentId, { summaryHash: review.summaryHash });
     expect(result.stores.every((s) => s.status === 'blocked')).toBe(true);
     expect(actions().filter((a) => a === 'payment.blocked')).toHaveLength(2);
+    const blocked = recordAgentEvent.mock.calls.map(([e]) => e).find((e) => e.action === 'payment.blocked');
+    expect(blocked.rules[0]).toMatchObject({ rule: 'payment.ceiling@v1', result: 'fail' });
+    expect(blocked.rules[0].values.chargedCents).toBe(blocked.rules[0].values.approvedCents + 1);
   });
 });
 
@@ -227,7 +231,7 @@ describe('cancel', () => {
 
 describe('passkey approval', () => {
   async function prepared(pay) {
-    AgentCheckout.registerRail('test_rail', { pay });
+    AgentCheckout.registerRail('test_rail', { pay, enforcesCeiling: true, enforcesShipTo: true });
     const review = await AgentCheckout.prepare(7, {});
     storeRows.forEach((r) => { r.rail = 'test_rail'; r.status = 'pending'; });
     return review;
@@ -242,6 +246,14 @@ describe('passkey approval', () => {
     const approved = events.find((e) => e.action === 'intent.approved');
     expect(approved.details).toMatchObject({ method: 'passkey', credentialId: 'cred_1', userVerified: true });
     expect(JSON.stringify(approved)).not.toContain('sig');
+    // Every decision cites the rules it checked, by id and version.
+    expect(approved.rules.map((r) => `${r.rule}:${r.result}`)).toEqual([
+      'checkout.not_expired@v1:pass', 'checkout.review_matches@v1:pass',
+      'checkout.shopper_approval@v1:pass', 'checkout.one_confirm@v1:pass',
+    ]);
+    const submitted = events.filter((e) => e.action === 'payment.submitted');
+    expect(submitted.length).toBeGreaterThan(0);
+    submitted.forEach((e) => expect(e.rules.map((r) => r.rule)).toEqual(expect.arrayContaining(['payment.logged_first@v1', 'payment.no_card_storage@v1'])));
   });
 
   test('a failed passkey check pays nothing and leaves the intent in draft', async () => {
@@ -261,5 +273,95 @@ describe('passkey approval', () => {
     Passkeys.hasPasskey.mockResolvedValue(true);
     await expect(AgentCheckout.approvalOptions(7, review.intentId)).resolves.toEqual({ needsPasskey: false, options: { challenge: 'c' } });
     expect(Passkeys.cartApprovalOptions).toHaveBeenCalledWith(7, review.intentId, review.summaryHash);
+  });
+});
+
+describe('items in the log', () => {
+  test('the review, the approval and each payment record the exact items, and changing an item changes what was approved', async () => {
+    const review = await AgentCheckout.prepare(7, {});
+    const allbirds = review.stores.find((s) => s.partnerKey === 'allbirds');
+    expect(allbirds.items[0]).toMatchObject({ productId: 'p_runner', variantId: 'v_runner_9', size: '9', color: 'Navy' });
+    const created = events.find((e) => e.action === 'intent.created');
+    expect(created.details.stores.find((s) => s.partnerKey === 'allbirds').items[0].variantId).toBe('v_runner_9');
+
+    // Same totals, different size: the review hash changes, so an old approval can't cover it.
+    const bridge = bridgeResult();
+    bridge.stores[0].items[0].variantId = 'v_runner_10';
+    BridgeCartService.startCheckout.mockResolvedValueOnce(bridge);
+    const other = await AgentCheckout.prepare(7, {});
+    const strip = (r) => AgentCheckout._internal.summaryHashOf({ ...r, intentId: 'same' });
+    expect(strip({ ...other, stores: other.stores })).not.toBe(strip({ ...review, stores: review.stores }));
+  });
+});
+
+test('a store price above the Muse cart price is cited on the review entry', async () => {
+  const bridge = bridgeResult();
+  bridge.stores[0].items[0].storePriceCents = 10800; // was 9800 in the Muse cart
+  BridgeCartService.startCheckout.mockResolvedValueOnce(bridge);
+  await AgentCheckout.prepare(7, {});
+  const created = events.find((e) => e.action === 'intent.created');
+  const cited = created.rules.find((r) => r.rule === 'checkout.price_changes_shown@v1');
+  expect(cited.values.increases).toEqual([{ store: 'allbirds', variantId: 'v_runner_9', cartPriceCents: 9800, storePriceCents: 10800 }]);
+});
+
+test('a payment method that does not cap the charge before paying cannot be installed', () => {
+  expect(() => AgentCheckout.registerRail('loose_rail', { pay: jest.fn() })).toThrow(/cap the charge/);
+  expect(() => AgentCheckout.registerRail('loose_rail', { pay: jest.fn(), enforcesCeiling: true })).toThrow(/ship-to/);
+  expect(AgentCheckout._internal.rails.has('loose_rail')).toBe(false);
+});
+
+
+describe('ship-to lock', () => {
+  const pay = jest.fn(async ({ store }) => ({ status: 'paid', orderId: `o_${store.partnerKey}`, totalCents: store.ceilingCents }));
+
+  async function prepared(payFn = pay) {
+    AgentCheckout.registerRail('test_rail', { pay: payFn, enforcesCeiling: true, enforcesShipTo: true });
+    const review = await AgentCheckout.prepare(7, {});
+    storeRows.forEach((r) => { r.rail = 'test_rail'; r.status = 'pending'; });
+    return review;
+  }
+
+  test('a different address gives a different approval hash', async () => {
+    const a = await AgentCheckout.prepare(7, {});
+    const { shipToHashOf, _internal } = AgentCheckout;
+    const base = { intentId: 'ci_x', totalCents: 1, currency: 'USD', stores: [] };
+    const home = shipToHashOf(bridgeResult().shipTo);
+    const other = shipToHashOf({ ...bridgeResult().shipTo, address1: '12 Elm St' });
+    expect(home).not.toBe(other);
+    expect(_internal.summaryHashOf({ ...base, shipToHash: home })).not.toBe(_internal.summaryHashOf({ ...base, shipToHash: other }));
+    // Spacing and case don't count as a different address.
+    expect(shipToHashOf({ ...bridgeResult().shipTo, address1: '  1 TEST  st ' })).toBe(home);
+    expect(intents.get(a.intentId).ship_to_hash).toBe(home);
+    const created = events.find((e) => e.action === 'intent.created');
+    expect(created.details.shipTo).toEqual({ city: 'Oakland', state: 'CA', zip: '94600', country: 'US', shipToHash: home });
+    expect(JSON.stringify(created.details)).not.toContain('1 Test St');
+  });
+
+  test('the rail gets the approved address to check against', async () => {
+    pay.mockClear();
+    const review = await prepared();
+    await AgentCheckout.confirm(7, review.intentId, { summaryHash: review.summaryHash });
+    const { store } = pay.mock.calls[0][0];
+    expect(store.shipToHash).toBe(AgentCheckout.shipToHashOf(bridgeResult().shipTo));
+    expect(store.shipTo.address1).toBe('1 Test St');
+  });
+
+  test('a store that ships elsewhere is blocked and logged', async () => {
+    const elsewhere = AgentCheckout.shipToHashOf({ ...bridgeResult().shipTo, address1: '12 Elm St' });
+    const review = await prepared(jest.fn(async ({ store }) => ({ status: 'paid', orderId: 'o1', totalCents: store.ceilingCents, shipToHash: elsewhere })));
+    const result = await AgentCheckout.confirm(7, review.intentId, { summaryHash: review.summaryHash });
+    expect(result.stores.every((s) => s.status === 'blocked')).toBe(true);
+    const blocked = events.filter((e) => e.action === 'payment.blocked');
+    expect(blocked).toHaveLength(2);
+    expect(blocked[0].rules[0]).toMatchObject({ rule: 'checkout.ship_to_locked@v1', result: 'fail' });
+  });
+
+  test('with no address, nothing is payable by Muse', async () => {
+    BridgeCartService.startCheckout.mockResolvedValue({ ...bridgeResult(), shipTo: null });
+    AgentCheckout.registerRail('test_rail', { pay, enforcesCeiling: true, enforcesShipTo: true });
+    const review = await AgentCheckout.prepare(7, {});
+    expect(review.stores.every((s) => s.rail === 'handoff')).toBe(true);
+    const created = events.find((e) => e.action === 'intent.created');
+    expect(created.rules.find((r) => r.rule.startsWith('checkout.ship_to_locked'))).toMatchObject({ result: 'fail' });
   });
 });

@@ -28,7 +28,7 @@ const {
 } = require('@simplewebauthn/server');
 const pool = require('../../db/pool');
 const { ValidationError, ConflictError, RateLimitError, AppError } = require('../../utils/errors');
-const { recordAgentEvent } = require('../agentAudit');
+const { recordAgentEvent, cite } = require('../agentAudit');
 const logger = require('../../utils/logger');
 const { SCHEMA_SQL } = require('./schema');
 
@@ -64,9 +64,9 @@ function sameHash(a, b) {
 }
 
 /** Best effort: a log failure never blocks the shopper (checkout's own writes are required). */
-async function logEvent(userId, action, decision, reason, details = {}) {
+async function logEvent(userId, action, decision, reason, details = {}, rules = []) {
   try {
-    await recordAgentEvent({ actor: 'shopper', action, decision, reason, userId, details });
+    await recordAgentEvent({ actor: 'shopper', action, decision, reason, userId, details, rules });
   } catch (err) {
     logger.warn(`passkeys: could not log ${action}: ${err.message}`);
   }
@@ -131,7 +131,8 @@ async function saveChallenge(userId, purpose, challenge, intentId = null, summar
     [userId],
   )).rows[0];
   if (recent && recent.n >= CHALLENGES_PER_WINDOW) {
-    await logEvent(userId, 'passkey.rate_limited', 'blocked', 'Too many Face ID prompts in 10 minutes', { purpose });
+    await logEvent(userId, 'passkey.rate_limited', 'blocked', 'Too many Face ID prompts in 10 minutes', { purpose },
+      [cite('passkey.rate_limit', 'fail', { promptsIn10Min: recent.n, limit: CHALLENGES_PER_WINDOW })]);
     throw new RateLimitError('Too many tries. Wait a few minutes and try again.', 600);
   }
   await pool.query(
@@ -163,7 +164,8 @@ async function sendSetupCode(userId) {
   await ensureSchema();
   if (await hasPasskey(userId)) throw new ConflictError(ALREADY_SET_UP, ALREADY_SET_UP, ['Use the device you set up Face ID on']);
   if (!emailConfigured()) {
-    await logEvent(userId, 'passkey.setup_refused', 'blocked', 'Email is not configured, so the setup code cannot be sent');
+    await logEvent(userId, 'passkey.setup_refused', 'blocked', 'Email is not configured, so the setup code cannot be sent', {},
+      [cite('passkey.email_code', 'fail', { emailConfigured: false })]);
     throw new AppError('Face ID setup email is not configured', 503, 'EMAIL_NOT_CONFIGURED', true,
       'Face ID setup isn\'t available yet. Check out at each store for now.', [], true);
   }
@@ -173,7 +175,8 @@ async function sendSetupCode(userId) {
     [userId],
   )).rows[0];
   if (recent && recent.n >= EMAIL_CODES_PER_WINDOW) {
-    await logEvent(userId, 'passkey.rate_limited', 'blocked', 'Too many setup codes in 15 minutes', { purpose: 'email' });
+    await logEvent(userId, 'passkey.rate_limited', 'blocked', 'Too many setup codes in 15 minutes', { purpose: 'email' },
+      [cite('passkey.rate_limit', 'fail', { codesIn15Min: recent.n, limit: EMAIL_CODES_PER_WINDOW })]);
     throw new RateLimitError('We already sent you a few codes. Check your email or wait 15 minutes.', 900);
   }
   const { email, name } = await shopperEmail(userId);
@@ -193,7 +196,8 @@ async function sendSetupCode(userId) {
     heading: 'Set up Face ID for Muse checkout',
     body: `Your code is ${code}. It expires in 10 minutes.\n\nIf you didn't try to set up Face ID on Muse, don't share this code. Change your Muse password.`,
   });
-  await logEvent(userId, 'passkey.setup_code_sent', 'info', 'Setup code emailed');
+  await logEvent(userId, 'passkey.setup_code_sent', 'info', 'Setup code emailed', {},
+    [cite('passkey.one_per_shopper', 'pass'), cite('passkey.rate_limit', 'pass', { codesIn15Min: (recent ? recent.n : 0) + 1 })]);
   return { sentTo: maskEmail(email), expiresInMinutes: 10 };
 }
 
@@ -215,7 +219,7 @@ async function checkSetupCode(userId, code) {
   if (!row) throw new ValidationError('That code expired. Ask for a new one.');
   if (typed.length === 6 && sameHash(row.challenge, hashCode(userId, typed))) {
     await pool.query('UPDATE passkey_challenges SET expires_at = NOW() WHERE id = $1', [row.id]);
-    await logEvent(userId, 'passkey.setup_code_ok', 'approved', 'Setup code matched');
+    await logEvent(userId, 'passkey.setup_code_ok', 'approved', 'Setup code matched', {}, [cite('passkey.email_code', 'pass')]);
     return true;
   }
   const attempts = Number(row.attempts) + 1;
@@ -224,7 +228,8 @@ async function checkSetupCode(userId, code) {
   } else {
     await pool.query('UPDATE passkey_challenges SET attempts = $2 WHERE id = $1', [row.id, attempts]);
   }
-  await logEvent(userId, 'passkey.setup_code_wrong', 'declined', `Wrong setup code (try ${attempts} of ${EMAIL_CODE_MAX_ATTEMPTS})`);
+  await logEvent(userId, 'passkey.setup_code_wrong', 'declined', `Wrong setup code (try ${attempts} of ${EMAIL_CODE_MAX_ATTEMPTS})`, {},
+    [cite('passkey.email_code', 'fail', { attempt: attempts, maxAttempts: EMAIL_CODE_MAX_ATTEMPTS })]);
   throw new ValidationError(attempts >= EMAIL_CODE_MAX_ATTEMPTS
     ? 'Too many wrong codes. Ask for a new one.'
     : 'That code doesn\'t match. Check the email and try again.');
@@ -285,7 +290,8 @@ async function verifyRegistration(userId, response, { nickname = null } = {}) {
     [userId, credential.id, Buffer.from(credential.publicKey), credential.counter || 0,
       credential.transports || response?.response?.transports || [], nickname],
   );
-  await logEvent(userId, 'passkey.registered', 'approved', 'Face ID set up for Muse checkout', { nickname });
+  await logEvent(userId, 'passkey.registered', 'approved', 'Face ID set up for Muse checkout', { nickname },
+    [cite('passkey.email_code', 'pass'), cite('passkey.one_per_shopper', 'pass')]);
   await sendSetupAlert(userId);
   return { id: credential.id };
 }

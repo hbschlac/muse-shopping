@@ -76,6 +76,28 @@ describe('BridgeCartService.addItem', () => {
     }));
     expect(actions()).toEqual(['product.checked', 'cart.item_added']);
     expect(recordAgentEvent.mock.calls[1][0]).toMatchObject({ actor: 'muse-agent', decision: 'allowed', userId: 7, partnerKey: 'allbirds', amountCents: 22000 });
+    // The log names the exact item: ids, size, color, unit price, and who sells it.
+    expect(recordAgentEvent.mock.calls[1][0].details).toMatchObject({
+      productId: PRODUCT.id, variantId: 'gid://shopify/ProductVariant/11', quantity: 2,
+      title: "Women's Wool Runner", variantTitle: '6 / Natural', size: '6', color: 'Natural',
+      unitPriceCents: 11000, marketplace: null, sellerName: 'Allbirds',
+    });
+  });
+
+  test('on a marketplace, the log records the marketplace, the seller, who ships it and the listing', async () => {
+    AgentBridges.getPartner.mockReturnValue({ ...PARTNER, key: 'walmart', name: 'Walmart', marketplace: true });
+    const product = {
+      ...PRODUCT,
+      seller: { id: 'S-123', name: 'Acme Outfitters' },
+      variants: [{ ...PRODUCT.variants[1], offerId: 'OFFER-9', gtin: '00012345678905', fulfilledBy: 'Walmart' }],
+    };
+    mockBridge({ getProduct: jest.fn().mockResolvedValue(product) });
+    pool.query.mockResolvedValueOnce({ rows: [{ id: 50, name: 'Walmart', slug: 'bridge-walmart' }] });
+    const addItem = jest.spyOn(CartService, 'addItem').mockResolvedValue({ id: 3 });
+    await BridgeCartService.addItem(7, { partnerKey: 'walmart', productId: product.id, variantId: 'gid://shopify/ProductVariant/11' });
+    const seller = { marketplace: 'Walmart', sellerId: 'S-123', sellerName: 'Acme Outfitters', fulfilledBy: 'Walmart', offerId: 'OFFER-9', gtin: '00012345678905' };
+    expect(recordAgentEvent.mock.calls.at(-1)[0].details).toMatchObject(seller);
+    expect(addItem.mock.calls[0][1].metadata.bridge).toMatchObject(seller);
   });
 
   test('creates the store row the first time a partner is used', async () => {
@@ -147,6 +169,12 @@ describe('BridgeCartService.startCheckout', () => {
     expect(result.shipTo).toMatchObject({ name: 'Jane Smith', city: 'New York' });
     expect(result.shipTo.phone).toBeUndefined();
     expect(result.stores[0].prefilled).toBe(true);
+    // Each store's checkout lists its exact items, with the cart price and the store's price.
+    expect(result.stores[0].items).toEqual([expect.objectContaining({
+      cartItemId: 1, variantId: 'gid://shopify/ProductVariant/11', quantity: 2, cartPriceCents: 11000, storePriceCents: 9900,
+    })]);
+    const created = recordAgentEvent.mock.calls.map(([e]) => e).find((e) => e.action === 'checkout.created' && e.decision === 'info');
+    expect(created.details.items[0]).toMatchObject({ variantId: 'gid://shopify/ProductVariant/11', storePriceCents: 9900 });
 
     // Activity log: one cart session id for the whole run; the failed store is logged too.
     expect(actions().sort()).toEqual(['cart.prices_refreshed', 'checkout.created', 'checkout.created', 'checkout.prefilled'].sort());

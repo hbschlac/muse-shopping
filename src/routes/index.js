@@ -184,5 +184,6 @@ router.use('/admin/emails', adminEmailRoutes);
 router.use('/admin/email-ui', adminEmailUIRoutes);
 router.use('/admin/signup-requests', adminSignupRequestRoutes);
 router.use('/admin/cache', adminCacheRoutes);
+router.use('/admin/agent-trail', require('./adminAgentTrailRoutes'));
 
 module.exports = router;

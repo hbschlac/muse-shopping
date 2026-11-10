@@ -25,7 +25,12 @@
  *     decline threshold, SPT max_amount), and Muse blocks a store whose final
  *     total comes back higher.
  *
- * Rails plug in with registerRail(name, { pay }). None is registered yet, so
+ *   - Goods ship only to the address the shopper saw on the review screen. The
+ *     address is part of summaryHash, and each rail refuses to pay a store
+ *     whose checkout ships anywhere else (a changed address is the clearest
+ *     sign of a hijacked agent).
+ *
+ * Rails plug in with registerRail(name, { pay, enforcesCeiling: true, enforcesShipTo: true }). None is registered yet, so
  * today every store hands off: the confirm step is safe to ship before any
  * partner approves Muse. pay() receives { intent, store, ctx } and returns
  * { status: 'paid', orderId, totalCents } or throws.
@@ -35,7 +40,7 @@ const crypto = require('crypto');
 const pool = require('../../db/pool');
 const logger = require('../../utils/logger');
 const { ValidationError, NotFoundError, ConflictError } = require('../../utils/errors');
-const { recordAgentEvent } = require('../agentAudit');
+const { recordAgentEvent, cite } = require('../agentAudit');
 const AgentBridges = require('../agentBridges');
 const BridgeCartService = require('../bridgeCartService');
 const { SCHEMA_SQL } = require('./schema');
@@ -48,8 +53,20 @@ const SCHEMA_LOCK_KEY = 4172027;
 const rails = new Map();
 
 /** Register a payment rail (shop_pay, visa_ic, stripe_spt, ...). */
+/**
+ * A rail must enforce the approved ceiling itself, before money moves (e.g. the
+ * amount cap in a Visa purchase instruction, or the checkout total limit for
+ * Shop Pay), and say so with enforcesCeiling: true. Muse's own check after the
+ * store answers is only a backstop. hannah's rule, Nov 10 2026.
+ */
 function registerRail(name, impl) {
   if (!impl || typeof impl.pay !== 'function') throw new Error(`Rail ${name} needs a pay() function`);
+  if (impl.enforcesCeiling !== true) {
+    throw new Error(`Rail ${name} must cap the charge at the approved amount before paying (enforcesCeiling: true)`);
+  }
+  if (impl.enforcesShipTo !== true) {
+    throw new Error(`Rail ${name} must refuse to pay when the store's ship-to differs from the approved address (enforcesShipTo: true)`);
+  }
   rails.set(name, impl);
 }
 
@@ -110,6 +127,7 @@ async function pickRail(partnerKey, ctx) {
     await recordAgentEvent({
       actor: ACTOR, action: 'rail.selected', decision: 'info', reason: choice.reason,
       rail: 'handoff', partnerKey, ...ctx, details: { handlers },
+      rules: [cite('rail.installed', 'fail', { storeOffers: handlers.length, museHas: rails.size })],
     });
   }
   if (choice.rail !== 'handoff' && !rails.has(choice.rail)) {
@@ -118,13 +136,41 @@ async function pickRail(partnerKey, ctx) {
   return choice;
 }
 
+/** Items whose store price is above the Muse cart price; the review screen shows each one. */
+function priceIncreases(stores) {
+  const ups = [];
+  for (const s of stores) {
+    for (const i of s.items || []) {
+      if (Number.isInteger(i.cartPriceCents) && Number.isInteger(i.storePriceCents) && i.storePriceCents > i.cartPriceCents) {
+        ups.push({ store: s.partnerKey, variantId: i.variantId, cartPriceCents: i.cartPriceCents, storePriceCents: i.storePriceCents });
+      }
+    }
+  }
+  return ups.length ? [cite('checkout.price_changes_shown', 'pass', { increases: ups })] : [];
+}
+
+/**
+ * Stable hash of a ship-to address. Rails hash the address on the store's
+ * checkout with this and compare it to the approved one before paying.
+ */
+function shipToHashOf(a) {
+  if (!a) return null;
+  const norm = (v) => String(v ?? '').trim().replace(/\s+/g, ' ').toLowerCase();
+  const key = ['name', 'address1', 'address2', 'city', 'state', 'zip'].map((k) => norm(a[k]));
+  key.push(norm(a.country || 'US'));
+  return crypto.createHash('sha256').update(JSON.stringify(key)).digest('hex');
+}
+
 /** Stable hash of exactly what the review screen shows. */
 function summaryHashOf(summary) {
+  // The items are part of what the shopper approves, so a swapped size or seller changes the hash.
+  const itemKey = (i) => [i.productId, i.variantId, i.quantity, i.cartPriceCents, i.storePriceCents, i.sellerId, i.offerId];
   const stores = summary.stores
-    .map((s) => [s.partnerKey, s.rail, s.ceilingCents, s.currency, s.itemCount])
+    .map((s) => [s.partnerKey, s.rail, s.ceilingCents, s.currency, s.itemCount,
+      (s.items || []).map(itemKey).sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)))])
     .sort((a, b) => String(a[0]).localeCompare(String(b[0])));
   return crypto.createHash('sha256')
-    .update(JSON.stringify({ id: summary.intentId, total: summary.totalCents, currency: summary.currency, stores }))
+    .update(JSON.stringify({ id: summary.intentId, total: summary.totalCents, currency: summary.currency, shipTo: summary.shipToHash || null, stores }))
     .digest('hex');
 }
 
@@ -144,16 +190,23 @@ async function prepare(userId, { email = null, shippingAddress = null, partnerKe
 
   const intentId = `ci_${crypto.randomUUID()}`;
   const ctx = { userId, cartSessionId, checkoutIntentId: intentId };
+  const shipTo = bridge.shipTo || null;
+  const shipToHash = shipToHashOf(shipTo);
   const stores = [];
   for (const s of bridge.stores) {
     const choice = await pickRail(s.partnerKey, ctx);
     const quoted = s.checkout.totals?.total?.cents ?? null;
+    let rail = choice.rail;
+    let railReason = choice.reason;
+    if (quoted == null) { rail = 'handoff'; railReason = 'store did not return a total'; }
+    else if (!shipToHash && rail !== 'handoff') { rail = 'handoff'; railReason = 'no shipping address to approve'; }
     stores.push({
       partnerKey: s.partnerKey,
       storeName: s.storeName,
-      rail: quoted == null ? 'handoff' : choice.rail,
-      railReason: quoted == null ? 'store did not return a total' : choice.reason,
+      rail,
+      railReason,
       itemCount: s.itemCount,
+      items: Array.isArray(s.items) ? s.items : [],
       checkoutId: s.checkout.id || null,
       continueUrl: s.checkout.continueUrl || null,
       quotedCents: quoted,
@@ -165,22 +218,24 @@ async function prepare(userId, { email = null, shippingAddress = null, partnerKe
   const currency = stores[0].currency;
   const totalCents = stores.reduce((n, s) => n + (s.quotedCents || 0), 0);
   const expiresAt = new Date(Date.now() + INTENT_TTL_MS);
-  const summary = { intentId, totalCents, currency, stores };
+  const summary = { intentId, totalCents, currency, shipToHash, stores };
   const summaryHash = summaryHashOf(summary);
 
   await pool.query(
-    `INSERT INTO checkout_intents (id, user_id, cart_session_id, status, total_cents, currency, summary_hash, expires_at)
-     VALUES ($1, $2, $3, 'draft', $4, $5, $6, $7)`,
-    [intentId, userId, cartSessionId, totalCents, currency, summaryHash, expiresAt.toISOString()],
+    `INSERT INTO checkout_intents (id, user_id, cart_session_id, status, total_cents, currency, summary_hash, expires_at, ship_to, ship_to_hash)
+     VALUES ($1, $2, $3, 'draft', $4, $5, $6, $7, $8, $9)`,
+    [intentId, userId, cartSessionId, totalCents, currency, summaryHash, expiresAt.toISOString(),
+      shipTo ? JSON.stringify(shipTo) : null, shipToHash],
   );
   for (const s of stores) {
     await pool.query(
       `INSERT INTO checkout_intent_stores
          (intent_id, partner_key, store_name, rail, rail_reason, checkout_id, continue_url,
-          item_count, quoted_cents, ceiling_cents, currency, status)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+          item_count, quoted_cents, ceiling_cents, currency, status, items)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
       [intentId, s.partnerKey, s.storeName, s.rail, s.railReason, s.checkoutId, s.continueUrl,
-        s.itemCount, s.quotedCents, s.ceilingCents, s.currency, s.rail === 'handoff' ? 'handoff' : 'pending'],
+        s.itemCount, s.quotedCents, s.ceilingCents, s.currency, s.rail === 'handoff' ? 'handoff' : 'pending',
+        JSON.stringify(s.items)],
     );
   }
 
@@ -190,8 +245,19 @@ async function prepare(userId, { email = null, shippingAddress = null, partnerKe
     ...ctx, amountCents: totalCents, currency,
     details: {
       expiresAt: expiresAt.toISOString(),
-      stores: stores.map((s) => ({ partnerKey: s.partnerKey, rail: s.rail, ceilingCents: s.ceilingCents })),
+      summaryHash,
+      // Street and name stay out of the log; the hash proves which address was approved.
+      shipTo: shipTo ? { city: shipTo.city, state: shipTo.state, zip: shipTo.zip, country: shipTo.country || 'US', shipToHash } : null,
+      stores: stores.map((s) => ({ partnerKey: s.partnerKey, rail: s.rail, railReason: s.railReason, ceilingCents: s.ceilingCents, items: s.items })),
     },
+    rules: [
+      ...stores.map((s) => cite('rail.store_total', s.quotedCents == null ? 'fail' : 'pass', { store: s.partnerKey, quotedCents: s.quotedCents })),
+      ...stores.map((s) => cite('rail.installed', s.rail === 'handoff' ? 'fail' : 'pass', { store: s.partnerKey, rail: s.rail })),
+      cite('payment.ceiling', 'not_applicable', { ceilingsSetTo: 'each store\'s quoted total' }),
+      cite('checkout.ship_to_locked', shipToHash ? 'pass' : 'fail', { shipToHash }),
+      ...priceIncreases(stores),
+      cite('checkout.not_expired', 'not_applicable', { expiresAt: expiresAt.toISOString() }),
+    ],
   });
 
   return {
@@ -209,9 +275,22 @@ async function loadIntent(userId, intentId) {
   return { intent, stores };
 }
 
+function shipToOf(intent) {
+  const v = intent.ship_to;
+  if (!v) return null;
+  if (typeof v === 'string') { try { return JSON.parse(v); } catch { return null; } }
+  return v;
+}
+
+function itemsOf(row) {
+  const v = row.items;
+  if (Array.isArray(v)) return v;
+  try { return JSON.parse(v || '[]'); } catch (err) { return []; }
+}
+
 function publicStore(row) {
   return {
-    partnerKey: row.partner_key, storeName: row.store_name, rail: row.rail, status: row.status,
+    partnerKey: row.partner_key, storeName: row.store_name, rail: row.rail, status: row.status, items: itemsOf(row),
     ceilingCents: row.ceiling_cents, currency: row.currency, orderId: row.order_id,
     continueUrl: row.status === 'paid' ? null : row.continue_url, error: row.error,
   };
@@ -238,7 +317,20 @@ async function payStore(intent, row, confirmation) {
   const rail = rails.get(row.rail);
   if (!rail) {
     await setStore(row, { status: 'handoff', error: 'payment rail not available' });
-    await recordAgentEvent({ actor: ACTOR, action: 'handoff.offered', decision: 'info', reason: 'rail not available at pay time', ...base });
+    await recordAgentEvent({
+      actor: ACTOR, action: 'handoff.offered', decision: 'info', reason: 'rail not available at pay time', ...base,
+      rules: [cite('rail.installed', 'fail', { rail: row.rail })],
+    });
+    return row;
+  }
+
+  if (!intent.ship_to_hash) {
+    // Reviews built before the address lock have nothing to check the store against.
+    await setStore(row, { status: 'handoff', error: 'no approved shipping address' });
+    await recordAgentEvent({
+      actor: ACTOR, action: 'handoff.offered', decision: 'info', reason: 'no approved shipping address to check', ...base,
+      rules: [cite('checkout.ship_to_locked', 'fail', { shipToHash: null })],
+    });
     return row;
   }
 
@@ -246,7 +338,14 @@ async function payStore(intent, row, confirmation) {
   await recordAgentEvent({
     actor: ACTOR, action: 'payment.submitted', decision: 'allowed',
     reason: `Paying ${row.store_name} up to the approved ${row.ceiling_cents}`,
-    ...base, amountCents: row.ceiling_cents, details: { checkoutId: row.checkout_id },
+    ...base, amountCents: row.ceiling_cents, details: { checkoutId: row.checkout_id, items: itemsOf(row) },
+    rules: [
+      cite('checkout.shopper_approval', 'pass'),
+      cite('payment.logged_first', 'pass'),
+      cite('payment.ceiling', 'not_applicable', { approvedCents: row.ceiling_cents, note: 'checked again on the store\'s answer' }),
+      cite('checkout.ship_to_locked', 'not_applicable', { shipToHash: intent.ship_to_hash, note: 'the rail checks the store\'s address before paying' }),
+      cite('payment.no_card_storage', 'pass'),
+    ],
   }, { required: true });
 
   let result;
@@ -257,6 +356,7 @@ async function payStore(intent, row, confirmation) {
         store: {
           partnerKey: row.partner_key, storeName: row.store_name, checkoutId: row.checkout_id,
           ceilingCents: row.ceiling_cents, currency: row.currency,
+          shipTo: shipToOf(intent), shipToHash: intent.ship_to_hash,
         },
         confirmation,
         ctx,
@@ -271,6 +371,18 @@ async function payStore(intent, row, confirmation) {
     return row;
   }
 
+  if (result?.shipToHash && result.shipToHash !== intent.ship_to_hash) {
+    // The rail should have refused this. Record it loudly for review.
+    await setStore(row, { status: 'blocked', error: 'store shipped to a different address than the one approved', order_id: result.orderId || null });
+    await recordAgentEvent({
+      actor: ACTOR, action: 'payment.blocked', decision: 'blocked',
+      reason: 'Store\'s ship-to address differs from the approved address',
+      ...base, details: { orderId: result.orderId || null },
+      rules: [cite('checkout.ship_to_locked', 'fail', { approvedHash: intent.ship_to_hash, storeHash: result.shipToHash })],
+    });
+    return row;
+  }
+
   if (Number.isInteger(result?.totalCents) && result.totalCents > row.ceiling_cents) {
     // The network cap should have declined this. Record it loudly for review.
     await setStore(row, { status: 'blocked', error: `charged ${result.totalCents}, above approved ${row.ceiling_cents}`, order_id: result.orderId || null });
@@ -278,6 +390,7 @@ async function payStore(intent, row, confirmation) {
       actor: ACTOR, action: 'payment.blocked', decision: 'blocked',
       reason: `Store total ${result.totalCents} is above the approved ${row.ceiling_cents}`,
       ...base, amountCents: result.totalCents, details: { orderId: result.orderId || null },
+      rules: [cite('payment.ceiling', 'fail', { approvedCents: row.ceiling_cents, chargedCents: result.totalCents })],
     });
     return row;
   }
@@ -287,7 +400,10 @@ async function payStore(intent, row, confirmation) {
     actor: `store:${row.partner_key}`, action: 'payment.completed', decision: 'approved',
     reason: `Order placed at ${row.store_name}`, ...base,
     amountCents: Number.isInteger(result?.totalCents) ? result.totalCents : row.ceiling_cents,
-    details: { orderId: result?.orderId || null },
+    details: { orderId: result?.orderId || null, items: itemsOf(row) },
+    rules: [cite('payment.ceiling', Number.isInteger(result?.totalCents) ? 'pass' : 'not_applicable', {
+      approvedCents: row.ceiling_cents, chargedCents: Number.isInteger(result?.totalCents) ? result.totalCents : null,
+    })],
   });
   return row;
 }
@@ -304,13 +420,17 @@ async function confirm(userId, intentId, confirmation = {}) {
   if (intent.status !== 'draft') throw new ConflictError(`This checkout is already ${intent.status}`);
   if (new Date(intent.expires_at).getTime() < Date.now()) {
     await pool.query("UPDATE checkout_intents SET status = 'expired', finished_at = NOW() WHERE id = $1 AND status = 'draft'", [intent.id]);
-    await recordAgentEvent({ actor: 'system', action: 'intent.expired', decision: 'declined', reason: 'Confirmed after the 30-minute window', ...ctx });
+    await recordAgentEvent({
+      actor: 'system', action: 'intent.expired', decision: 'declined', reason: 'Confirmed after the 30-minute window', ...ctx,
+      rules: [cite('checkout.not_expired', 'fail', { expiresAt: new Date(intent.expires_at).toISOString() })],
+    });
     throw new ConflictError('This checkout expired. Review the cart again.');
   }
   if (!confirmation.summaryHash || confirmation.summaryHash !== intent.summary_hash) {
     await recordAgentEvent({
       actor: 'shopper', action: 'intent.declined', decision: 'blocked',
       reason: 'Confirmation did not match the review the shopper was shown', ...ctx,
+      rules: [cite('checkout.review_matches', 'fail')],
     });
     throw new ValidationError('The cart changed since you reviewed it. Review it again.');
   }
@@ -325,6 +445,7 @@ async function confirm(userId, intentId, confirmation = {}) {
       await recordAgentEvent({
         actor: 'shopper', action: 'intent.declined', decision: 'blocked',
         reason: `Passkey check failed: ${err.message}`, ...ctx,
+        rules: [cite('checkout.review_matches', 'pass'), cite('checkout.shopper_approval', 'fail')],
       });
       throw err;
     }
@@ -343,7 +464,16 @@ async function confirm(userId, intentId, confirmation = {}) {
       actor: 'shopper', action: 'intent.approved', decision: 'approved',
       reason: `Shopper confirmed ${stores.length} store(s) in one step`,
       ...ctx, amountCents: intent.total_cents, currency: intent.currency,
-      details: { summaryHash: intent.summary_hash, ...approvedBy },
+      details: {
+        summaryHash: intent.summary_hash, ...approvedBy,
+        stores: stores.map((s) => ({ partnerKey: s.partner_key, rail: s.rail, ceilingCents: s.ceiling_cents, items: itemsOf(s) })),
+      },
+      rules: [
+        cite('checkout.not_expired', 'pass', { expiresAt: new Date(intent.expires_at).toISOString() }),
+        cite('checkout.review_matches', 'pass', { summaryHash: intent.summary_hash }),
+        cite('checkout.shopper_approval', approvedBy.method === 'passkey' ? 'pass' : 'not_applicable', { method: approvedBy.method }),
+        cite('checkout.one_confirm', 'pass'),
+      ],
     }, { required: true });
   } catch (err) {
     await pool.query("UPDATE checkout_intents SET status = 'draft', approved_at = NULL WHERE id = $1", [intent.id]).catch(() => {});
@@ -362,6 +492,7 @@ async function confirm(userId, intentId, confirmation = {}) {
       await recordAgentEvent({
         actor: ACTOR, action: 'handoff.offered', decision: 'info',
         reason: `Shopper checks out on ${row.store_name}'s site`, ...ctx, partnerKey: row.partner_key, rail: row.rail,
+        rules: [cite('rail.installed', row.status === 'handoff' ? 'fail' : 'not_applicable', { rail: row.rail, storeStatus: row.status })],
       });
     }
   }
@@ -417,4 +548,5 @@ module.exports = {
   ensureSchema,
   INTENT_TTL_MS,
   _internal: { summaryHashOf, rails },
+  shipToHashOf,
 };

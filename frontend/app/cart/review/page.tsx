@@ -321,6 +321,34 @@ function StoreRow({ store, done }: { store: AgentCheckoutStore; done: boolean })
         <p className="text-base font-semibold text-gray-900 shrink-0">{money(store.ceilingCents, store.currency)}</p>
       </div>
 
+      {(store.items?.length ?? 0) > 0 && (
+        <ul className="mt-3 space-y-2 border-t border-gray-100 pt-3">
+          {store.items!.map((item, i) => {
+            const each = item.storePriceCents ?? item.cartPriceCents;
+            const options = [item.size && `Size ${item.size}`, item.color].filter(Boolean).join(' · ') || item.variantTitle;
+            const went_up = item.cartPriceCents != null && item.storePriceCents != null && item.storePriceCents > item.cartPriceCents;
+            const seller = item.marketplace && item.sellerName ? `Sold by ${item.sellerName}${item.fulfilledBy ? `, ships from ${item.fulfilledBy}` : ''}` : null;
+            return (
+              <li key={item.variantId || item.cartItemId || i} className="flex items-start justify-between gap-3 text-sm">
+                <div className="min-w-0">
+                  <p className="text-gray-900 truncate">{item.title}</p>
+                  <p className="text-xs text-gray-600">
+                    {options ? `${options} · ` : ''}Qty {item.quantity}
+                  </p>
+                  {seller && <p className="text-xs text-gray-600">{seller}</p>}
+                  {went_up && (
+                    <p className="text-xs font-semibold text-[var(--color-coral)]">
+                      Price went up at {store.storeName}: was {money(item.cartPriceCents, store.currency)}, now {money(item.storePriceCents, store.currency)} each
+                    </p>
+                  )}
+                </div>
+                <p className="text-gray-900 shrink-0">{money(each == null ? null : each * item.quantity, store.currency)}</p>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
       {done && paid && (
         <p className="text-sm text-gray-900 mt-3 flex items-center gap-1.5">
           <CheckCircle2 className="w-4 h-4 text-green-600" />

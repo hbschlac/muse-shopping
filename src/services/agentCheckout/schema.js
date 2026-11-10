@@ -41,6 +41,11 @@ CREATE TABLE IF NOT EXISTS checkout_intent_stores (
   error TEXT,
   UNIQUE (intent_id, partner_key)
 );
+-- 093: the exact items the shopper approved at each store (ids, size, color, seller, prices).
+ALTER TABLE checkout_intent_stores ADD COLUMN IF NOT EXISTS items JSONB NOT NULL DEFAULT '[]'::jsonb;
+-- 094: the address the shopper approved; its hash is part of summary_hash.
+ALTER TABLE checkout_intents ADD COLUMN IF NOT EXISTS ship_to JSONB;
+ALTER TABLE checkout_intents ADD COLUMN IF NOT EXISTS ship_to_hash CHAR(64);
 `;
 
 module.exports = { SCHEMA_SQL };
