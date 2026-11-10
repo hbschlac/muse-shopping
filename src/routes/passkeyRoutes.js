@@ -3,7 +3,8 @@
  * See src/services/passkeys.
  *
  *   GET  /passkeys                    the shopper's passkeys (ids and dates only)
- *   POST /passkeys/register/options   options for navigator.credentials.create()
+ *   POST /passkeys/register/email-code  emails a 6-digit setup code
+ *   POST /passkeys/register/options   { emailCode } options for navigator.credentials.create()
  *   POST /passkeys/register/verify    { response, nickname? } saves the public key
  */
 
@@ -30,9 +31,20 @@ router.get('/', async (req, res, next) => {
   }
 });
 
+router.post('/register/email-code', async (req, res, next) => {
+  try {
+    res.json(successResponse(await Passkeys.sendSetupCode(req.userId), 'Code sent'));
+  } catch (error) {
+    next(error);
+  }
+});
+
 router.post('/register/options', async (req, res, next) => {
   try {
-    res.json(successResponse(await Passkeys.registrationOptions(req.userId)));
+    const { emailCode } = req.body || {};
+    res.json(successResponse(await Passkeys.registrationOptions(req.userId, {
+      emailCode: typeof emailCode === 'string' ? emailCode.slice(0, 12) : '',
+    })));
   } catch (error) {
     next(error);
   }

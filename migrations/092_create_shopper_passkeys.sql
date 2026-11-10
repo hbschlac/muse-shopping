@@ -17,10 +17,12 @@ CREATE INDEX IF NOT EXISTS idx_shopper_passkeys_user ON shopper_passkeys (user_i
 CREATE TABLE IF NOT EXISTS passkey_challenges (
   id BIGSERIAL PRIMARY KEY,
   user_id INTEGER NOT NULL,
-  purpose VARCHAR(20) NOT NULL,         -- register, cart
+  purpose VARCHAR(20) NOT NULL,         -- email (setup code), register, cart
   challenge TEXT NOT NULL,
   intent_id VARCHAR(64),                -- checkout intent a cart challenge is bound to
   summary_hash CHAR(64),                -- the review the shopper saw
   expires_at TIMESTAMPTZ NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_passkey_challenges_user ON passkey_challenges (user_id, purpose, expires_at);
+ALTER TABLE passkey_challenges ADD COLUMN IF NOT EXISTS attempts INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE passkey_challenges ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP;

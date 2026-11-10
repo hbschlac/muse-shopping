@@ -203,6 +203,10 @@ payment-method ID. It does not use the agent identity above and does not touch p
   verification). The signed challenge is bound to that checkout and the exact review shown, is
   single-use, and expires in 5 minutes. Muse stores only the passkey's public key. Without a valid
   tap, Muse pays nothing, and the approval is written to Muse's tamper-evident agent activity log.
+  Setting up the passkey needs a one-time code emailed to the shopper (5 wrong tries burn it; 3 codes
+  per 15 minutes), so a stolen login alone can't add a passkey. Each shopper has one passkey, gets an
+  email when it is added, and every setup step and refusal is logged. Face ID prompts are limited to
+  30 per shopper per 10 minutes.
   The card networks' own approval steps (Visa passkey, Shop Pay) are added on top as each is turned on.
 
 ## 8. Data handling
@@ -261,7 +265,7 @@ Secrets live in Vercel environment variables, not in the code.
 
 | Date | Change |
 |---|---|
-| 2026-11-10 | Muse's own cart approval built (switched off): one passkey tap per cart, bound to that review. |
+| 2026-11-10 | Muse's own cart approval built (switched off): one passkey tap per cart, bound to that review. Passkey setup needs an emailed code; one passkey per shopper; setup alert email; rate limits. |
 | 2026-11-03 | Planned payment path: ICC via Visa Acceptance as enabler, Microform hosted fields, Shop Pay tokens; one confirm step per cart. |
 | 2026-11-03 | Operator: no legal entity yet (side project). Signing key: Ed25519 in Cloud KMS. Planned Visa Intelligent Commerce flow named. |
 | 2026-11-02 | First version. UCP bridges and agent profile live; cart handoff and Muse MCP server in review; signing keys, Web Bot Auth and TAP registration planned. |

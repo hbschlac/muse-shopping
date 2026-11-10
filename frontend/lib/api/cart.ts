@@ -213,8 +213,17 @@ export async function getAgentCheckoutApprovalOptions(
   return unwrap(response);
 }
 
-export async function getPasskeyRegistrationOptions(): Promise<unknown> {
-  const response = (await api.post('/passkeys/register/options', {}, { requiresAuth: true })) as Wrapped<unknown>;
+/** Emails the shopper a 6-digit code; Face ID setup needs it. */
+export async function requestPasskeySetupCode(): Promise<{ sentTo: string; expiresInMinutes: number }> {
+  const response = (await api.post('/passkeys/register/email-code', {}, { requiresAuth: true })) as Wrapped<{
+    sentTo: string;
+    expiresInMinutes: number;
+  }>;
+  return unwrap(response);
+}
+
+export async function getPasskeyRegistrationOptions(emailCode: string): Promise<unknown> {
+  const response = (await api.post('/passkeys/register/options', { emailCode }, { requiresAuth: true })) as Wrapped<unknown>;
   return unwrap(response);
 }
 
