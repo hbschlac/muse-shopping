@@ -6,6 +6,7 @@
  *   GET  /api/v1/listings/plan    which stores to refresh and what to ask for
  *   POST /api/v1/listings/ingest  one store's run (contract-checked again here)
  *   GET  /api/v1/listings/status  per-store health, for the job and the repair work
+ *   DELETE /api/v1/listings/overrides/:storeKey  take a store off the fallback (after a repair lands)
  */
 
 const express = require('express');
@@ -53,6 +54,15 @@ router.post('/ingest', async (req, res, next) => {
 router.get('/status', async (req, res, next) => {
   try {
     res.json({ success: true, data: { stores: await listingWatch.getStatus() } });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.delete('/overrides/:storeKey', async (req, res, next) => {
+  try {
+    const removed = await listingWatch.deleteOverride(String(req.params.storeKey));
+    res.json({ success: true, data: { storeKey: req.params.storeKey, removed } });
   } catch (err) {
     next(err);
   }

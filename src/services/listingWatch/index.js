@@ -21,5 +21,6 @@ module.exports = {
   followersByStoreKey,
   storeKeyForBrand,
   getStatus: store.getStatus,
+  deleteOverride: store.deleteOverride,
   ensureSchema: store.ensureSchema,
 };

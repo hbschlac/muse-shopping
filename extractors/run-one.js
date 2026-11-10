@@ -8,7 +8,10 @@
  * it the tools from extractors/tools.js, checks the output against the
  * contract, and prints one JSON result on stdout:
  *
- *   { storeKey, scriptName, scriptVersion, ok, error?, output?, contractErrors?, requestsUsed, ms }
+ *   { storeKey, scriptName, scriptVersion, ok, error?, output?, contractErrors?, trial?, requestsUsed, ms }
+ *
+ * scriptName is the script that actually ran: a store's own script when one
+ * exists, so status and repairs name the file to fix.
  *
  * scriptVersion is a hash of the script file, so the server can tell when a
  * repair replaced the script and start a fresh baseline instead of alerting.
@@ -25,10 +28,25 @@ const { validateOutput } = require('../src/services/listingWatch/contract');
 
 const SCRIPTS_DIR = path.join(__dirname, 'scripts');
 const SCRIPT_NAME_RE = /^[a-z0-9][a-z0-9-]{0,63}$/;
+// Same value as src/services/listingWatch/scripts.js (store scripts may not import it).
+const DEFAULT_SCRIPT = 'shopify-catalog';
 
 function scriptPath(name) {
   if (!SCRIPT_NAME_RE.test(String(name || ''))) throw new Error(`bad script name: ${name}`);
   return path.join(SCRIPTS_DIR, `${name}.js`);
+}
+
+/**
+ * Which script to run. A store's own script (extractors/scripts/<storeKey>.js,
+ * written by a repair) replaces the default; an override (the fallback) wins
+ * over both because the plan already put it in task.script.
+ */
+function resolveScript(task) {
+  if (task.script === DEFAULT_SCRIPT && SCRIPT_NAME_RE.test(String(task.storeKey || ''))
+    && fs.existsSync(path.join(SCRIPTS_DIR, `${task.storeKey}.js`))) {
+    return task.storeKey;
+  }
+  return task.script;
 }
 
 function scriptVersion(file) {
@@ -37,10 +55,12 @@ function scriptVersion(file) {
 
 async function runTask(task, { toolsOptions } = {}) {
   const started = Date.now();
-  const result = { storeKey: task.storeKey, scriptName: task.script, scriptVersion: null, ok: false };
+  const name = resolveScript(task);
+  const result = { storeKey: task.storeKey, scriptName: name, scriptVersion: null, ok: false };
+  if (task.trial) result.trial = true;
   let tools;
   try {
-    const file = scriptPath(task.script);
+    const file = scriptPath(name);
     result.scriptVersion = scriptVersion(file);
     // eslint-disable-next-line global-require, import/no-dynamic-require
     const script = require(file);
@@ -77,4 +97,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { runTask, scriptPath, scriptVersion };
+module.exports = { runTask, resolveScript, scriptPath, scriptVersion, SCRIPTS_DIR };

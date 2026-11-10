@@ -24,6 +24,8 @@ const RUN_ONE = path.join(__dirname, '..', 'extractors', 'run-one.js');
 const TASK_TIMEOUT_MS = 90_000;
 const PARALLEL = 4;
 const REPAIR_AFTER_BROKEN_RUNS = 2;
+// Same value as src/services/listingWatch/scripts.js.
+const FALLBACK_SCRIPT = 'embedded-product-data';
 
 function authHeaders() {
   const secret = process.env.NEW_ARRIVALS_POLL_SECRET;
@@ -103,8 +105,11 @@ async function extract(planFile, outFile) {
 
 async function post(resultsFile, repairsFile) {
   const runId = process.env.RUN_ID || `manual-${Date.now()}`;
-  const results = readJson(resultsFile);
+  // A store's trial goes first: a healthy one is saved under this run id, and
+  // the fallback's result for the same store then comes back as a duplicate.
+  const results = readJson(resultsFile).sort((a, b) => Number(!!b.trial) - Number(!!a.trial));
   const summary = {};
+  const repairs = [];
   for (const r of results) {
     try {
       const data = await api('POST', '/listings/ingest', {
@@ -116,9 +121,15 @@ async function post(resultsFile, repairsFile) {
         error: r.error,
         output: r.output,
         watchedItemIds: r.watchedItemIds,
+        trial: !!r.trial,
       });
       summary[data.status] = (summary[data.status] || 0) + 1;
-      console.log(`${r.storeKey}: ${data.status}${data.reason ? ` (${data.reason})` : ''}${data.events ? `, ${data.events} changes` : ''}`);
+      const label = r.trial ? `${r.storeKey} (trial of ${r.scriptName})` : r.storeKey;
+      console.log(`${label}: ${data.status}${data.reason ? ` (${data.reason})` : ''}${data.events ? `, ${data.events} changes` : ''}${data.fallback ? `, switched to ${FALLBACK_SCRIPT}` : ''}${data.fallbackCleared ? ', back off the fallback' : ''}`);
+      // The store's own script still fails while the fallback carries it: repair that script.
+      if (data.status === 'trial_broken') {
+        repairs.push({ storeKey: r.storeKey, script: r.scriptName, reason: 'on fallback', error: data.reason || r.error || null });
+      }
     } catch (err) {
       summary.post_failed = (summary.post_failed || 0) + 1;
       console.log(`${r.storeKey}: post failed: ${err.message}`);
@@ -126,11 +137,16 @@ async function post(resultsFile, repairsFile) {
   }
   console.log(`summary: ${JSON.stringify(summary)}`);
 
-  // Stores broken two runs in a row get a repair attempt.
+  // The fallback itself broken two runs in a row: nothing left to fall back to.
+  // (A store's own script broken twice is switched to the fallback by ingest,
+  // and gets its repair through the daily trial above.)
   const status = await api('GET', '/listings/status');
-  const repairs = (status.stores || [])
-    .filter(s => s.last_status === 'broken' && Number(s.consecutive_broken) >= REPAIR_AFTER_BROKEN_RUNS)
-    .map(s => ({ storeKey: s.store_key, script: s.script_name, error: s.last_reason, runId: s.last_run_id }));
+  for (const s of status.stores || []) {
+    if (s.last_status === 'broken' && s.script_name === FALLBACK_SCRIPT
+      && Number(s.consecutive_broken) >= REPAIR_AFTER_BROKEN_RUNS) {
+      repairs.push({ storeKey: s.store_key, script: s.script_name, reason: 'fallback broken', error: s.last_reason });
+    }
+  }
   writeJson(repairsFile, repairs);
   if (repairs.length) console.log(`needs repair: ${repairs.map(r => r.storeKey).join(', ')}`);
   if (summary.post_failed === results.length && results.length) process.exitCode = 1;

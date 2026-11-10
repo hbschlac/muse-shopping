@@ -4,7 +4,7 @@
  *
  *   tools.ucp.search(query, { limit, cursor })  Shopify Catalog search_catalog
  *   tools.ucp.lookup(ids)                      Shopify Catalog lookup_catalog (10 per call, batched here)
- *   tools.http.getText(url)                    GET a page on the task's own store
+ *   tools.http.getText(url)                    GET a page on the task's own store (follows same-store redirects)
  *   tools.html.jsonLdProducts(html, baseUrl)   schema.org Product objects embedded in a page
  *   tools.log(...)                             goes to stderr, never into the output
  *
@@ -22,6 +22,7 @@ const USER_AGENT = 'MuseShopping-ListingWatch/1.0 (+https://www.muse.shopping/.w
 const LOOKUP_BATCH = 10;
 const REQUEST_TIMEOUT_MS = 15000;
 const PAUSE_MS = 300;
+const MAX_REDIRECTS = 3;
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
@@ -47,11 +48,16 @@ function createTools(task, { maxRequests = 60, fetchImpl = global.fetch, pauseMs
   let used = 0;
   let rpcId = 0;
 
-  async function request(url, init = {}) {
+  function check(url) {
     const u = new URL(url);
     if (u.protocol !== 'https:') throw new Error(`blocked: ${url} is not https`);
     if (!allowed.has(u.hostname.toLowerCase())) throw new Error(`blocked: ${u.hostname} is not this store`);
     if (u.username || u.password) throw new Error('blocked: credentials in URL');
+    return u;
+  }
+
+  async function request(url, init = {}) {
+    const u = check(url);
     used += 1;
     if (used > maxRequests) throw new Error(`request budget of ${maxRequests} used up`);
     if (used > 1 && pauseMs) await sleep(pauseMs);
@@ -61,7 +67,7 @@ function createTools(task, { maxRequests = 60, fetchImpl = global.fetch, pauseMs
     try {
       return await fetchImpl(u.toString(), {
         ...init,
-        redirect: 'error',
+        redirect: init.redirect || 'error',
         headers: { 'User-Agent': USER_AGENT, ...(init.headers || {}) },
         signal: controller.signal,
       });
@@ -131,10 +137,27 @@ function createTools(task, { maxRequests = 60, fetchImpl = global.fetch, pauseMs
   };
 
   const http = {
+    /**
+     * GET a page on this store. Follows up to 3 redirects by hand (www.x.com
+     * -> x.com is common), and every hop must stay on the store's own hosts.
+     */
     async getText(url) {
-      const res = await request(url, { headers: { Accept: 'text/html,application/xhtml+xml' } });
-      if (!res.ok) throw new Error(`GET ${url} returned ${res.status}`);
-      return res.text();
+      let current = url;
+      for (let hop = 0; ; hop += 1) {
+        const res = await request(current, { headers: { Accept: 'text/html,application/xhtml+xml' }, redirect: 'manual' });
+        const location = res.status >= 300 && res.status < 400 && res.headers && res.headers.get('location');
+        if (!location) {
+          if (!res.ok) throw new Error(`GET ${current} returned ${res.status}`);
+          return res.text();
+        }
+        if (hop >= MAX_REDIRECTS) throw new Error(`GET ${url}: more than ${MAX_REDIRECTS} redirects`);
+        current = new URL(location, current).toString();
+        try {
+          check(current);
+        } catch (err) {
+          throw new Error(`${err.message} (redirected from ${url})`);
+        }
+      }
     },
   };
 

@@ -12,6 +12,12 @@
  *              price move over 70%); not saved, and the next run decides
  *   baseline   first run for the store, or the script changed; saved, no alerts
  *   ok         saved, and the changes are queued for alerts
+ *
+ * A store's script broken BROKEN_RUNS_BEFORE_FALLBACK runs in a row switches
+ * the store to the fallback script (listing_store_overrides). While it is on
+ * the fallback, a daily trial run of its own script comes in with trial: true.
+ * A healthy trial clears the fallback and is saved like any run; a broken one
+ * is only noted on the override (status trial_broken) and asks for a repair.
  */
 
 const logger = require('../../utils/logger');
@@ -19,6 +25,17 @@ const { validateOutput } = require('./contract');
 const { assessRun } = require('./health');
 const { diffListings } = require('./differ');
 const store = require('./store');
+const { FALLBACK_SCRIPT, BROKEN_RUNS_BEFORE_FALLBACK } = require('./scripts');
+
+/** Broken runs in a row by this script, counting the one just received. */
+function brokenStreak(recentRuns, scriptName) {
+  let n = 1;
+  for (const r of recentRuns || []) {
+    if (r.status !== 'broken' || r.scriptName !== scriptName) break;
+    n += 1;
+  }
+  return n;
+}
 
 function dispatchQuietly() {
   try {
@@ -45,6 +62,7 @@ function dispatchQuietly() {
  * @param {string} [body.error]
  * @param {Object} [body.output] - the script's { listings }
  * @param {string[]} [body.watchedItemIds] - what the plan asked it to look up
+ * @param {boolean} [body.trial] - the daily trial of the store's own script while on the fallback
  * @param {Object} [deps] - injectable for tests
  */
 async function ingestRun(body, deps = {}) {
@@ -66,10 +84,26 @@ async function ingestRun(body, deps = {}) {
   };
 
   const health = assessRun(run, { lastGoodCount: state.lastGoodCount });
+  if (body.trial) {
+    if (!health.healthy) {
+      await db.recordTrial(storeKey, health.reason);
+      logger.warn(`listingWatch: ${storeKey} trial of ${meta.scriptName} broken: ${health.reason}`);
+      return { storeKey, status: 'trial_broken', scriptName: meta.scriptName, reason: health.reason };
+    }
+    await db.deleteOverride(storeKey);
+    logger.info(`listingWatch: ${storeKey} trial of ${meta.scriptName} healthy; fallback cleared`);
+  }
   if (!health.healthy) {
     await db.recordRun(storeKey, { ...meta, status: 'broken', reason: health.reason, listingCount: run.listings.length });
     logger.warn(`listingWatch: ${storeKey} broken: ${health.reason}`);
-    return { storeKey, status: 'broken', reason: health.reason, contractErrors: checked.errors };
+    const streak = brokenStreak(state.recentRuns, meta.scriptName);
+    let fallback = false;
+    if (streak >= BROKEN_RUNS_BEFORE_FALLBACK && meta.scriptName && meta.scriptName !== FALLBACK_SCRIPT) {
+      await db.setOverride(storeKey, FALLBACK_SCRIPT, `fallback after ${streak} broken runs of ${meta.scriptName}`);
+      logger.warn(`listingWatch: ${storeKey} switched to ${FALLBACK_SCRIPT}`);
+      fallback = true;
+    }
+    return { storeKey, status: 'broken', reason: health.reason, contractErrors: checked.errors, streak, fallback };
   }
 
   const watchedItemIds = (body.watchedItemIds || []).map(String);
@@ -100,6 +134,7 @@ async function ingestRun(body, deps = {}) {
   return {
     storeKey,
     status,
+    ...(body.trial ? { fallbackCleared: true } : {}),
     listings: run.listings.length,
     dropped: run.dropped,
     events: diff.events.length,
