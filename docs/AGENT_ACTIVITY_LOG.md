@@ -66,7 +66,7 @@ writes the token or cryptogram anywhere, including this log.
 ## Where checkout writes these
 
 `src/services/agentCheckout` (one review, one confirm, pay per store) writes `intent.created`,
-`intent.approved` (required), `intent.declined` / `intent.cancelled` / `intent.expired`,
+`intent.approved` (required; `details.method` is `passkey` with the passkey's credential id once the shopper's passkey tap is verified), `intent.declined` / `intent.cancelled` / `intent.expired`,
 `payment.submitted` (required, before each store is paid), `payment.completed` / `payment.failed`,
 `payment.blocked` (store total above the approved ceiling) and `handoff.offered`. If a required
 write fails, that store is not paid and falls back to its "Check out at {store}" link.

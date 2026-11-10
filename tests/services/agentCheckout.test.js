@@ -7,6 +7,11 @@ jest.mock('../../src/db/pool', () => ({ query: jest.fn(), connect: jest.fn() }))
 jest.mock('../../src/services/agentAudit', () => ({ recordAgentEvent: jest.fn() }));
 jest.mock('../../src/services/bridgeCartService', () => ({ startCheckout: jest.fn() }));
 jest.mock('../../src/services/agentBridges', () => ({ getPartner: jest.fn() }));
+jest.mock('../../src/services/passkeys', () => ({
+  verifyCartApproval: jest.fn(),
+  hasPasskey: jest.fn(),
+  cartApprovalOptions: jest.fn(),
+}));
 jest.mock('../../src/utils/logger', () => ({ info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() }));
 
 const pool = require('../../src/db/pool');
@@ -14,6 +19,7 @@ const { recordAgentEvent } = require('../../src/services/agentAudit');
 const BridgeCartService = require('../../src/services/bridgeCartService');
 const AgentBridges = require('../../src/services/agentBridges');
 const AgentCheckout = require('../../src/services/agentCheckout');
+const Passkeys = require('../../src/services/passkeys');
 
 let intents;
 let storeRows;
@@ -82,6 +88,9 @@ beforeEach(() => {
   BridgeCartService.startCheckout.mockResolvedValue(bridgeResult());
   AgentBridges.getPartner.mockReturnValue({ paymentHandlers: ['dev.shopify.shop_pay'] });
   AgentCheckout.unregisterRail('test_rail');
+  Passkeys.verifyCartApproval.mockResolvedValue({ credentialId: 'cred_1', userVerified: true });
+  Passkeys.hasPasskey.mockResolvedValue(true);
+  Passkeys.cartApprovalOptions.mockResolvedValue({ challenge: 'c' });
 });
 
 const actions = () => events.map((e) => e.action);
@@ -213,5 +222,44 @@ describe('cancel', () => {
     expect(res.status).toBe('cancelled');
     expect(actions()).toContain('intent.cancelled');
     await expect(AgentCheckout.confirm(7, review.intentId, { summaryHash: review.summaryHash })).rejects.toThrow(/already cancelled/);
+  });
+});
+
+describe('passkey approval', () => {
+  async function prepared(pay) {
+    AgentCheckout.registerRail('test_rail', { pay });
+    const review = await AgentCheckout.prepare(7, {});
+    storeRows.forEach((r) => { r.rail = 'test_rail'; r.status = 'pending'; });
+    return review;
+  }
+
+  test('confirm checks the passkey against this intent and review, and logs it as the approval method', async () => {
+    const pay = jest.fn(async ({ store }) => ({ orderId: 'o', totalCents: store.ceilingCents }));
+    const review = await prepared(pay);
+    const assertion = { id: 'cred_1', response: { signature: 'sig' } };
+    await AgentCheckout.confirm(7, review.intentId, { summaryHash: review.summaryHash, passkey: assertion });
+    expect(Passkeys.verifyCartApproval).toHaveBeenCalledWith(7, review.intentId, review.summaryHash, assertion);
+    const approved = events.find((e) => e.action === 'intent.approved');
+    expect(approved.details).toMatchObject({ method: 'passkey', credentialId: 'cred_1', userVerified: true });
+    expect(JSON.stringify(approved)).not.toContain('sig');
+  });
+
+  test('a failed passkey check pays nothing and leaves the intent in draft', async () => {
+    const pay = jest.fn();
+    const review = await prepared(pay);
+    Passkeys.verifyCartApproval.mockRejectedValue(new Error('Passkey check failed.'));
+    await expect(AgentCheckout.confirm(7, review.intentId, { summaryHash: review.summaryHash })).rejects.toThrow(/Passkey/);
+    expect(pay).not.toHaveBeenCalled();
+    expect(intents.get(review.intentId).status).toBe('draft');
+    expect(events.find((e) => e.action === 'intent.declined').reason).toMatch(/Passkey/);
+  });
+
+  test('approval options tell the shopper to set up a passkey when they have none', async () => {
+    const review = await AgentCheckout.prepare(7, {});
+    Passkeys.hasPasskey.mockResolvedValue(false);
+    await expect(AgentCheckout.approvalOptions(7, review.intentId)).resolves.toEqual({ needsPasskey: true });
+    Passkeys.hasPasskey.mockResolvedValue(true);
+    await expect(AgentCheckout.approvalOptions(7, review.intentId)).resolves.toEqual({ needsPasskey: false, options: { challenge: 'c' } });
+    expect(Passkeys.cartApprovalOptions).toHaveBeenCalledWith(7, review.intentId, review.summaryHash);
   });
 });

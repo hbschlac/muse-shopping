@@ -353,11 +353,20 @@ class CartController {
     }
   }
 
+  static async agentCheckoutApprovalOptions(req, res, next) {
+    try {
+      if (!agentCheckoutEnabled()) throw new NotFoundError('Agent checkout');
+      return res.json(successResponse(await AgentCheckout.approvalOptions(req.userId, req.params.intentId)));
+    } catch (error) {
+      next(error);
+    }
+  }
+
   static async confirmAgentCheckout(req, res, next) {
     try {
       if (!agentCheckoutEnabled()) throw new NotFoundError('Agent checkout');
-      const { summaryHash, method, ...railApproval } = req.body || {};
-      const result = await AgentCheckout.confirm(req.userId, req.params.intentId, { summaryHash, method, ...railApproval });
+      const { summaryHash, passkey, ...railApproval } = req.body || {};
+      const result = await AgentCheckout.confirm(req.userId, req.params.intentId, { ...railApproval, summaryHash, passkey });
       return res.json(successResponse(result, 'Checkout confirmed'));
     } catch (error) {
       logger.error('Error in confirmAgentCheckout controller:', error);

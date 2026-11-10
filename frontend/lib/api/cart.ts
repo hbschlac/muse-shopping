@@ -180,7 +180,7 @@ export async function prepareAgentCheckout(): Promise<AgentCheckoutReview> {
  */
 export async function confirmAgentCheckout(
   intentId: string,
-  approval: { summaryHash: string; method?: string }
+  approval: { summaryHash: string; passkey?: unknown }
 ): Promise<AgentCheckoutResult> {
   const response = (await api.post(
     `/cart/agent-checkout/${encodeURIComponent(intentId)}/confirm`,
@@ -197,4 +197,28 @@ export async function cancelAgentCheckout(intentId: string): Promise<AgentChecko
     { requiresAuth: true }
   )) as Wrapped<AgentCheckoutResult>;
   return unwrap(response);
+}
+
+// Passkeys (Face ID / Touch ID) that approve a cart before Muse pays.
+
+/** WebAuthn options for the passkey tap on this cart, or needsPasskey if none is set up. */
+export async function getAgentCheckoutApprovalOptions(
+  intentId: string
+): Promise<{ needsPasskey: boolean; options?: unknown }> {
+  const response = (await api.post(
+    `/cart/agent-checkout/${encodeURIComponent(intentId)}/approval-options`,
+    {},
+    { requiresAuth: true }
+  )) as Wrapped<{ needsPasskey: boolean; options?: unknown }>;
+  return unwrap(response);
+}
+
+export async function getPasskeyRegistrationOptions(): Promise<unknown> {
+  const response = (await api.post('/passkeys/register/options', {}, { requiresAuth: true })) as Wrapped<unknown>;
+  return unwrap(response);
+}
+
+export async function verifyPasskeyRegistration(response: unknown, nickname?: string): Promise<{ id: string }> {
+  const r = (await api.post('/passkeys/register/verify', { response, nickname }, { requiresAuth: true })) as Wrapped<{ id: string }>;
+  return unwrap(r);
 }

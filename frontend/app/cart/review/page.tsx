@@ -11,9 +11,19 @@ import BottomNav from '@/components/BottomNav';
 import PageHeader from '@/components/PageHeader';
 import { AGENT_CHECKOUT_ENABLED } from '@/lib/features';
 import {
+  startAuthentication,
+  startRegistration,
+  browserSupportsWebAuthn,
+  type PublicKeyCredentialCreationOptionsJSON,
+  type PublicKeyCredentialRequestOptionsJSON,
+} from '@simplewebauthn/browser';
+import {
   prepareAgentCheckout,
   confirmAgentCheckout,
   cancelAgentCheckout,
+  getAgentCheckoutApprovalOptions,
+  getPasskeyRegistrationOptions,
+  verifyPasskeyRegistration,
   type AgentCheckoutReview,
   type AgentCheckoutResult,
   type AgentCheckoutStore,
@@ -54,6 +64,7 @@ export default function CartReviewPage() {
   const [result, setResult] = useState<AgentCheckoutResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [confirming, setConfirming] = useState(false);
+  const [step, setStep] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const confirmed = useRef(false);
   const left = useCountdown(result ? undefined : review?.expiresAt);
@@ -81,18 +92,34 @@ export default function CartReviewPage() {
     load();
   }, [load, router]);
 
+  // Confirm = one passkey tap (Face ID / Touch ID) bound to this exact review, then Muse pays.
   const confirm = async () => {
     if (!review || confirmed.current) return;
     confirmed.current = true; // one tap only, even before React re-renders
     try {
       setConfirming(true);
       setError(null);
-      setResult(await confirmAgentCheckout(review.intentId, { summaryHash: review.summaryHash, method: 'confirm' }));
+      if (!browserSupportsWebAuthn()) {
+        throw new Error('This browser can\'t use Face ID or Touch ID. Check out at each store instead.');
+      }
+      let approval = await getAgentCheckoutApprovalOptions(review.intentId);
+      if (approval.needsPasskey) {
+        setStep('Setting up Face ID for Muse…');
+        const regOptions = (await getPasskeyRegistrationOptions()) as PublicKeyCredentialCreationOptionsJSON;
+        await verifyPasskeyRegistration(await startRegistration({ optionsJSON: regOptions }), 'Muse checkout');
+        approval = await getAgentCheckoutApprovalOptions(review.intentId);
+      }
+      setStep('Confirm with Face ID…');
+      const passkey = await startAuthentication({ optionsJSON: approval.options as PublicKeyCredentialRequestOptionsJSON });
+      setStep('Paying each store…');
+      setResult(await confirmAgentCheckout(review.intentId, { summaryHash: review.summaryHash, passkey }));
     } catch (err) {
       confirmed.current = false;
-      setError(errorText(err, 'Checkout did not go through. Nothing was charged.'));
+      const cancelled = err instanceof Error && (err.name === 'NotAllowedError' || err.name === 'AbortError');
+      setError(cancelled ? 'Face ID was cancelled. Nothing was charged.' : errorText(err, 'Checkout did not go through. Nothing was charged.'));
     } finally {
       setConfirming(false);
+      setStep(null);
     }
   };
 
@@ -182,11 +209,11 @@ export default function CartReviewPage() {
                     disabled={confirming}
                     className="w-full h-12 bg-gradient-to-br from-[var(--color-peach)] to-[var(--color-blue)] text-white font-semibold rounded-[12px] disabled:opacity-60"
                   >
-                    {confirming ? 'Paying each store…' : `Confirm and pay ${money(payableTotal, currency)}`}
+                    {confirming ? step || 'Working…' : `Confirm with Face ID · ${money(payableTotal, currency)}`}
                   </button>
                 )}
                 <p className="text-xs text-gray-600 text-center mt-2">
-                  One confirm covers every store above. No store is charged more than the amount shown.
+                  One Face ID or Touch ID tap approves every store above, for this cart only. No store is charged more than the amount shown.
                 </p>
               </>
             ) : (
