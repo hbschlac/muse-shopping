@@ -106,6 +106,7 @@ To change what a rule does, bump its `version`, move the old text to `RETIRED` u
 | `checkout.not_expired` | `intent.created`, `intent.approved`, `intent.expired` |
 | `checkout.shopper_approval` | `intent.approved`, `intent.declined`, `payment.submitted` |
 | `checkout.one_confirm` | `intent.approved` |
+| `agent.tripwire` | `agent.paused`, `intent.declined` |
 | `checkout.ship_to_locked` | `intent.created`, `payment.submitted`, `payment.blocked`, `handoff.offered` |
 | `payment.ceiling` | `intent.created`, `payment.submitted`, `payment.completed`, `payment.blocked` |
 | `payment.logged_first` | `payment.submitted` |

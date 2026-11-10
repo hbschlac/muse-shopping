@@ -15,3 +15,10 @@ ONLY in Google Cloud KMS. Read `docs/security/AGENT_SIGNING_KEY.md` before touch
   another signer, another key directory, or a "sign raw bytes" helper.
 - Laptop jobs and scrapers (`src/jobs`, `scripts`) never import the signer. A test enforces this.
 - Run `node scripts/scan-secrets.js --staged` before committing; CI runs it on every push.
+
+## Agent checkout: no AI model in the money path
+
+Paying a store is fixed code that pays only for the exact cart the shopper approved with Face ID.
+Never let an AI model call `src/services/agentCheckout`, `passkeys` or a payment rail, and never
+let store text decide what to buy, how much, or where to ship. `tests/services/noModelInMoneyPath.test.js`
+enforces it. Store text goes through `cleanStoreText()`. Rules and playbook: `docs/ROGUE_AGENT.md`.

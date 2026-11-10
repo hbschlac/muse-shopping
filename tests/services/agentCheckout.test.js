@@ -24,6 +24,7 @@ const Passkeys = require('../../src/services/passkeys');
 let intents;
 let storeRows;
 let events;
+let holds;
 
 function fakeQuery(sql, params = []) {
   const s = sql.replace(/\s+/g, ' ').trim();
@@ -60,6 +61,14 @@ function fakeQuery(sql, params = []) {
     it.status = s.match(/status = '(\w+)'/)[1];
     return { rows: [{ id: it.id }] };
   }
+  if (s.startsWith('INSERT INTO agent_checkout_holds')) {
+    holds.push({ id: holds.length + 1, user_id: params[0], reason: params[1], checkout_intent_id: params[2], cleared_at: null });
+    return { rows: [] };
+  }
+  if (s.startsWith('SELECT id, reason FROM agent_checkout_holds')) {
+    const open = holds.filter((h) => h.user_id === params[0] && !h.cleared_at).reverse();
+    return { rows: open.slice(0, 1) };
+  }
   throw new Error(`unexpected SQL: ${s}`);
 }
 
@@ -82,6 +91,7 @@ beforeEach(() => {
   intents = new Map();
   storeRows = [];
   events = [];
+  holds = [];
   jest.clearAllMocks();
   pool.query.mockImplementation(async (sql, params) => fakeQuery(sql, params));
   pool.connect.mockResolvedValue({ query: jest.fn().mockResolvedValue({ rows: [] }), release: jest.fn() });
@@ -363,5 +373,51 @@ describe('ship-to lock', () => {
     expect(review.stores.every((s) => s.rail === 'handoff')).toBe(true);
     const created = events.find((e) => e.action === 'intent.created');
     expect(created.rules.find((r) => r.rule.startsWith('checkout.ship_to_locked'))).toMatchObject({ result: 'fail' });
+  });
+});
+
+
+describe('tripwire', () => {
+  const okPay = jest.fn(async ({ store }) => ({ status: 'paid', orderId: `o_${store.partnerKey}`, totalCents: store.ceilingCents }));
+
+  async function prepared(payFn) {
+    AgentCheckout.registerRail('test_rail', { pay: payFn, enforcesCeiling: true, enforcesShipTo: true });
+    const review = await AgentCheckout.prepare(7, {});
+    storeRows.forEach((r) => { r.rail = 'test_rail'; r.status = 'pending'; });
+    return review;
+  }
+
+  test('a charge above the approval pauses the shopper and blocks the next cart', async () => {
+    const review = await prepared(jest.fn(async ({ store }) => ({ status: 'paid', orderId: 'o1', totalCents: store.ceilingCents + 1 })));
+    await AgentCheckout.confirm(7, review.intentId, { summaryHash: review.summaryHash });
+    expect(holds.length).toBeGreaterThan(0);
+    const paused = events.filter((e) => e.action === 'agent.paused');
+    expect(paused[0].rules[0]).toMatchObject({ rule: 'agent.tripwire@v1', result: 'fail' });
+
+    okPay.mockClear();
+    const next = await prepared(okPay);
+    await expect(AgentCheckout.confirm(7, next.intentId, { summaryHash: next.summaryHash })).rejects.toThrow(/paused/);
+    expect(okPay).not.toHaveBeenCalled();
+    await expect(AgentCheckout.approvalOptions(7, next.intentId)).rejects.toThrow(/paused/);
+  });
+
+  test('a confirm for a different cart pauses the shopper', async () => {
+    const review = await prepared(okPay);
+    await expect(AgentCheckout.confirm(7, review.intentId, { summaryHash: 'f'.repeat(64) })).rejects.toThrow(/changed/);
+    expect(holds).toHaveLength(1);
+    expect(await AgentCheckout.isPaused(7)).toMatchObject({ reason: expect.stringMatching(/different from the one reviewed/) });
+  });
+
+  test('a missing hash (a stale page) does not pause anyone', async () => {
+    const review = await prepared(okPay);
+    await expect(AgentCheckout.confirm(7, review.intentId, {})).rejects.toThrow(/changed/);
+    expect(holds).toHaveLength(0);
+  });
+
+  test('another shopper is not affected', async () => {
+    holds.push({ id: 1, user_id: 99, reason: 'x', cleared_at: null });
+    const review = await prepared(okPay);
+    const result = await AgentCheckout.confirm(7, review.intentId, { summaryHash: review.summaryHash });
+    expect(result.status).toBe('done');
   });
 });
