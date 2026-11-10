@@ -10,9 +10,12 @@
  *   CJ_API_TOKEN       - personal access token (developers.cj.com)
  *   CJ_COMPANY_ID      - your CJ publisher company ID (CID)
  *   CJ_ADVERTISERS     - "tjmaxx:<advertiser id>,nordstrom-rack:<advertiser id>"
+ *   CJ_PROPERTY_ID     - promotional property ID (PID) for muse.shopping. Without
+ *                        it, product links are the store's plain URL and earn no
+ *                        commission; with it, CJ returns a tracked clickUrl.
  *
- * Endpoint and field names follow CJ's GraphQL Product Feed docs; confirm them
- * against developers.cj.com once the account has an approved advertiser.
+ * Query and field names checked against CJ's published Product Feed GraphQL
+ * schema (developers.cj.com/graphql/reference/Product Feed), 2026-11-10.
  */
 
 const logger = require('../../utils/logger');
@@ -21,19 +24,22 @@ const { recordSeenItems } = require('../newArrivalsService');
 const API = 'https://ads.api.cj.com/query';
 const PAGE_SIZE = 100;
 
-const QUERY = `
-  query Products($companyId: ID!, $partnerIds: [ID!], $keywords: [String!], $limit: Int, $offset: Int) {
-    shoppingProducts(companyId: $companyId, partnerIds: $partnerIds, keywords: $keywords, limit: $limit, offset: $offset) {
+// linkCode needs a non-null pid, so it is only asked for when one is set.
+function buildQuery(withPid) {
+  return `
+  query Products($companyId: ID!, $partnerIds: [ID!], $keywords: [String!], $limit: Int, $offset: Int${withPid ? ', $pid: ID!' : ''}) {
+    shoppingProducts(companyId: $companyId, partnerIds: $partnerIds, partnerStatus: JOINED, keywords: $keywords, limit: $limit, offset: $offset) {
       totalCount
       resultList {
-        id title brand gender productType link imageLink
+        id title brand gender productType link imageLink availability isDeleted
         price { amount }
         salePrice { amount }
-        googleProductCategory { name }
+        googleProductCategory { name }${withPid ? '\n        linkCode(pid: $pid) { clickUrl }' : ''}
       }
     }
   }
 `;
+}
 
 function parseAdvertisers(value) {
   return String(value || '')
@@ -56,8 +62,10 @@ const toCents = v => {
 function parseProducts(resultList) {
   const items = [];
   for (const p of resultList || []) {
-    if (!p || !p.id || !p.title || !p.link) continue;
-    const category = [p.googleProductCategory?.name, p.productType].filter(Boolean).join(' > ');
+    if (!p || !p.id || !p.title || !p.link || p.isDeleted) continue;
+    if (/out[_ ]of[_ ]stock/i.test(p.availability || '')) continue;
+    const productType = Array.isArray(p.productType) ? p.productType.join(' > ') : p.productType;
+    const category = [p.googleProductCategory?.name, productType].filter(Boolean).join(' > ');
     const gender = String(p.gender || '').toLowerCase();
     const text = `${category} ${p.title}`.toLowerCase();
     if (gender && !/female|women|unisex/.test(gender)) continue;
@@ -73,7 +81,7 @@ function parseProducts(resultList) {
       priceCents: onSale ? sale : price,
       originalPriceCents: onSale ? price : null,
       imageUrl: p.imageLink || null,
-      productUrl: p.link,
+      productUrl: p.linkCode?.clickUrl || p.link,
       department: 'women',
       category: category ? category.slice(0, 100) : null,
     });
@@ -82,13 +90,13 @@ function parseProducts(resultList) {
 }
 
 async function searchAdvertiser(advertiserId, { offset = 0, keywords = ['women'], fetchImpl = global.fetch, env = process.env } = {}) {
+  const pid = env.CJ_PROPERTY_ID || null;
+  const variables = { companyId: env.CJ_COMPANY_ID, partnerIds: [advertiserId], keywords, limit: PAGE_SIZE, offset };
+  if (pid) variables.pid = pid;
   const res = await fetchImpl(API, {
     method: 'POST',
     headers: { Authorization: `Bearer ${env.CJ_API_TOKEN}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      query: QUERY,
-      variables: { companyId: env.CJ_COMPANY_ID, partnerIds: [advertiserId], keywords, limit: PAGE_SIZE, offset },
-    }),
+    body: JSON.stringify({ query: buildQuery(!!pid), variables }),
   });
   if (!res.ok) throw new Error(`CJ product search failed for ${advertiserId}: ${res.status}`);
   const body = await res.json();

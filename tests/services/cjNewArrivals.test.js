@@ -15,8 +15,11 @@ const RESULTS = [
     imageLink: 'https://img/a1.jpg', price: { amount: '60.00' }, salePrice: { amount: '29.99' },
     googleProductCategory: { name: 'Apparel & Accessories > Clothing > Dresses' } },
   { id: 'A2', title: "Men's Oxford Shirt", gender: 'male', link: 'https://x/a2', price: { amount: '25' } },
-  { id: 'A3', title: 'Ribbed Knit Sweater', link: 'https://x/a3', price: { amount: '19.99' } },
+  { id: 'A3', title: 'Ribbed Knit Sweater', link: 'https://x/a3', price: { amount: '19.99' },
+    productType: ['Women', 'Sweaters'], linkCode: { clickUrl: 'https://www.jdoqocy.com/click-a3' } },
   { id: 'A4', title: 'No link' },
+  { id: 'A5', title: 'Deleted Tee', gender: 'female', link: 'https://x/a5', isDeleted: true, price: { amount: '9' } },
+  { id: 'A6', title: 'Sold Out Skirt', gender: 'female', link: 'https://x/a6', availability: 'out of stock', price: { amount: '9' } },
 ];
 
 const env = { CJ_API_TOKEN: 't', CJ_COMPANY_ID: '777', CJ_ADVERTISERS: 'tjmaxx:123, bad, x:abc' };
@@ -31,7 +34,26 @@ describe('CJ product feed', () => {
       name: 'Linen Midi Dress', brandName: 'Vince Camuto', priceCents: 2999, originalPriceCents: 6000,
       productUrl: 'https://www.anrdoezrs.net/a1', department: 'women',
     });
-    expect(items[1]).toMatchObject({ priceCents: 1999, originalPriceCents: null });
+    expect(items[1]).toMatchObject({
+      priceCents: 1999, originalPriceCents: null, category: 'Women > Sweaters',
+      productUrl: 'https://www.jdoqocy.com/click-a3',
+    });
+  });
+
+  it('asks for a tracked link only when a property ID is set', async () => {
+    const ok = { ok: true, json: async () => ({ data: { shoppingProducts: { resultList: [] } } }) };
+    const without = jest.fn().mockResolvedValue(ok);
+    await Cj.pollCj({ env, fetchImpl: without });
+    const plain = JSON.parse(without.mock.calls[0][1].body);
+    expect(plain.query).not.toMatch(/linkCode/);
+    expect(plain.query).toMatch(/partnerStatus: JOINED/);
+    expect(plain.variables.pid).toBeUndefined();
+
+    const withPid = jest.fn().mockResolvedValue(ok);
+    await Cj.pollCj({ env: { ...env, CJ_PROPERTY_ID: '999' }, fetchImpl: withPid });
+    const tracked = JSON.parse(withPid.mock.calls[0][1].body);
+    expect(tracked.query).toMatch(/linkCode\(pid: \$pid\) \{ clickUrl \}/);
+    expect(tracked.variables.pid).toBe('999');
   });
 
   it('parses advertisers and needs every setting', () => {
