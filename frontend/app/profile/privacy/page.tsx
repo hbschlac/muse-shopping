@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Shield, Download, Trash2, CheckCircle, AlertCircle } from 'lucide-react';
 import PageHeader from '@/components/PageHeader';
+import { api } from '@/lib/api/client';
 
 interface ConsentPreferences {
   data_collection: boolean;
@@ -48,24 +49,12 @@ export default function PrivacySettingsPage() {
     setMessage(null);
 
     try {
-      const response = await fetch('/api/shopper/privacy/consent', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(preferences),
-      });
-
-      if (response.ok) {
-        localStorage.setItem('privacy_preferences', JSON.stringify(preferences));
-        setMessage({ type: 'success', text: 'Privacy preferences saved successfully' });
-      } else {
-        setMessage({ type: 'error', text: 'Failed to save preferences' });
-      }
+      await api.post('/shopper/privacy/consent', preferences, { requiresAuth: true });
+      localStorage.setItem('privacy_preferences', JSON.stringify(preferences));
+      setMessage({ type: 'success', text: 'Privacy preferences saved successfully' });
     } catch (error) {
       console.error('Error saving preferences:', error);
-      setMessage({ type: 'error', text: 'An error occurred while saving' });
+      setMessage({ type: 'error', text: 'Could not save. Please sign in and try again.' });
     } finally {
       setSaving(false);
     }
@@ -73,53 +62,37 @@ export default function PrivacySettingsPage() {
 
   const exportData = async () => {
     try {
-      const response = await fetch('/api/shopper/data/export', {
-        credentials: 'include',
-      });
+      const data = await api.get('/shopper/data/export', { requiresAuth: true });
 
-      if (response.ok) {
-        const data = await response.json();
+      // Download as JSON file
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `muse_data_export_${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
 
-        // Download as JSON file
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `muse_data_export_${new Date().toISOString().split('T')[0]}.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-
-        setMessage({ type: 'success', text: 'Your data has been exported' });
-      } else {
-        setMessage({ type: 'error', text: 'Failed to export data' });
-      }
+      setMessage({ type: 'success', text: 'Your data has been exported' });
     } catch (error) {
       console.error('Error exporting data:', error);
-      setMessage({ type: 'error', text: 'An error occurred during export' });
+      setMessage({ type: 'error', text: 'Could not export. Please sign in and try again.' });
     }
   };
 
   const deleteData = async () => {
     try {
-      const response = await fetch('/api/shopper/data/delete', {
-        method: 'POST',
-        credentials: 'include',
+      await api.post('/shopper/data/delete', undefined, { requiresAuth: true });
+      setMessage({
+        type: 'success',
+        text: 'Data deletion request submitted. Your data will be anonymized within 30 days.',
       });
-
-      if (response.ok) {
-        setMessage({
-          type: 'success',
-          text: 'Data deletion request submitted. Your data will be anonymized within 30 days.',
-        });
-        setShowDeleteConfirm(false);
-      } else {
-        setMessage({ type: 'error', text: 'Failed to submit deletion request' });
-      }
+      setShowDeleteConfirm(false);
     } catch (error) {
       console.error('Error deleting data:', error);
-      setMessage({ type: 'error', text: 'An error occurred during deletion' });
+      setMessage({ type: 'error', text: 'Could not submit. Please sign in and try again.' });
     }
   };
 

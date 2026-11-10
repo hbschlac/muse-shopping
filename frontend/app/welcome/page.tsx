@@ -77,7 +77,7 @@ export default function WelcomePage() {
       <div className="mt-8 text-center">
         <p className="text-gray-500 text-sm">
           <Link
-            href="/profile/privacy"
+            href="/privacy"
             className="text-gray-600 hover:text-gray-900 transition-colors duration-150 underline"
           >
             Privacy Policy

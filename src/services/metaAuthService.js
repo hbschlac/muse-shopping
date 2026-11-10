@@ -17,7 +17,6 @@ const META_REDIRECT_URI = process.env.META_REDIRECT_URI || 'http://localhost:300
 // Instagram Basic Display API Scopes
 const INSTAGRAM_SCOPES = [
   'instagram_basic',
-  'instagram_content_publish',
   'pages_show_list',
   'pages_read_engagement',
 ];

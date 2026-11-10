@@ -86,7 +86,7 @@ export default function TermsOfServicePage() {
               <h2 className="text-xl font-semibold text-gray-900 mb-4">8. Privacy</h2>
               <p className="text-gray-700 mb-4">
                 Your use of the Service is also governed by our{' '}
-                <Link href="/profile/privacy" className="text-[var(--color-coral)] hover:underline">
+                <Link href="/privacy" className="text-[var(--color-coral)] hover:underline">
                   Privacy Policy
                 </Link>
                 , which describes how we collect, use, and protect your information.

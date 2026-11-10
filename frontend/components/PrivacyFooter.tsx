@@ -12,7 +12,7 @@ export default function PrivacyFooter({ variant = 'light', className = '' }: Pri
     <div className={`text-center ${className}`}>
       <p className={`text-sm ${isDark ? 'text-white/70' : 'text-gray-500'}`}>
         <Link
-          href="/profile/privacy"
+          href="/privacy"
           className={`${isDark ? 'text-white/80 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors duration-150 underline`}
         >
           Privacy Policy

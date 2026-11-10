@@ -87,8 +87,10 @@ router.get('/health/circuit-breakers', HealthCheckController.circuitBreakers);
 router.get('/health/metrics', HealthCheckController.metrics);
 
 // Legal pages
+// The privacy policy lives in the frontend at /privacy. This old URL is the one
+// given to Meta and Google, so it redirects there instead of serving a copy.
 router.get('/privacy', (req, res) => {
-  res.sendFile(path.join(__dirname, '../../public/privacy-policy.html'));
+  res.redirect(301, '/privacy');
 });
 
 router.get('/terms', (req, res) => {

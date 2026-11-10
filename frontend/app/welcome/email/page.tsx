@@ -224,7 +224,7 @@ export default function EmailSignInPage() {
         <div className="mt-8 text-center">
           <p className="text-sm text-gray-500">
             <Link
-              href="/profile/privacy"
+              href="/privacy"
               className="text-gray-600 hover:text-gray-900 transition-colors duration-150 underline"
             >
               Privacy Policy
