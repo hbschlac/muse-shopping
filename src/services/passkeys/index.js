@@ -21,12 +21,13 @@ const {
   verifyAuthenticationResponse,
 } = require('@simplewebauthn/server');
 const pool = require('../../db/pool');
-const { ValidationError } = require('../../utils/errors');
+const { ValidationError, ConflictError } = require('../../utils/errors');
 const { SCHEMA_SQL } = require('./schema');
 
 const RP_NAME = 'Muse';
 const CHALLENGE_TTL_MS = 5 * 60 * 1000;
 const SCHEMA_LOCK_KEY = 4172028;
+const ALREADY_SET_UP = 'Face ID is already set up for Muse on another device.';
 
 function rpId() {
   return process.env.WEBAUTHN_RP_ID || 'muse.shopping';
@@ -109,7 +110,11 @@ async function registrationOptions(userId) {
   } catch (err) {
     email = null; // the label in the passkey picker; not required
   }
+  // One passkey per shopper for now. Adding another device without a tap on
+  // the first would let anyone holding a stolen login add their own Face ID
+  // and approve carts. Adding a second device comes later, approved by the first.
   const existing = await listPasskeys(userId);
+  if (existing.length > 0) throw new ConflictError(ALREADY_SET_UP, ALREADY_SET_UP, ['Use the device you set up Face ID on']);
   const options = await generateRegistrationOptions({
     rpName: RP_NAME,
     rpID: rpId(),
@@ -126,6 +131,7 @@ async function registrationOptions(userId) {
 /** Step 2: verify the device's response and save the public key. */
 async function verifyRegistration(userId, response, { nickname = null } = {}) {
   await ensureSchema();
+  if (await hasPasskey(userId)) throw new ConflictError(ALREADY_SET_UP, ALREADY_SET_UP, ['Use the device you set up Face ID on']);
   const saved = await takeChallenge(userId, 'register');
   if (!saved) throw new ValidationError('Passkey setup timed out. Try again.');
   let result;

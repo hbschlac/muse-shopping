@@ -12,8 +12,15 @@ const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
 const Passkeys = require('../services/passkeys');
 const { successResponse } = require('../utils/responseFormatter');
+const { NotFoundError } = require('../utils/errors');
 
 router.use(authMiddleware);
+
+// Same switch as agent checkout: off unless AGENT_CHECKOUT_ENABLED=true.
+router.use((req, res, next) => {
+  if (process.env.AGENT_CHECKOUT_ENABLED !== 'true') return next(new NotFoundError('Passkeys'));
+  return next();
+});
 
 router.get('/', async (req, res, next) => {
   try {
