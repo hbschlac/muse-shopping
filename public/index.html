@@ -16,11 +16,31 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Muse">
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="preload" href="/fonts/be-vietnam-pro-latin-400.woff2" as="font" type="font/woff2" crossorigin>
 
     <style>
+        /* Font served by Muse itself, so visitors' browsers never contact Google. */
+        @font-face {
+            font-family: 'Be Vietnam Pro';
+            font-style: normal;
+            font-weight: 400;
+            font-display: swap;
+            src: url(/fonts/be-vietnam-pro-latin-400.woff2) format('woff2');
+        }
+        @font-face {
+            font-family: 'Be Vietnam Pro';
+            font-style: normal;
+            font-weight: 500;
+            font-display: swap;
+            src: url(/fonts/be-vietnam-pro-latin-500.woff2) format('woff2');
+        }
+        @font-face {
+            font-family: 'Be Vietnam Pro';
+            font-style: normal;
+            font-weight: 600;
+            font-display: swap;
+            src: url(/fonts/be-vietnam-pro-latin-600.woff2) format('woff2');
+        }
         :root {
             --ecru: #F6F1EB;
             --white: #FFFFFF;
