@@ -48,6 +48,20 @@ describe('Sign in with Shop test', () => {
     expect(res.status).toBe(200);
   });
 
+  test('log writes stop past the hourly cap', () => {
+    const { underLogCap, LOG_CAP_PER_HOUR } = require('../../src/routes/identityRoutes')._internal;
+    const t0 = Date.now() + 2 * 60 * 60 * 1000; // new window
+    const results = Array.from({ length: LOG_CAP_PER_HOUR + 5 }, () => underLogCap(t0));
+    expect(results.filter(Boolean)).toHaveLength(LOG_CAP_PER_HOUR);
+  });
+
+  test('callback is limited per IP', async () => {
+    const a = app();
+    let last;
+    for (let i = 0; i < 11; i += 1) last = await request(a).get('/api/v1/identity/shop/callback?error=x');
+    expect(last.status).toBe(429);
+  });
+
   test('summarizeCallback trims long values', () => {
     expect(shop.summarizeCallback({ error: 'x'.repeat(1000) }).error).toHaveLength(300);
   });

@@ -13,16 +13,36 @@ const express = require('express');
 const router = express.Router();
 const logger = require('../utils/logger');
 const { recordAgentEvent } = require('../services/agentAudit');
+const rateLimit = require('express-rate-limit');
 const shop = require('../services/identityLinking/shopClient');
+
+// The callback is public (Shop redirects a browser to it), and agent_events is
+// append-only, so anyone could fill the log by hitting it. Two caps: per IP,
+// and a per-instance ceiling on log writes. Past the ceiling the page still
+// answers; it just stops logging.
+const callbackLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+const LOG_CAP_PER_HOUR = 30;
+let logWindowStart = 0;
+let logsThisWindow = 0;
+function underLogCap(now = Date.now()) {
+  if (now - logWindowStart > 60 * 60 * 1000) { logWindowStart = now; logsThisWindow = 0; }
+  logsThisWindow += 1;
+  return logsThisWindow <= LOG_CAP_PER_HOUR;
+}
 
 router.get('/shop/client.json', (req, res) => {
   res.set('Cache-Control', 'public, max-age=300');
   res.type('application/json').send(JSON.stringify(shop.buildClientMetadata()));
 });
 
-router.get('/shop/callback', async (req, res) => {
+router.get('/shop/callback', callbackLimiter, async (req, res) => {
   const outcome = shop.summarizeCallback(req.query);
-  await recordAgentEvent({
+  if (underLogCap()) await recordAgentEvent({
     actor: 'shopper',
     action: 'identity.link_probe',
     decision: outcome.accepted ? 'allowed' : 'declined',
@@ -41,3 +61,4 @@ router.get('/shop/callback', async (req, res) => {
 });
 
 module.exports = router;
+module.exports._internal = { underLogCap, LOG_CAP_PER_HOUR };
