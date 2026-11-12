@@ -121,6 +121,7 @@ router.use('/checkout', checkoutRoutes);
 router.use('/bridges', agentBridgeRoutes);
 router.use('/watches', watchRoutes);
 router.use('/passkeys', passkeyRoutes);
+router.use('/identity', require('./identityRoutes')); // UCP identity linking (Sign in with Shop test)
 router.use('/listings', listingRoutes); // scheduled listing refresh (job secret)
 router.use('/visa-acceptance', visaAcceptanceRoutes);
 router.use('/mcp', museMcpRoutes);
