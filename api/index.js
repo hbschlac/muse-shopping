@@ -6,8 +6,13 @@
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
+const helmet = require('helmet');
+const { stripInvisible } = require('../src/middleware/stripInvisible');
 
 const app = express();
+
+// Don't advertise the server software.
+app.disable('x-powered-by');
 
 // Trust Vercel's edge proxy (one hop) so req.ip is the real client and
 // express-rate-limit stops throwing ValidationError on X-Forwarded-For.
@@ -17,6 +22,37 @@ app.set('trust proxy', 1);
 // Take the Vercel OIDC token off the request before anything else can log or
 // forward it. Only the agent signer uses it (src/services/agentSigning).
 app.use(require('../src/services/agentSigning/oidcToken').captureOidcToken);
+
+// Security headers on every response this server sends (the landing page at /,
+// the API, /.well-known, /kya.md). This file is what Vercel runs; src/app.js is
+// only used locally, so its helmet setup never reached production.
+// - frame-ancestors / X-Frame-Options: no other site can show Muse in a hidden
+//   frame and trick a shopper into tapping (clickjacking).
+// - CSP: the landing page only loads its own files; its one inline style
+//   block needs 'unsafe-inline' for styles.
+// - Cross-Origin-Resource-Policy stays cross-origin so stores and email
+//   clients can still fetch /public images and /.well-known files.
+app.use(helmet({
+  contentSecurityPolicy: {
+    useDefaults: true,
+    directives: {
+      'default-src': ["'self'"],
+      'script-src': ["'self'"],
+      'style-src': ["'self'", "'unsafe-inline'"],
+      'img-src': ["'self'", 'data:', 'https:'],
+      'font-src': ["'self'", 'data:'],
+      'connect-src': ["'self'"],
+      'frame-ancestors': ["'self'"],
+      'form-action': ["'self'"],
+      'object-src': ["'none'"],
+      'base-uri': ["'self'"],
+    },
+  },
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  crossOriginEmbedderPolicy: false,
+  // Same HSTS Vercel already sends; no includeSubDomains so other subdomains are unaffected.
+  strictTransportSecurity: { maxAge: 63072000, includeSubDomains: false },
+}));
 
 // Enable CORS
 app.use(cors({
@@ -35,6 +71,10 @@ app.use(cors({
 app.use('/api/v1/listings/ingest', express.json({ limit: '4mb' }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Remove invisible characters from everything people submit, so nobody can
+// store hidden instructions for an AI in a name or a note. See the file.
+app.use(stripInvisible);
 
 // Serve static files from public directory
 app.use('/public', express.static(path.join(__dirname, '../public')));

@@ -6,12 +6,11 @@
 const express = require('express');
 const router = express.Router();
 const ManualOrderController = require('../../controllers/admin/manualOrderController');
-const authMiddleware = require('../../middleware/authMiddleware');
-// const adminMiddleware = require('../../middleware/adminMiddleware'); // TODO: Implement admin check
+const { requireAdmin } = require('../../middleware/authMiddleware');
 
-// All routes require authentication (and admin role in production)
-router.use(authMiddleware);
-// router.use(adminMiddleware); // TODO: Uncomment when admin middleware is implemented
+// Admin only: these show shoppers' emails and shipping/billing addresses and
+// change order status. A sign-in alone is not enough.
+router.use(requireAdmin);
 
 /**
  * Manual order management
