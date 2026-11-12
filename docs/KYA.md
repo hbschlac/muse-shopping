@@ -265,6 +265,7 @@ Secrets live in Vercel environment variables, not in the code.
 
 | Date | Change |
 |---|---|
+| 2026-11-11 | Shopper sign-in test (In review): Muse publishes an OAuth client description at /api/v1/identity/shop/client.json to see whether Shop (accounts.shop.app) accepts Muse for UCP identity linking. The test keeps no codes or tokens; nothing is linked. |
 | 2026-11-10 | Muse's own cart approval built (switched off): one passkey tap per cart, bound to that review. Passkey setup needs an emailed code; one passkey per shopper; setup alert email; rate limits. |
 | 2026-11-03 | Planned payment path: ICC via Visa Acceptance as enabler, Microform hosted fields, Shop Pay tokens; one confirm step per cart. |
 | 2026-11-03 | Operator: no legal entity yet (side project). Signing key: Ed25519 in Cloud KMS. Planned Visa Intelligent Commerce flow named. |
