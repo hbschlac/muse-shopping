@@ -75,6 +75,16 @@ describe('settings rules', () => {
     expect(policy.inQuietHours(SEVEN_THIRTY_PM_PT, p)).toBe(false);
   });
 
+  it('quiet hours can be turned off', () => {
+    const c = { change_type: 'back_in_stock', store_key: 'allbirds', item_id: 'p1' };
+    const off = prefs({ quiet_enabled: false });
+    expect(policy.inQuietHours(ELEVEN_PM_PT, off)).toBe(false);
+    expect(policy.decide('back_in_stock', c, off, {}, ELEVEN_PM_PT).status).toBe('push');
+    expect(policy.normalizePrefs({}).quiet_enabled).toBe(true);
+    expect(policy.validatePrefsPatch({ quiet_enabled: false }).patch).toEqual({ quiet_enabled: false });
+    expect(policy.validatePrefsPatch({ quiet_enabled: 'no' }).error).toMatch(/true or false/);
+  });
+
   it('muting a store or one item stops its alerts', () => {
     const c = { change_type: 'back_in_stock', store_key: 'allbirds', item_id: 'p1' };
     expect(policy.decide('back_in_stock', c, prefs({ muted: [{ store_key: 'allbirds' }] }), {}, NOON_PT).reason).toBe('muted');
