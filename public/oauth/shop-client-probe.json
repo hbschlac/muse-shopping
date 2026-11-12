@@ -1,0 +1,11 @@
+{
+  "client_id": "https://cdn.jsdelivr.net/gh/hbschlac/muse-shopping@claude/project-thread-y7lpg2/public/oauth/shop-client-probe.json",
+  "client_name": "Muse",
+  "client_uri": "https://www.muse.shopping",
+  "logo_uri": "https://www.muse.shopping/icons/icon-512.png",
+  "redirect_uris": ["https://www.muse.shopping/api/v1/identity/shop/callback"],
+  "grant_types": ["authorization_code", "refresh_token", "urn:ietf:params:oauth:grant-type:device_code"],
+  "response_types": ["code"],
+  "token_endpoint_auth_method": "none",
+  "scope": "openid email dev.ucp.shopping.checkout:manage"
+}
