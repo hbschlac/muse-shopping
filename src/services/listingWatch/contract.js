@@ -95,8 +95,20 @@ function listingProblem(l) {
   return null;
 }
 
-// Store text is shown in the app and in alerts; markup in it is never wanted.
-const plain = v => String(v).replace(/<[^>]*>/g, '').replace(/[\u0000-\u001f\u007f]/g, ' ').trim();
+// Store text is shown in the app and in alerts; markup and invisible characters
+// in it are never wanted. Same rules as src/utils/storeText.js (store scripts may
+// only load this file, so the code is copied; tests/utils/storeText.test.js keeps
+// the two equal).
+const INVISIBLE = /[\u00AD\u034F\u061C\u115F\u1160\u17B4\u17B5\u180B-\u180F\u200B-\u200F\u202A-\u202E\u2060-\u206F\u3164\uFE00-\uFE0F\uFEFF\uFFA0\uFFF9-\uFFFB]|[\u{E0000}-\u{E007F}\u{E0100}-\u{E01EF}]/gu;
+const plain = v => String(v)
+  .normalize('NFKC')
+  .replace(/<!--[\s\S]*?-->/g, ' ')
+  .replace(/<(script|style|template|noscript)\b[\s\S]*?<\/\1\s*>/gi, ' ')
+  .replace(/<[^>]*>/g, ' ')
+  .replace(INVISIBLE, '')
+  .replace(/[\u0000-\u001F\u007F-\u009F]/g, ' ')
+  .replace(/\s+/g, ' ')
+  .trim();
 
 function normalizeListing(l) {
   const str = v => (isStr(v) && plain(v) ? plain(v).slice(0, 200) : null);
@@ -119,4 +131,4 @@ function normalizeListing(l) {
   };
 }
 
-module.exports = { validateOutput, MAX_LISTINGS, MAX_VARIANTS, MIN_PRICE_CENTS, MAX_PRICE_CENTS };
+module.exports = { validateOutput, plain, MAX_LISTINGS, MAX_VARIANTS, MIN_PRICE_CENTS, MAX_PRICE_CENTS };

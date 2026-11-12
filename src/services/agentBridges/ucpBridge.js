@@ -17,15 +17,18 @@
 
 const { discover, callTool } = require('./ucpMcpClient');
 const { ValidationError } = require('../../utils/errors');
+const { cleanStoreText } = require('../../utils/storeText');
 
 function money(amount) {
   if (!amount || typeof amount.amount !== 'number') return null;
   return { cents: amount.amount, currency: amount.currency || 'USD' };
 }
 
+// Store text is data, never instructions: strip markup and invisible characters.
 function stripHtml(html) {
-  return String(html || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  return cleanStoreText(html, 5000) || '';
 }
+const text = (v, max = 500) => cleanStoreText(v, max);
 
 /**
  * Map a UCP catalog product to Muse's bridge product shape.
@@ -34,11 +37,12 @@ function normalizeProduct(product, partner) {
   const variants = (product.variants || []).map(v => ({
     id: v.id,
     sku: v.sku || null,
-    title: v.title || null,
+    title: text(v.title),
     price: money(v.price),
     available: v.availability ? !!v.availability.available : null,
     options: (v.options || []).reduce((acc, o) => {
-      if (o && o.name) acc[o.name] = o.label;
+      const name = text(o && o.name, 80);
+      if (name) acc[name] = text(o.label, 200);
       return acc;
     }, {}),
     imageUrl: (v.media || []).find(m => m.type === 'image')?.url || null,
@@ -57,7 +61,7 @@ function normalizeProduct(product, partner) {
     partnerKey: partner.key,
     brand: partner.name,
     id: product.id,
-    title: product.title,
+    title: text(product.title) || String(product.id),
     description: stripHtml(product.description?.html || product.description?.plain || product.description),
     url: product.url || null,
     imageUrl,
@@ -82,16 +86,16 @@ function summarizeCheckout(checkout) {
     totals,
     lineItems: (checkout.line_items || []).map(li => ({
       variantId: li.item?.id,
-      title: li.item?.title,
+      title: text(li.item?.title),
       priceCents: li.item?.price,
       imageUrl: li.item?.image_url || null,
       quantity: li.quantity,
     })),
-    policies: (checkout.links || []).map(l => ({ type: l.type, title: l.title, url: l.url })),
+    policies: (checkout.links || []).map(l => ({ type: l.type, title: text(l.title, 200), url: l.url })),
     // Items the shopper still has to provide on the store's page (address, contact, etc.)
     needsFromShopper: (checkout.messages || [])
       .filter(m => m.type === 'error')
-      .map(m => ({ code: m.code, message: m.content, severity: m.severity })),
+      .map(m => ({ code: m.code, message: text(m.content, 1000), severity: m.severity })),
     continueUrl: checkout.continue_url || null,
     expiresAt: checkout.expires_at || null,
   };

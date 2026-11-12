@@ -115,6 +115,53 @@ function withTimeout(promise, ms, label) {
   return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
 }
 
+/**
+ * Tripwire. Something that should never happen just happened (a store charged
+ * above the approval, shipped elsewhere, or a confirm didn't match the review).
+ * Treat it as a possible hijack: pause agent checkout for this shopper, log it,
+ * and email the owner. Never throws; the caller has already stopped the payment.
+ */
+async function tripwire(userId, reason, ctx) {
+  try {
+    await ensureSchema();
+    await pool.query(
+      'INSERT INTO agent_checkout_holds (user_id, reason, checkout_intent_id) VALUES ($1, $2, $3)',
+      [userId, reason, ctx.checkoutIntentId || null],
+    );
+  } catch (err) {
+    logger.error(`Agent checkout tripwire: could not save hold for user ${userId}: ${err.message}`);
+  }
+  await recordAgentEvent({
+    actor: 'system', action: 'agent.paused', decision: 'blocked',
+    reason: `Agent checkout paused for this shopper: ${reason}`, ...ctx,
+    rules: [cite('agent.tripwire', 'fail', { reason })],
+  }).catch((err) => logger.error(`Agent checkout tripwire: log failed: ${err.message}`));
+  try {
+    const to = process.env.AGENT_ALERT_EMAIL || 'hannah@muse.shopping';
+    if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+      await require('../emailService').sendTransactionalEmail(to, 'hannah', {
+        subject: 'Muse paused agent checkout for a shopper',
+        heading: 'Agent checkout tripwire',
+        body: `Muse stopped a payment and paused agent checkout for shopper ${userId}.\n\nReason: ${reason}\nCheckout: ${ctx.checkoutIntentId || 'n/a'}\n\nOpen the agent trail for this checkout, then follow docs/ROGUE_AGENT.md.`,
+      });
+    } else {
+      logger.error('Agent checkout tripwire fired but email is not configured; alert not sent');
+    }
+  } catch (err) {
+    logger.error(`Agent checkout tripwire: alert email failed: ${err.message}`);
+  }
+}
+
+/** True when this shopper has an open tripwire hold. */
+async function isPaused(userId) {
+  await ensureSchema();
+  const r = await pool.query(
+    'SELECT id, reason FROM agent_checkout_holds WHERE user_id = $1 AND cleared_at IS NULL ORDER BY id DESC LIMIT 1',
+    [userId],
+  );
+  return r.rows[0] || null;
+}
+
 /** Pick a rail for one store. A rail counts only if Muse has it registered. */
 async function pickRail(partnerKey, ctx) {
   const partner = AgentBridges.getPartner(partnerKey) || {};
@@ -380,6 +427,7 @@ async function payStore(intent, row, confirmation) {
       ...base, details: { orderId: result.orderId || null },
       rules: [cite('checkout.ship_to_locked', 'fail', { approvedHash: intent.ship_to_hash, storeHash: result.shipToHash })],
     });
+    await tripwire(intent.user_id, `${row.store_name} shipped to a different address than the one approved`, base);
     return row;
   }
 
@@ -392,6 +440,7 @@ async function payStore(intent, row, confirmation) {
       ...base, amountCents: result.totalCents, details: { orderId: result.orderId || null },
       rules: [cite('payment.ceiling', 'fail', { approvedCents: row.ceiling_cents, chargedCents: result.totalCents })],
     });
+    await tripwire(intent.user_id, `${row.store_name} charged ${result.totalCents} cents, above the approved ${row.ceiling_cents}`, base);
     return row;
   }
 
@@ -418,6 +467,15 @@ async function confirm(userId, intentId, confirmation = {}) {
   const ctx = { userId, cartSessionId: intent.cart_session_id, checkoutIntentId: intent.id };
 
   if (intent.status !== 'draft') throw new ConflictError(`This checkout is already ${intent.status}`);
+  const hold = await isPaused(userId);
+  if (hold) {
+    await recordAgentEvent({
+      actor: ACTOR, action: 'intent.declined', decision: 'blocked',
+      reason: `Agent checkout is paused for this shopper: ${hold.reason}`, ...ctx,
+      rules: [cite('agent.tripwire', 'fail', { holdId: hold.id })],
+    });
+    throw new ConflictError('Muse checkout is paused on your account while we check something. You can still check out at each store.');
+  }
   if (new Date(intent.expires_at).getTime() < Date.now()) {
     await pool.query("UPDATE checkout_intents SET status = 'expired', finished_at = NOW() WHERE id = $1 AND status = 'draft'", [intent.id]);
     await recordAgentEvent({
@@ -432,6 +490,10 @@ async function confirm(userId, intentId, confirmation = {}) {
       reason: 'Confirmation did not match the review the shopper was shown', ...ctx,
       rules: [cite('checkout.review_matches', 'fail')],
     });
+    if (confirmation.summaryHash) {
+      // A hash was sent but it isn't this review's: someone tried to approve a different cart.
+      await tripwire(userId, 'a confirm arrived for a cart different from the one reviewed', ctx);
+    }
     throw new ValidationError('The cart changed since you reviewed it. Review it again.');
   }
 
@@ -517,6 +579,9 @@ async function approvalOptions(userId, intentId) {
   const { intent } = await loadIntent(userId, intentId);
   if (intent.status !== 'draft') throw new ConflictError(`This checkout is already ${intent.status}`);
   if (new Date(intent.expires_at).getTime() < Date.now()) throw new ConflictError('This checkout expired. Review the cart again.');
+  if (await isPaused(userId)) {
+    throw new ConflictError('Muse checkout is paused on your account while we check something. You can still check out at each store.');
+  }
   const hasKey = await passkeys().hasPasskey(userId);
   if (!hasKey) return { needsPasskey: true };
   return { needsPasskey: false, options: await passkeys().cartApprovalOptions(userId, intent.id, intent.summary_hash) };
@@ -548,5 +613,6 @@ module.exports = {
   ensureSchema,
   INTENT_TTL_MS,
   _internal: { summaryHashOf, rails },
+  isPaused,
   shipToHashOf,
 };
