@@ -1,7 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const WaitlistController = require('../controllers/waitlistController');
-const authMiddleware = require('../middleware/authMiddleware');
+// Admin routes need the admin role, not just a sign-in: they show every
+// signup's name, email and phone and send invite emails as Muse.
+const { requireAdmin } = require('../middleware/authMiddleware');
 const { validate } = require('../middleware/validation');
 const { body, query, param } = require('express-validator');
 
@@ -91,12 +93,12 @@ router.get(
  */
 
 // Get waitlist statistics
-router.get('/admin/statistics', authMiddleware, WaitlistController.getStatistics);
+router.get('/admin/statistics', requireAdmin, WaitlistController.getStatistics);
 
 // Get paginated waitlist
 router.get(
   '/admin/list',
-  authMiddleware,
+  requireAdmin,
   [
     query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
     query('limit').optional().isInt({ min: 1, max: 200 }).withMessage('Limit must be between 1 and 200'),
@@ -114,7 +116,7 @@ router.get(
 // Get specific waitlist signup by ID
 router.get(
   '/admin/:id',
-  authMiddleware,
+  requireAdmin,
   [param('id').isInt().withMessage('ID must be an integer'), validate],
   WaitlistController.getSignupById
 );
@@ -122,7 +124,7 @@ router.get(
 // Update waitlist signup
 router.patch(
   '/admin/:id',
-  authMiddleware,
+  requireAdmin,
   [
     param('id').isInt().withMessage('ID must be an integer'),
     body('first_name').optional().trim().isLength({ min: 1, max: 100 }),
@@ -142,7 +144,7 @@ router.patch(
 // Send invite to single signup
 router.post(
   '/admin/:id/invite',
-  authMiddleware,
+  requireAdmin,
   [param('id').isInt().withMessage('ID must be an integer'), validate],
   WaitlistController.sendInvite
 );
@@ -150,7 +152,7 @@ router.post(
 // Batch send invites to top priority signups
 router.post(
   '/admin/batch-invite',
-  authMiddleware,
+  requireAdmin,
   [body('count').optional().isInt({ min: 1, max: 100 }).withMessage('Count must be between 1 and 100'), validate],
   WaitlistController.batchSendInvites
 );
